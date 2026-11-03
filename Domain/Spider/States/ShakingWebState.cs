@@ -46,7 +46,7 @@ namespace SpiderDesk.Domain.Spider.States
             if (!_dropletsReleased && _shakeTimer <= 0.75)
             {
                 _dropletsReleased = true;
-                _web.Droplets.ShakeOffAllDroplets(_web.CompletedSegments, world.Random);
+                _web.Droplets.ShakeOffAllDroplets(_web.CompletedSegments, _web.Center, world.Random);
             }
 
             if (_shakeTimer <= 0)

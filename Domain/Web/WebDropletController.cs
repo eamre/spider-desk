@@ -95,7 +95,7 @@ namespace SpiderDesk.Domain.Web
             return Math.Min(14.0, totalSag);
         }
 
-        public Point CalculateDropletWorldPosition(WaterDroplet droplet, IReadOnlyList<WebSegment> segments)
+        public Point CalculateDropletWorldPosition(WaterDroplet droplet, IReadOnlyList<WebSegment> segments, Point webCenter)
         {
             if (droplet.SegmentIndex < 0 || droplet.SegmentIndex >= segments.Count)
             {
@@ -106,21 +106,36 @@ namespace SpiderDesk.Domain.Web
             double t = droplet.NormalizedT;
             double sag = GetSegmentSag(droplet.SegmentIndex);
 
-            double sagOffset = 4.0 * t * (1.0 - t) * sag;
+            Point mid = new Point((seg.Start.X + seg.End.X) * 0.5, (seg.Start.Y + seg.End.Y) * 0.5);
+            double segLen = (seg.End - seg.Start).Length;
 
+            Vector toCenter = webCenter - mid;
+            double distToCenter = toCenter.Length;
+            if (distToCenter > 0.001)
+            {
+                toCenter /= distToCenter;
+            }
+
+            double inwardPull = seg.IsAnchor ? 0.0 : Math.Min(11.0, segLen * 0.13);
+            Point control = new Point(
+                mid.X + toCenter.X * inwardPull * 1.8,
+                mid.Y + toCenter.Y * inwardPull * 1.8 + sag * 1.6 + 0.6
+            );
+
+            double inv = 1.0 - t;
             return new Point(
-                seg.Start.X + (seg.End.X - seg.Start.X) * t,
-                seg.Start.Y + (seg.End.Y - seg.Start.Y) * t + sagOffset
+                inv * inv * seg.Start.X + 2.0 * inv * t * control.X + t * t * seg.End.X,
+                inv * inv * seg.Start.Y + 2.0 * inv * t * control.Y + t * t * seg.End.Y
             );
         }
 
-        public void ShakeOffAllDroplets(IReadOnlyList<WebSegment> segments, Random rng)
+        public void ShakeOffAllDroplets(IReadOnlyList<WebSegment> segments, Point webCenter, Random rng)
         {
             foreach (var drop in _attachedDroplets)
             {
                 if (drop.SegmentIndex >= 0 && drop.SegmentIndex < segments.Count)
                 {
-                    Point worldPos = CalculateDropletWorldPosition(drop, segments);
+                    Point worldPos = CalculateDropletWorldPosition(drop, segments, webCenter);
                     double initialVy = 45.0 + rng.NextDouble() * 65.0;
                     drop.Detach(worldPos, initialVy);
                     _fallingDroplets.Add(drop);

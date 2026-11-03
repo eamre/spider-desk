@@ -37,9 +37,9 @@ namespace SpiderDesk.Domain.Spider.States
 
             if (candidate.IsCornerFan)
             {
-                double radius = 190.0 + world.Random.NextDouble() * 35.0;
+                double radius = 225.0 + world.Random.NextDouble() * 35.0;
                 double midAngle = (candidate.StartAngle + candidate.EndAngle) * 0.5;
-                Point restingHub = WebBlueprintGenerator.PolarToCartesian(candidate.Vertex, midAngle, 48.0);
+                Point restingHub = WebBlueprintGenerator.PolarToCartesian(candidate.Vertex, midAngle, 58.0);
 
                 var plan = WebBlueprintGenerator.CreateCornerFanPlan(
                     candidate.Vertex,
@@ -168,8 +168,8 @@ namespace SpiderDesk.Domain.Spider.States
             double w = world.ScreenWidth;
             double h = world.ScreenHeight;
 
-            const double cornerMargin = 14.0;
-            const double taskbarPad = 56.0;
+            const double cornerMargin = 3.0;
+            const double taskbarPad = 48.0;
             const double orbPad = 165.0;
 
             WebSiteCandidate[] candidates =

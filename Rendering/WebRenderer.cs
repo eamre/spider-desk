@@ -72,9 +72,14 @@ namespace SpiderDesk.Rendering
                 Pen pen = seg.IsAnchor ? _anchorPen : _spiralPen;
                 double sag = web.Droplets.GetSegmentSag(i);
 
-                if (sag > 0.25)
+                if (!seg.IsAnchor)
                 {
-                    // Üzerinde su damlası biriken tel ağırlıktan dolayı aşağı doğru esner
+                    // Yakalayıcı ipek telleri iki radyal kol arasında merkeze doğru hafif içbükey (scalloped)
+                    // kavis ve yerçekimi esnemesiyle çizerek doğal örümcek ağı estetiği oluştur
+                    DrawScallopedSilkSegment(dc, pen, p1, p2, web.Center, sag);
+                }
+                else if (sag > 0.25)
+                {
                     Point midSag = new Point(
                         (p1.X + p2.X) * 0.5,
                         (p1.Y + p2.Y) * 0.5 + sag
@@ -96,7 +101,7 @@ namespace SpiderDesk.Rendering
             // 2. Tellerin üzerindeki ağır su/yağmur damlalarını çiz
             foreach (var drop in web.Droplets.AttachedDroplets)
             {
-                Point pos = web.Droplets.CalculateDropletWorldPosition(drop, web.CompletedSegments);
+                Point pos = web.Droplets.CalculateDropletWorldPosition(drop, web.CompletedSegments, web.Center);
                 double r = drop.Radius;
                 dc.DrawEllipse(_waterDropBrush, null, pos, r * 0.92, r * 1.12);
                 dc.DrawEllipse(_waterHighlightBrush, null, new Point(pos.X - r * 0.28, pos.Y - r * 0.3), r * 0.32, r * 0.32);
@@ -138,6 +143,54 @@ namespace SpiderDesk.Rendering
                 dc.Pop();
                 dc.Pop();
             }
+        }
+
+        private static void DrawScallopedSilkSegment(
+            DrawingContext dc,
+            Pen pen,
+            Point p1,
+            Point p2,
+            Point webCenter,
+            double dropletSag)
+        {
+            Point mid = new Point((p1.X + p2.X) * 0.5, (p1.Y + p2.Y) * 0.5);
+            double segLen = (p2 - p1).Length;
+
+            Vector toCenter = webCenter - mid;
+            double distToCenter = toCenter.Length;
+            if (distToCenter > 0.001)
+            {
+                toCenter /= distToCenter;
+            }
+
+            // İki radyal kol arasındaki ipek tel merkeze doğru hafif içbükey gerilir
+            double inwardPull = Math.Min(11.0, segLen * 0.13);
+            Point control = new Point(
+                mid.X + toCenter.X * inwardPull * 1.8,
+                mid.Y + toCenter.Y * inwardPull * 1.8 + dropletSag * 1.6 + 0.6
+            );
+
+            // Kuadratik Bezier eğrisini 4 hafif doğru parçasıyla (sıfır bellek tahsisiyle) pürüzsüz çiz
+            Point q1 = EvalQuadBezier(p1, control, p2, 0.25);
+            Point q2 = EvalQuadBezier(p1, control, p2, 0.50);
+            Point q3 = EvalQuadBezier(p1, control, p2, 0.75);
+
+            dc.DrawLine(pen, p1, q1);
+            dc.DrawLine(pen, q1, q2);
+            dc.DrawLine(pen, q2, q3);
+            dc.DrawLine(pen, q3, p2);
+        }
+
+        private static Point EvalQuadBezier(Point p0, Point c, Point p2, double t)
+        {
+            double inv = 1.0 - t;
+            double w0 = inv * inv;
+            double w1 = 2.0 * inv * t;
+            double w2 = t * t;
+            return new Point(
+                w0 * p0.X + w1 * c.X + w2 * p2.X,
+                w0 * p0.Y + w1 * c.Y + w2 * p2.Y
+            );
         }
 
         private SolidColorBrush GetFallingDropBrush(byte alpha)

@@ -73,7 +73,7 @@ namespace SpiderDesk.Domain.Web
         }
 
         /// <summary>
-        /// Ekran köşeleri için 90 derecelik yelpaze/üçgen şeklinde kesintisiz köşe ağı planı üretir.
+        /// Ekran köşeleri için 90 derecelik, içbükey kemerli ve kesintisiz köşe yelpaze ağı planı üretir.
         /// </summary>
         public static Queue<WebBuildStep> CreateCornerFanPlan(
             Point cornerVertex,
@@ -84,8 +84,8 @@ namespace SpiderDesk.Domain.Web
             Random rng)
         {
             var queue = new Queue<WebBuildStep>();
-            int spokeCount = rng.Next(7, 10);
-            int arcRingCount = rng.Next(7, 10);
+            int spokeCount = 10;
+            int arcRingCount = 10;
 
             double[] angles = new double[spokeCount];
             double[] spokeRadii = new double[spokeCount];
@@ -95,18 +95,20 @@ namespace SpiderDesk.Domain.Web
             {
                 double t = (double)i / (spokeCount - 1);
                 double baseAngle = startAngle + totalSpan * t;
-                // İlk ve son kol tam duvar kenarına paralel olsun, ara kollarda doğal sapma olsun
+                // İlk ve son kol tam ekran kenarlarına paralel uzansın, ara kollarda çok hafif doğal sapma olsun
                 double jitter = (i == 0 || i == spokeCount - 1)
                     ? 0.0
-                    : (rng.NextDouble() - 0.5) * (totalSpan / spokeCount) * 0.20;
+                    : (rng.NextDouble() - 0.5) * (totalSpan / spokeCount) * 0.12;
 
                 angles[i] = baseAngle + jitter;
-                // Köşe duvarlarına yakın kollar biraz daha uzun, orta kavis biraz daha doğal
-                double edgeStretch = 1.0 + Math.Abs(t - 0.5) * 0.25;
-                spokeRadii[i] = radius * edgeStretch * (0.92 + rng.NextDouble() * 0.16);
+
+                // Duvar kenarlarında (t=0 ve t=1) uzun, 45 derece diyagonal ortasında (t=0.5) içbükey zarif kavis
+                double concaveProfile = 1.24 - 0.36 * Math.Sin(t * Math.PI);
+                double subtleVariance = 0.985 + rng.NextDouble() * 0.03;
+                spokeRadii[i] = radius * concaveProfile * subtleVariance;
             }
 
-            // 1. AŞAMA: Köşe noktasından dışa doğru yelpaze kolları ve dış kemer (ipi hiç bırakmadan)
+            // 1. AŞAMA: Köşe noktasından dışa doğru radyal yelpaze kolları ve dış kemer (ipi hiç bırakmadan)
             Point firstTip = PolarToCartesian(cornerVertex, angles[0], spokeRadii[0]);
             queue.Enqueue(new WebBuildStep(cornerVertex, firstTip, DrawSilk: true, IsAnchor: true));
 
@@ -115,10 +117,10 @@ namespace SpiderDesk.Domain.Web
                 Point outerTip = PolarToCartesian(cornerVertex, angles[i], spokeRadii[i]);
                 Point nextOuterTip = PolarToCartesian(cornerVertex, angles[i + 1], spokeRadii[i + 1]);
 
-                // Dış kemer telini yan kola çek
-                queue.Enqueue(new WebBuildStep(outerTip, nextOuterTip, DrawSilk: true, IsAnchor: true));
+                // Dış kemer telini yan kola çek (IsAnchor: false ile içbükey ipek kavisi alır)
+                queue.Enqueue(new WebBuildStep(outerTip, nextOuterTip, DrawSilk: true, IsAnchor: false));
 
-                // Yan koldan köşe merkezine ipi hiç bırakmadan in ve üçgeni kapat
+                // Yan koldan köşe merkezine radyal taşıyıcı kolu çekerek in
                 queue.Enqueue(new WebBuildStep(nextOuterTip, cornerVertex, DrawSilk: true, IsAnchor: true));
 
                 if (i < spokeCount - 2)
@@ -128,12 +130,12 @@ namespace SpiderDesk.Domain.Web
                 }
             }
 
-            // 2. AŞAMA: İçten dışa zikzak yelpaze kemerleri (Bir duvardan diğer duvara kesintisiz dokuma)
+            // 2. AŞAMA: İçten dışa logaritmik aralıklı zikzak yelpaze kemerleri (Merkezde sık, dışa doğru genişleyen)
             Point prevPoint = cornerVertex;
             for (int ring = 1; ring <= arcRingCount; ring++)
             {
                 double progress = (double)ring / (arcRingCount + 1);
-                double ringRatio = 0.16 + 0.78 * Math.Pow(progress, 1.05);
+                double ringRatio = 0.10 + 0.82 * Math.Pow(progress, 1.22);
                 bool leftToRight = (ring % 2 == 1);
 
                 for (int step = 0; step < spokeCount; step++)
@@ -142,15 +144,13 @@ namespace SpiderDesk.Domain.Web
                     double r = spokeRadii[spokeIdx] * ringRatio;
                     Point nextPoint = PolarToCartesian(cornerVertex, angles[spokeIdx], r);
 
-                    // Aynı kol üzerinde bir üst halkaya çıkarken ana telin üstünden yürür,
-                    // kollar arasında geçerken yakalayıcı yelpaze telini örer
                     bool isCrossingSpokes = (step > 0);
                     queue.Enqueue(new WebBuildStep(prevPoint, nextPoint, DrawSilk: isCrossingSpokes, IsAnchor: false));
                     prevPoint = nextPoint;
                 }
             }
 
-            // 3. AŞAMA: Ağ tamamlandığında köşenin hemen içindeki nöbet noktasına (restingHub) geç
+            // 3. AŞAMA: Ağ tamamlandığında köşenin içindeki nöbet noktasına (restingHub) geç
             queue.Enqueue(new WebBuildStep(prevPoint, restingHub, DrawSilk: false, IsAnchor: false));
             return queue;
         }
