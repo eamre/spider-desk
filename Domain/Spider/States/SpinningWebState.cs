@@ -28,6 +28,7 @@ namespace SpiderDesk.Domain.Spider.States
             double radius = 105.0 + world.Random.NextDouble() * 35.0;
             var plan = WebBlueprintGenerator.CreatePlan(site, radius, world.Random);
             var web = new SpiderWebEntity(site, radius, plan);
+            web.Droplets.SpawnRate = world.DewSpawnRate;
 
             world.Webs.Add(web);
             if (world.Webs.Count > 4)

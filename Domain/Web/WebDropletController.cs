@@ -1,21 +1,36 @@
 using System;
 using System.Collections.Generic;
 using System.Windows;
+using SpiderDesk.Core;
 
 namespace SpiderDesk.Domain.Web
 {
     /// <summary>
     /// Bir ağ üzerindeki su damlalarının oluşumunu, tel esnemesini (yerçekimi sarkması)
-    /// ve silkelenme fiziğini yönetir (SRP).
+    /// ve silkelenme fiziğini yönetir.
     /// </summary>
     public class WebDropletController
     {
         private readonly List<WaterDroplet> _attachedDroplets = new();
         private readonly List<WaterDroplet> _fallingDroplets = new();
         private double _condensationTimer = 14.0;
+        private DewSpawnRatePreset _spawnRate = DewSpawnRatePreset.Normal;
 
         public IReadOnlyList<WaterDroplet> AttachedDroplets => _attachedDroplets;
         public IReadOnlyList<WaterDroplet> FallingDroplets => _fallingDroplets;
+
+        public DewSpawnRatePreset SpawnRate
+        {
+            get => _spawnRate;
+            set
+            {
+                _spawnRate = value;
+                if (_spawnRate != DewSpawnRatePreset.Off)
+                {
+                    _condensationTimer = Math.Min(_condensationTimer, GetNextInterval(new Random()));
+                }
+            }
+        }
 
         /// <summary>
         /// Ağda yeterince ağır su damlası biriktiğinde örümceğin ağı silkelemesi gerektiğini bildirir.
@@ -34,7 +49,10 @@ namespace SpiderDesk.Domain.Web
                 }
             }
 
-            if (!isWebCompleted || segments.Count == 0) return;
+            if (!isWebCompleted || segments.Count == 0 || _spawnRate == DewSpawnRatePreset.Off)
+            {
+                return;
+            }
 
             // 2. Mevcut damlalar zamanla çiy biriktirerek biraz büyür
             foreach (var drop in _attachedDroplets)
@@ -42,11 +60,11 @@ namespace SpiderDesk.Domain.Web
                 drop.Grow(dt * 0.08);
             }
 
-            // 3. Zamanla yeni çiy damlaları oluşur
+            // 3. Seçili çiy sıklığına göre yeni çiy damlaları oluşur
             _condensationTimer -= dt;
             if (_condensationTimer <= 0)
             {
-                _condensationTimer = 12.0 + rng.NextDouble() * 14.0;
+                _condensationTimer = GetNextInterval(rng);
                 if (_attachedDroplets.Count < 9)
                 {
                     SpawnDropletOnRandomSegment(segments, rng);
@@ -71,7 +89,6 @@ namespace SpiderDesk.Domain.Web
             {
                 if (_attachedDroplets[i].SegmentIndex == segmentIndex)
                 {
-                    // Damla büyüklüğüne göre tel aşağı doğru esner
                     totalSag += _attachedDroplets[i].Radius * 2.4;
                 }
             }
@@ -89,7 +106,6 @@ namespace SpiderDesk.Domain.Web
             double t = droplet.NormalizedT;
             double sag = GetSegmentSag(droplet.SegmentIndex);
 
-            // Parabolik esneme eğrisi: 4 * t * (1 - t) orta noktada maksimum (1.0) değer alır
             double sagOffset = 4.0 * t * (1.0 - t) * sag;
 
             return new Point(
@@ -115,7 +131,6 @@ namespace SpiderDesk.Domain.Web
 
         private void SpawnDropletOnRandomSegment(IReadOnlyList<WebSegment> segments, Random rng, double initialRadius = 2.0)
         {
-            // Sarmal telleri tercih et
             for (int attempt = 0; attempt < 10; attempt++)
             {
                 int idx = rng.Next(segments.Count);
@@ -126,6 +141,17 @@ namespace SpiderDesk.Domain.Web
                     return;
                 }
             }
+        }
+
+        private double GetNextInterval(Random rng)
+        {
+            return _spawnRate switch
+            {
+                DewSpawnRatePreset.Low => 30.0 + rng.NextDouble() * 20.0,    // 30 - 50 sn
+                DewSpawnRatePreset.Normal => 14.0 + rng.NextDouble() * 12.0, // 14 - 26 sn
+                DewSpawnRatePreset.High => 5.0 + rng.NextDouble() * 5.0,     // 5 - 10 sn
+                _ => 999.0
+            };
         }
     }
 }

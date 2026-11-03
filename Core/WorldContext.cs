@@ -14,6 +14,7 @@ namespace SpiderDesk.Core
         public Point PreviousCursorPosition { get; set; }
         public double CursorSpeed { get; set; }
         public bool IsNightTime { get; set; }
+        public DewSpawnRatePreset DewSpawnRate { get; set; } = DewSpawnRatePreset.Normal;
         public List<SpiderWebEntity> Webs { get; } = new();
         public List<BugEntity> Bugs { get; } = new();
         public Random Random { get; } = new();

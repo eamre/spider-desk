@@ -36,7 +36,8 @@ namespace SpiderDesk.Core
             {
                 ScreenWidth = SystemParameters.PrimaryScreenWidth,
                 ScreenHeight = SystemParameters.PrimaryScreenHeight,
-                IsNightTime = _environmentService.IsNightTime
+                IsNightTime = _environmentService.IsNightTime,
+                DewSpawnRate = _settings.DewSpawnRate
             };
 
             _bugSpawner = new BugSpawner(speciesProvider, _settings.SpawnRate);
@@ -101,6 +102,17 @@ namespace SpiderDesk.Core
         {
             _bugSpawner.SpawnRate = rate;
             _settings.SpawnRate = rate;
+            _settingsRepository.Save(_settings);
+        }
+
+        public void SetDewSpawnRate(DewSpawnRatePreset rate)
+        {
+            World.DewSpawnRate = rate;
+            foreach (var web in World.Webs)
+            {
+                web.Droplets.SpawnRate = rate;
+            }
+            _settings.DewSpawnRate = rate;
             _settingsRepository.Save(_settings);
         }
 

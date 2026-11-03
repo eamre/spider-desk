@@ -8,7 +8,7 @@ using SpiderDesk.Domain.Spider.Themes;
 namespace SpiderDesk.Infrastructure
 {
     /// <summary>
-    /// Sistem tepsisi (System Tray) ikonunu, tema seçicisini ve ayar menülerini yönetir (SRP).
+    /// Sistem tepsisi (System Tray) ikonunu, tema seçicisini ve ayar menülerini yönetir.
     /// </summary>
     public sealed class TrayMenuService : IDisposable
     {
@@ -23,6 +23,7 @@ namespace SpiderDesk.Infrastructure
         public event Action? ClearWebsRequested;
         public event Action<ISpiderTheme>? ThemeSelected;
         public event Action<BugSpawnRatePreset>? SpawnRateSelected;
+        public event Action<DewSpawnRatePreset>? DewSpawnRateSelected;
         public event Action<double>? SpeedMultiplierSelected;
         public event Action<EnvironmentTimeMode>? TimeModeSelected;
         public event Action<bool>? AlwaysOnTopChanged;
@@ -63,10 +64,13 @@ namespace SpiderDesk.Infrastructure
 
             menu.Items.Add(new ToolStripSeparator());
 
-            // 1. Örümcek Teması Alt Menüsü
+            // 1. Örümcek Teması Alt Menüsü (Ana Menüde)
             menu.Items.Add(BuildThemeSubMenu(currentSettings.ThemeId));
 
-            // 2. Hız ve Böcek Sıklığı Alt Menüsü
+            // 2. Gece/Gündüz Döngüsü Alt Menüsü (Ana Menüde)
+            menu.Items.Add(BuildTimeModeSubMenu(currentSettings.TimeMode));
+
+            // 3. Hız ve Sıklık Ayarları Alt Menüsü (Böcek Sıklığı, Çiy Sıklığı, Örümcek Hızı)
             menu.Items.Add(BuildSimulationSettingsSubMenu(currentSettings));
 
             menu.Items.Add(new ToolStripSeparator());
@@ -142,11 +146,42 @@ namespace SpiderDesk.Infrastructure
             return themeRoot;
         }
 
+        private ToolStripMenuItem BuildTimeModeSubMenu(EnvironmentTimeMode currentMode)
+        {
+            var timeRoot = new ToolStripMenuItem("🌙 Gece/Gündüz Döngüsü");
+
+            var timeOptions = new (string Label, EnvironmentTimeMode Mode)[]
+            {
+                ("Otomatik (Sistem Saati)", EnvironmentTimeMode.AutoBySystemClock),
+                ("Sürekli Gündüz", EnvironmentTimeMode.AlwaysDay),
+                ("Sürekli Gece (Ateş Böcekleri)", EnvironmentTimeMode.AlwaysNight)
+            };
+
+            var timeMenuItems = new List<ToolStripMenuItem>();
+            foreach (var opt in timeOptions)
+            {
+                var item = new ToolStripMenuItem(opt.Label)
+                {
+                    Checked = currentMode == opt.Mode
+                };
+                item.Click += (_, _) =>
+                {
+                    foreach (var other in timeMenuItems) other.Checked = false;
+                    item.Checked = true;
+                    TimeModeSelected?.Invoke(opt.Mode);
+                };
+                timeMenuItems.Add(item);
+                timeRoot.DropDownItems.Add(item);
+            }
+
+            return timeRoot;
+        }
+
         private ToolStripMenuItem BuildSimulationSettingsSubMenu(UserSettings settings)
         {
-            var settingsRoot = new ToolStripMenuItem("⚙️ Hız ve Böcek Sıklığı");
+            var settingsRoot = new ToolStripMenuItem("⚙️ Hız ve Sıklık Ayarları");
 
-            // Böcek Sıklığı Seçenekleri
+            // 1. Böcek Sıklığı Seçenekleri
             var rateHeader = new ToolStripMenuItem("🪰 Böcek Çıkma Sıklığı") { Enabled = false };
             settingsRoot.DropDownItems.Add(rateHeader);
 
@@ -176,7 +211,38 @@ namespace SpiderDesk.Infrastructure
 
             settingsRoot.DropDownItems.Add(new ToolStripSeparator());
 
-            // Örümcek Hızı Seçenekleri
+            // 2. Çiy Oluşma Sıklığı Seçenekleri
+            var dewHeader = new ToolStripMenuItem("💧 Çiy Oluşma Sıklığı") { Enabled = false };
+            settingsRoot.DropDownItems.Add(dewHeader);
+
+            var dewOptions = new (string Label, DewSpawnRatePreset Preset)[]
+            {
+                ("Kapalı", DewSpawnRatePreset.Off),
+                ("Seyrek (30-50 sn)", DewSpawnRatePreset.Low),
+                ("Normal (14-26 sn)", DewSpawnRatePreset.Normal),
+                ("Yoğun (5-10 sn)", DewSpawnRatePreset.High)
+            };
+
+            var dewMenuItems = new List<ToolStripMenuItem>();
+            foreach (var opt in dewOptions)
+            {
+                var item = new ToolStripMenuItem(opt.Label)
+                {
+                    Checked = settings.DewSpawnRate == opt.Preset
+                };
+                item.Click += (_, _) =>
+                {
+                    foreach (var other in dewMenuItems) other.Checked = false;
+                    item.Checked = true;
+                    DewSpawnRateSelected?.Invoke(opt.Preset);
+                };
+                dewMenuItems.Add(item);
+                settingsRoot.DropDownItems.Add(item);
+            }
+
+            settingsRoot.DropDownItems.Add(new ToolStripSeparator());
+
+            // 3. Örümcek Hızı Seçenekleri
             var speedHeader = new ToolStripMenuItem("⚡ Örümcek Hızı") { Enabled = false };
             settingsRoot.DropDownItems.Add(speedHeader);
 
@@ -201,36 +267,6 @@ namespace SpiderDesk.Infrastructure
                     SpeedMultiplierSelected?.Invoke(opt.Multiplier);
                 };
                 speedMenuItems.Add(item);
-                settingsRoot.DropDownItems.Add(item);
-            }
-
-            settingsRoot.DropDownItems.Add(new ToolStripSeparator());
-
-            // Gece/Gündüz Zaman Modu Seçenekleri
-            var timeHeader = new ToolStripMenuItem("🌙 Gece/Gündüz Döngüsü") { Enabled = false };
-            settingsRoot.DropDownItems.Add(timeHeader);
-
-            var timeOptions = new (string Label, EnvironmentTimeMode Mode)[]
-            {
-                ("Otomatik (Sistem Saati)", EnvironmentTimeMode.AutoBySystemClock),
-                ("Sürekli Gündüz", EnvironmentTimeMode.AlwaysDay),
-                ("Sürekli Gece (Ateş Böcekleri)", EnvironmentTimeMode.AlwaysNight)
-            };
-
-            var timeMenuItems = new List<ToolStripMenuItem>();
-            foreach (var opt in timeOptions)
-            {
-                var item = new ToolStripMenuItem(opt.Label)
-                {
-                    Checked = settings.TimeMode == opt.Mode
-                };
-                item.Click += (_, _) =>
-                {
-                    foreach (var other in timeMenuItems) other.Checked = false;
-                    item.Checked = true;
-                    TimeModeSelected?.Invoke(opt.Mode);
-                };
-                timeMenuItems.Add(item);
                 settingsRoot.DropDownItems.Add(item);
             }
 

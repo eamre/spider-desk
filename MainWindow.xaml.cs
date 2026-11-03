@@ -88,6 +88,7 @@ namespace SpiderDesk
             };
 
             _trayMenuService.SpawnRateSelected += rate => _engine.SetSpawnRate(rate);
+            _trayMenuService.DewSpawnRateSelected += rate => _engine.SetDewSpawnRate(rate);
             _trayMenuService.SpeedMultiplierSelected += mult => _engine.SetSpeedMultiplier(mult);
             _trayMenuService.TimeModeSelected += mode => _engine.SetTimeMode(mode);
 
