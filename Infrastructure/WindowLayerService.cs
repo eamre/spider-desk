@@ -16,12 +16,14 @@ namespace SpiderDesk.Infrastructure
     public class WindowLayerService : IWindowLayerService
     {
         private const int GWL_EXSTYLE = -20;
+        private const int GWLP_HWNDPARENT = -8;
         private const int WS_EX_TOPMOST = 0x00000008;
         private const int WS_EX_TRANSPARENT = 0x00000020;
         private const int WS_EX_TOOLWINDOW = 0x00000080;
         private const int WS_EX_NOACTIVATE = 0x08000000;
 
         private const uint GW_HWNDPREV = 3;
+        private const uint GW_HWNDNEXT = 2;
         private const uint GA_ROOT = 2;
 
         private static readonly IntPtr HWND_TOP = new IntPtr(0);
@@ -45,6 +47,9 @@ namespace SpiderDesk.Infrastructure
 
         [DllImport("user32.dll")]
         private static extern int SetWindowLong(IntPtr hwnd, int index, int newStyle);
+
+        [DllImport("user32.dll", EntryPoint = "SetWindowLongPtr")]
+        private static extern IntPtr SetWindowLongPtr(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
 
         [DllImport("user32.dll")]
         private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
@@ -116,7 +121,15 @@ namespace SpiderDesk.Infrastructure
             _hwnd = new WindowInteropHelper(window).Handle;
             int extendedStyle = GetWindowLong(_hwnd, GWL_EXSTYLE);
             SetWindowLong(_hwnd, GWL_EXSTYLE, extendedStyle | WS_EX_TRANSPARENT | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE);
+
             _desktopHwnd = FindDesktopHostWindow();
+            if (_desktopHwnd != IntPtr.Zero)
+            {
+                // Pencerenin sahibini (Owner) masaüstü penceresi yaparak Windows'un bizi her zaman
+                // masaüstü duvar kağıdının üstünde tutmasını sağla (masaüstüne tıklayınca SetWindowPos çağırmaya gerek kalmaz)
+                SetWindowLongPtr(_hwnd, GWLP_HWNDPARENT, _desktopHwnd);
+            }
+
             _lastAppliedTopmostState = null;
             EnforceZOrder();
         }
@@ -142,33 +155,59 @@ namespace SpiderDesk.Infrastructure
             if (_lastAppliedTopmostState != false)
             {
                 SetWindowPos(_hwnd, HWND_NOTOPMOST, 0, 0, 0, 0, flags);
+                PlaceDirectlyAboveDesktop(flags);
                 _lastAppliedTopmostState = false;
             }
-
-            if (_desktopHwnd == IntPtr.Zero || !IsDesktopWindow(_desktopHwnd))
+            else if (_desktopHwnd != IntPtr.Zero && IsBehindDesktop(_hwnd, _desktopHwnd))
             {
-                _desktopHwnd = FindDesktopHostWindow();
-            }
-
-            // Pencereyi her zaman masaüstü ikon katmanının (_desktopHwnd) hemen üstünde,
-            // normal pencerelerin ise altında tut (Topmost bayrağını hiç değiştirmeden, sıfır ekran titremesiyle)
-            if (_desktopHwnd != IntPtr.Zero)
-            {
-                IntPtr windowAboveDesktop = GetWindow(_desktopHwnd, GW_HWNDPREV);
-                if (windowAboveDesktop != _hwnd)
-                {
-                    bool aboveIsTopmost = windowAboveDesktop != IntPtr.Zero &&
-                                          (GetWindowLong(windowAboveDesktop, GWL_EXSTYLE) & WS_EX_TOPMOST) != 0;
-
-                    IntPtr insertAfter = (windowAboveDesktop == IntPtr.Zero || aboveIsTopmost)
-                        ? HWND_TOP
-                        : windowAboveDesktop;
-
-                    SetWindowPos(_hwnd, insertAfter, 0, 0, 0, 0, flags);
-                }
+                // Yalnızca pencere gerçekten masaüstünün arkasına düştüyse düzelt;
+                // masaüstüne tıklamalarda araya giren görünmez IME pencereleri için SetWindowPos çağırma!
+                PlaceDirectlyAboveDesktop(flags);
             }
 
             UpdateVisibilityAndInteractionState();
+        }
+
+        private void PlaceDirectlyAboveDesktop(uint flags)
+        {
+            if (_desktopHwnd == IntPtr.Zero || !IsDesktopWindow(_desktopHwnd))
+            {
+                _desktopHwnd = FindDesktopHostWindow();
+                if (_desktopHwnd != IntPtr.Zero)
+                {
+                    SetWindowLongPtr(_hwnd, GWLP_HWNDPARENT, _desktopHwnd);
+                }
+            }
+
+            if (_desktopHwnd == IntPtr.Zero) return;
+
+            IntPtr windowAboveDesktop = GetWindow(_desktopHwnd, GW_HWNDPREV);
+            if (windowAboveDesktop != _hwnd)
+            {
+                bool aboveIsTopmost = windowAboveDesktop != IntPtr.Zero &&
+                                      (GetWindowLong(windowAboveDesktop, GWL_EXSTYLE) & WS_EX_TOPMOST) != 0;
+
+                IntPtr insertAfter = (windowAboveDesktop == IntPtr.Zero || aboveIsTopmost)
+                    ? HWND_TOP
+                    : windowAboveDesktop;
+
+                SetWindowPos(_hwnd, insertAfter, 0, 0, 0, 0, flags);
+            }
+        }
+
+        private static bool IsBehindDesktop(IntPtr targetHwnd, IntPtr desktopHwnd)
+        {
+            IntPtr current = GetWindow(desktopHwnd, GW_HWNDNEXT);
+            int guard = 0;
+            while (current != IntPtr.Zero && guard++ < 32)
+            {
+                if (current == targetHwnd)
+                {
+                    return true;
+                }
+                current = GetWindow(current, GW_HWNDNEXT);
+            }
+            return false;
         }
 
         private void UpdateVisibilityAndInteractionState()
