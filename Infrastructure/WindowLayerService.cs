@@ -39,6 +39,9 @@ namespace SpiderDesk.Infrastructure
         [DllImport("user32.dll")]
         private static extern IntPtr GetForegroundWindow();
 
+        [DllImport("user32.dll")]
+        private static extern bool IsZoomed(IntPtr hWnd);
+
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
         private static extern int GetClassName(IntPtr hWnd, StringBuilder lpClassName, int nMaxCount);
 
@@ -46,12 +49,19 @@ namespace SpiderDesk.Infrastructure
         private IntPtr _lastForegroundHwnd;
         private bool? _lastAppliedTopmostState;
         private bool _alwaysOnTop;
+        private bool _isDesktopOccluded;
 
         /// <summary>
         /// Kullanıcı masaüstüne bakıyorsa veya "Pencerelerin Üstünde Göster" açıksa true döner.
         /// Tarayıcı vb. pencerelerde gezinirken false döner ki fare hareketleri arka plandaki örümceği etkilemesin.
         /// </summary>
         public bool IsOverlayInteractive => _lastAppliedTopmostState == true;
+
+        /// <summary>
+        /// Öndeki pencere tam ekran/büyütülmüş (maximized) ise ve "Pencerelerin Üstünde Göster" kapalıysa true döner.
+        /// Bu durumda masaüstü tamamen kapalı olduğu için GPU çizimi atlanarak güç tasarrufu sağlanır.
+        /// </summary>
+        public bool IsDesktopOccluded => !_alwaysOnTop && _isDesktopOccluded;
 
         public bool AlwaysOnTop
         {
@@ -81,14 +91,19 @@ namespace SpiderDesk.Infrastructure
             if (_hwnd == IntPtr.Zero) return;
 
             IntPtr currentFg = GetForegroundWindow();
-            // Ön plandaki pencere değişmediyse ve zaten durum uygulandıysa Windows API'yi tekrar çağırma (F5 titremesini önler)
             if (currentFg == _lastForegroundHwnd && _lastAppliedTopmostState.HasValue)
             {
+                // Aynı pencere önde kalmaya devam ederken büyütülme (maximize) durumunu güncelle
+                if (_lastAppliedTopmostState == false && currentFg != IntPtr.Zero)
+                {
+                    _isDesktopOccluded = IsZoomed(currentFg);
+                }
                 return;
             }
 
             _lastForegroundHwnd = currentFg;
             bool shouldBeTopmost = _alwaysOnTop || IsDesktopWindow(currentFg);
+            _isDesktopOccluded = !shouldBeTopmost && currentFg != IntPtr.Zero && IsZoomed(currentFg);
 
             // Sadece Z-Order durumu gerçekten değiştiğinde SetWindowPos çağır
             if (_lastAppliedTopmostState == shouldBeTopmost)

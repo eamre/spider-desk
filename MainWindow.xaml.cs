@@ -22,7 +22,12 @@ namespace SpiderDesk
         private readonly TrayMenuService _trayMenuService;
         private readonly DispatcherTimer _timer;
 
+        private static readonly TimeSpan ActiveFrameInterval = TimeSpan.FromMilliseconds(16);     // 60 FPS (Masaüstü odaktayken)
+        private static readonly TimeSpan BackgroundFrameInterval = TimeSpan.FromMilliseconds(33); // 30 FPS (Küçük pencere arkasındayken)
+        private static readonly TimeSpan OccludedEcoInterval = TimeSpan.FromMilliseconds(100);    // 10 Hz (Tam ekran pencere arkasındayken - %0 GPU)
+
         private bool _isPaused;
+        private bool _wasOccluded;
         private DateTime _lastTick;
 
         public MainWindow(
@@ -115,19 +120,26 @@ namespace SpiderDesk
         private void OnFrameTick(object? sender, EventArgs e)
         {
             DateTime now = DateTime.Now;
-            double dt = Math.Min(0.1, (now - _lastTick).TotalSeconds);
+            double dt = Math.Min(0.15, (now - _lastTick).TotalSeconds);
             _lastTick = now;
 
             _windowLayerService.EnforceZOrder();
+            UpdateAdaptiveFrameRate();
 
             if (!_isPaused)
             {
                 double width = ActualWidth > 100 ? ActualWidth : SystemParameters.PrimaryScreenWidth;
                 double height = ActualHeight > 100 ? ActualHeight : SystemParameters.PrimaryScreenHeight;
 
-                _cursorService.Update(this, dt);
+                bool isInteractive = _windowLayerService.IsOverlayInteractive;
+                bool isOccluded = _windowLayerService.IsDesktopOccluded;
 
-                double effectiveCursorSpeed = _windowLayerService.IsOverlayInteractive
+                if (isInteractive)
+                {
+                    _cursorService.Update(this, dt);
+                }
+
+                double effectiveCursorSpeed = isInteractive
                     ? _cursorService.Speed
                     : 0.0;
 
@@ -139,7 +151,14 @@ namespace SpiderDesk
                     _cursorService.PreviousPosition,
                     effectiveCursorSpeed
                 );
-                _canvas.InvalidateVisual();
+
+                // Masaüstü tam ekran bir pencerenin arkasında tamamen kapalıysa GPU çizimini tamamen atla (%0 GPU kullanımı).
+                // Masaüstü tekrar görünür olduğunda veya görünür durumdayken çizimi güncelle.
+                if (!isOccluded || _wasOccluded)
+                {
+                    _canvas.InvalidateVisual();
+                }
+                _wasOccluded = isOccluded;
 
                 _trayMenuService.UpdateStatus(
                     _engine.Spider.Level,
@@ -147,6 +166,18 @@ namespace SpiderDesk
                     _engine.Spider.CurrentState.DisplayName,
                     _engine.Spider.BugsCaught
                 );
+            }
+        }
+
+        private void UpdateAdaptiveFrameRate()
+        {
+            TimeSpan desiredInterval = _windowLayerService.IsOverlayInteractive
+                ? ActiveFrameInterval
+                : (_windowLayerService.IsDesktopOccluded ? OccludedEcoInterval : BackgroundFrameInterval);
+
+            if (_timer.Interval != desiredInterval)
+            {
+                _timer.Interval = desiredInterval;
             }
         }
 

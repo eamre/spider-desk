@@ -7,6 +7,7 @@ namespace SpiderDesk.Core
     {
         bool AlwaysOnTop { get; set; }
         bool IsOverlayInteractive { get; }
+        bool IsDesktopOccluded { get; }
         void Attach(Window window);
         void EnforceZOrder();
     }
