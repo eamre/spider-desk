@@ -1,0 +1,21 @@
+using System;
+using System.Collections.Generic;
+using System.Windows;
+using SpiderDesk.Domain.Insects;
+using SpiderDesk.Domain.Web;
+
+namespace SpiderDesk.Core
+{
+    public class WorldContext
+    {
+        public double ScreenWidth { get; set; } = 1920;
+        public double ScreenHeight { get; set; } = 1080;
+        public Point CursorPosition { get; set; }
+        public Point PreviousCursorPosition { get; set; }
+        public double CursorSpeed { get; set; }
+        public bool IsNightTime { get; set; }
+        public List<SpiderWebEntity> Webs { get; } = new();
+        public List<BugEntity> Bugs { get; } = new();
+        public Random Random { get; } = new();
+    }
+}

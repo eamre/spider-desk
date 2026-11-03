@@ -1,0 +1,69 @@
+using System.Linq;
+using System.Windows;
+using SpiderDesk.Core;
+using SpiderDesk.Domain.Web;
+
+namespace SpiderDesk.Domain.Spider.States
+{
+    /// <summary>
+    /// Örümceğin masaüstünde serbestçe gezindiği ve yeni ağ kuracak yer aradığı durum.
+    /// </summary>
+    public class WanderingState : ISpiderBehaviorState
+    {
+        private Point _targetPoint;
+        private double _timer;
+
+        public string DisplayName => "Geziniyor";
+
+        public void Enter(SpiderEntity spider, WorldContext world)
+        {
+            spider.ActiveSilkLine = null;
+            spider.DraglineAnchor = spider.Position;
+            PickNextDestination(spider, world);
+        }
+
+        public void Update(SpiderEntity spider, WorldContext world, double dt)
+        {
+            _timer -= dt;
+
+            if (world.Webs.Count == 0 && _timer <= 0)
+            {
+                spider.TransitionTo(SpinningWebState.CreateForBestSite(world), world);
+                return;
+            }
+
+            if (spider.MoveTowards(_targetPoint, 130.0, dt) || _timer <= 0)
+            {
+                if (world.Webs.Count < 3 && world.Random.NextDouble() < 0.45)
+                {
+                    spider.TransitionTo(SpinningWebState.CreateForBestSite(world), world);
+                }
+                else if (world.Webs.Count > 0 && world.Random.NextDouble() < 0.50)
+                {
+                    var web = world.Webs[world.Random.Next(world.Webs.Count)];
+                    spider.ActiveWeb = web;
+                    spider.TransitionTo(new WaitingOnWebState(web), world);
+                }
+                else
+                {
+                    PickNextDestination(spider, world);
+                }
+            }
+        }
+
+        public void Exit(SpiderEntity spider, WorldContext world)
+        {
+            spider.DraglineAnchor = null;
+        }
+
+        private void PickNextDestination(SpiderEntity spider, WorldContext world)
+        {
+            _targetPoint = new Point(
+                100 + world.Random.NextDouble() * (world.ScreenWidth - 200),
+                100 + world.Random.NextDouble() * (world.ScreenHeight - 220)
+            );
+            spider.DraglineAnchor = spider.Position;
+            _timer = 3.5 + world.Random.NextDouble() * 4.0;
+        }
+    }
+}
