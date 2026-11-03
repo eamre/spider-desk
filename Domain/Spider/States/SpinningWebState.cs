@@ -22,6 +22,7 @@ namespace SpiderDesk.Domain.Spider.States
         private bool _hasCurrentStep;
         private WebBuildStep _currentStep;
 
+        public bool HasReachedSite => _reachedSite;
         public string DisplayName => _reachedSite ? "Ağ Örüyor" : "Ağ Yeri Seçti";
 
         public SpinningWebState(SpiderWebEntity web)
@@ -110,13 +111,18 @@ namespace SpiderDesk.Domain.Spider.States
                     _web.IsStepInProgress = false;
                     spider.ActiveSilkLine = null;
 
-                    if (spider.TryConsumePendingWebRequest())
+                    ISpiderBehaviorState nextState = spider.TryConsumePendingWebRequest()
+                        ? CreateForBestSite(world)
+                        : new WaitingOnWebState(_web);
+
+                    if (spider.CarriedCocoonSize is { } carriedSize)
                     {
-                        spider.TransitionTo(CreateForBestSite(world), world);
+                        spider.CarriedCocoonSize = null;
+                        spider.TransitionTo(new StoringPreyState(_web, carriedSize, nextState), world);
                     }
                     else
                     {
-                        spider.TransitionTo(new WaitingOnWebState(_web), world);
+                        spider.TransitionTo(nextState, world);
                     }
                     return;
                 }

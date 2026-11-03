@@ -203,13 +203,27 @@ namespace SpiderDesk.Domain.Spider
 
         private BugEntity? FindPrey(WorldContext world)
         {
-            // Örümcek ağ örüyorken işini yarım bırakmasın, önce ağını tamamlasın
-            if (CurrentState is SpinningWebState)
+            // Örümcek ağın iplerini aktif olarak örüyorken işini yarım bırakmasın;
+            // ancak ağ öreceği yere doğru henüz yürüyorsa (HasReachedSite == false) yolda denk geldiği böceği yakalayabilir.
+            if (CurrentState is SpinningWebState { HasReachedSite: true })
             {
                 return null;
             }
 
-            // Ağa yakalanmış ve bekleme süresini (3.5 - 6.5 sn) doldurmuş en yakın böceği seç
+            // 1. Öncelik: Örümcek yürürken / gezinirken hemen yakınında (52 px) denk geldiği serbest böcek
+            const double encounterRadiusSq = 52.0 * 52.0;
+            BugEntity? nearbyEncounterBug = world.Bugs
+                .Where(b => b.CurrentState.Status == BugLifecycleStatus.ActiveInWorld &&
+                            (b.Position - Position).LengthSquared <= encounterRadiusSq)
+                .OrderBy(b => (b.Position - Position).LengthSquared)
+                .FirstOrDefault();
+
+            if (nearbyEncounterBug != null)
+            {
+                return nearbyEncounterBug;
+            }
+
+            // 2. Öncelik: Ağa yakalanmış ve bekleme süresini (3.5 - 6.5 sn) doldurmuş en yakın böceği seç
             return world.Bugs
                 .Where(b => b.IsReadyToBeHunted)
                 .OrderBy(b => (b.Position - Position).LengthSquared)

@@ -1,12 +1,14 @@
 using System;
+using System.Linq;
 using SpiderDesk.Core;
 using SpiderDesk.Domain.Insects;
 using SpiderDesk.Domain.Insects.States;
+using SpiderDesk.Domain.Web;
 
 namespace SpiderDesk.Domain.Spider.States
 {
     /// <summary>
-    /// Örümceğin yakalanan böceğe koştuğu, onu ipekle sardığı ve ardından önceki görevine döndüğü durum.
+    /// Örümceğin yakalanan veya yolda denk geldiği böceğe koştuğu, onu ipekle sardığı ve ağa taşıdığı durum.
     /// </summary>
     public class HuntingState : ISpiderBehaviorState
     {
@@ -30,8 +32,12 @@ namespace SpiderDesk.Domain.Spider.States
 
         public void Update(SpiderEntity spider, WorldContext world, double dt)
         {
-            // Eğer böcek yenildiyse veya güçlü bir böcek olup ağdan kurtulduysa:
-            if (_targetBug.IsEaten || (!_isWrapping && _targetBug.CurrentState.Status != BugLifecycleStatus.TrappedInWeb))
+            bool isTrapped = _targetBug.CurrentState.Status == BugLifecycleStatus.TrappedInWeb;
+            bool isReachableWildBug = _targetBug.CurrentState.Status == BugLifecycleStatus.ActiveInWorld &&
+                                      (_targetBug.Position - spider.Position).LengthSquared <= 135.0 * 135.0;
+
+            // Eğer böcek yenildiyse, güçlü bir böcek olup ağdan kurtulduysa veya masaüstünde biz yetişemeden uzağa uçtuysa:
+            if (_targetBug.IsEaten || (!_isWrapping && !isTrapped && !isReachableWildBug))
             {
                 FinishHunt(spider, world);
                 return;
@@ -39,7 +45,9 @@ namespace SpiderDesk.Domain.Spider.States
 
             if (!_isWrapping)
             {
-                if (spider.MoveTowards(_targetBug.Position, 260.0, dt, stopDistance: 14.0))
+                double chaseSpeed = isTrapped ? 260.0 : 310.0;
+                double catchDistance = isTrapped ? 14.0 : 18.0;
+                if (spider.MoveTowards(_targetBug.Position, chaseSpeed, dt, stopDistance: catchDistance))
                 {
                     _isWrapping = true;
                     _targetBug.TransitionTo(new BeingWrappedBugState(), world);
@@ -55,21 +63,39 @@ namespace SpiderDesk.Domain.Spider.States
                 {
                     spider.RecordPreyCaught();
 
-                    var targetWeb = _targetBug.TrappedWeb ?? spider.ActiveWeb;
+                    bool caughtOnWeb = _targetBug.TrappedWeb != null;
+                    SpiderWebEntity? targetWeb = _targetBug.TrappedWeb
+                        ?? (spider.ActiveWeb is { IsCompleted: true } ? spider.ActiveWeb : null)
+                        ?? world.Webs
+                            .Where(w => w.IsCompleted)
+                            .OrderBy(w => (w.HubPosition - spider.Position).LengthSquared)
+                            .FirstOrDefault()
+                        ?? spider.ActiveWeb;
+
                     bool anyPantryHasFood = spider.FindWebWithStoredFood(world) != null;
 
-                    // Örümcek AÇ ise ve hiçbir ağın erzağında böcek YOKSA: Erzağa taşımaya gerek yok, hemen olduğu yerde yesin.
-                    // Ancak tok ise VEYA erzakta zaten böcek varsa: Yeni yakalananı önce erzağa eklesin, sonra (açsa) erzaktan yesin!
-                    bool eatOnTheSpot = spider.Metabolism.IsHungry && !anyPantryHasFood;
+                    // Ağa takılan böcekte: Örümcek açsa ve hiçbir ağın erzağında böcek yoksa olduğu yerde (ağda) yer.
+                    // Yürürken masaüstünde denk geldiği böcekte ise: Kozayı gideceği ağa taşır ve açsa ağa varınca yer!
+                    bool eatOnTheSpot = caughtOnWeb && spider.Metabolism.IsHungry && !anyPantryHasFood;
 
                     if (eatOnTheSpot || targetWeb == null)
                     {
                         spider.Metabolism.Feed(25.0);
                         FinishHunt(spider, world);
                     }
+                    else if (!targetWeb.IsCompleted)
+                    {
+                        // Gideceği ağ henüz örülmemişse kozayı ağzında taşıyarak ağ örmeye devam eder; ağ bitince kilere asar / yer.
+                        spider.CarriedCocoonSize = _targetBug.Size;
+                        FinishHunt(spider, world);
+                    }
                     else
                     {
-                        spider.TransitionTo(new StoringPreyState(targetWeb, _targetBug.Size, _previousState), world);
+                        ISpiderBehaviorState nextStateAfterStore = _previousState is WanderingState
+                            ? new WaitingOnWebState(targetWeb)
+                            : _previousState;
+
+                        spider.TransitionTo(new StoringPreyState(targetWeb, _targetBug.Size, nextStateAfterStore), world);
                     }
                 }
             }
