@@ -54,7 +54,7 @@ namespace SpiderDesk.Infrastructure
             rainItem.Click += (_, _) => RainOnWebsRequested?.Invoke();
             menu.Items.Add(rainItem);
 
-            var spawnBugsItem = new ToolStripMenuItem("🪰 Ekrana Böcek Gönder (3 Adet)");
+            var spawnBugsItem = new ToolStripMenuItem("🐛 Ekrana Böcek Gönder (3 Adet)");
             spawnBugsItem.Click += (_, _) => SpawnBugsRequested?.Invoke(3);
             menu.Items.Add(spawnBugsItem);
 
@@ -182,7 +182,7 @@ namespace SpiderDesk.Infrastructure
             var settingsRoot = new ToolStripMenuItem("⚙️ Hız ve Sıklık Ayarları");
 
             // 1. Böcek Sıklığı Seçenekleri
-            var rateHeader = new ToolStripMenuItem("🪰 Böcek Çıkma Sıklığı") { Enabled = false };
+            var rateHeader = new ToolStripMenuItem("🐛 Böcek Çıkma Sıklığı") { Enabled = false };
             settingsRoot.DropDownItems.Add(rateHeader);
 
             var rateOptions = new (string Label, BugSpawnRatePreset Preset)[]
