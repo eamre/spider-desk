@@ -22,9 +22,8 @@ namespace SpiderDesk
         private readonly TrayMenuService _trayMenuService;
         private readonly DispatcherTimer _timer;
 
-        private static readonly TimeSpan ActiveFrameInterval = TimeSpan.FromMilliseconds(16);     // 60 FPS (Masaüstü odaktayken)
-        private static readonly TimeSpan BackgroundFrameInterval = TimeSpan.FromMilliseconds(33); // 30 FPS (Küçük pencere arkasındayken)
-        private static readonly TimeSpan OccludedEcoInterval = TimeSpan.FromMilliseconds(100);    // 10 Hz (Tam ekran pencere arkasındayken - %0 GPU)
+        private static readonly TimeSpan ActiveFrameInterval = TimeSpan.FromMilliseconds(16);  // 60 FPS (Masaüstü görünürken)
+        private static readonly TimeSpan OccludedEcoInterval = TimeSpan.FromMilliseconds(100); // 10 Hz (Tam ekran pencere arkasındayken - %0 GPU)
 
         private bool _isPaused;
         private bool _wasOccluded;
@@ -171,9 +170,11 @@ namespace SpiderDesk
 
         private void UpdateAdaptiveFrameRate()
         {
-            TimeSpan desiredInterval = _windowLayerService.IsOverlayInteractive
-                ? ActiveFrameInterval
-                : (_windowLayerService.IsDesktopOccluded ? OccludedEcoInterval : BackgroundFrameInterval);
+            // Masaüstü kısmen veya tamamen görünür olduğu her an 60 FPS çalışır;
+            // yalnızca tam ekran büyütülmüş bir pencere masaüstünü tamamen kapattığında 10 Hz Eco moduna geçer.
+            TimeSpan desiredInterval = _windowLayerService.IsDesktopOccluded
+                ? OccludedEcoInterval
+                : ActiveFrameInterval;
 
             if (_timer.Interval != desiredInterval)
             {

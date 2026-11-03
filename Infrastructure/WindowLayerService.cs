@@ -8,17 +8,23 @@ using SpiderDesk.Core;
 namespace SpiderDesk.Infrastructure
 {
     /// <summary>
-    /// Pencerenin tıklama geçirgenliğini (Click-Through) ve Masaüstü Z-Sırasını (Z-Order) yönetir (SRP & DIP).
-    /// Ekran yenilenmesi/titremesi (flicker) olmaması için SetWindowPos yalnızca durum değiştiğinde çağrılır.
+    /// Pencerenin tıklama geçirgenliğini (Click-Through) ve Masaüstü Z-Sırasını (Z-Order) yönetir.
+    /// HWND_TOPMOST yalnızca "Pencerelerin Üstünde Göster" açıkken kullanılır; normal modda pencere doğrudan
+    /// masaüstü duvar kağıdı/ikon katmanının (Progman/WorkerW) hemen üstünde tutulur. Böylece masaüstüne
+    /// tıklandığında ekran yenilenmesi/titremesi olmaz ve pencereler alta alındığında masaüstüne tıklamaya gerek kalmaz.
     /// </summary>
     public class WindowLayerService : IWindowLayerService
     {
         private const int GWL_EXSTYLE = -20;
+        private const int WS_EX_TOPMOST = 0x00000008;
         private const int WS_EX_TRANSPARENT = 0x00000020;
         private const int WS_EX_TOOLWINDOW = 0x00000080;
         private const int WS_EX_NOACTIVATE = 0x08000000;
 
-        private static readonly IntPtr HWND_BOTTOM = new IntPtr(1);
+        private const uint GW_HWNDPREV = 3;
+        private const uint GA_ROOT = 2;
+
+        private static readonly IntPtr HWND_TOP = new IntPtr(0);
         private static readonly IntPtr HWND_TOPMOST = new IntPtr(-1);
         private static readonly IntPtr HWND_NOTOPMOST = new IntPtr(-2);
 
@@ -26,6 +32,13 @@ namespace SpiderDesk.Infrastructure
         private const uint SWP_NOMOVE = 0x0002;
         private const uint SWP_NOACTIVATE = 0x0010;
         private const uint SWP_NOSENDCHANGING = 0x0400;
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct POINT
+        {
+            public int X;
+            public int Y;
+        }
 
         [DllImport("user32.dll")]
         private static extern int GetWindowLong(IntPtr hwnd, int index);
@@ -40,26 +53,47 @@ namespace SpiderDesk.Infrastructure
         private static extern IntPtr GetForegroundWindow();
 
         [DllImport("user32.dll")]
+        private static extern IntPtr GetWindow(IntPtr hWnd, uint uCmd);
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto)]
+        private static extern IntPtr FindWindow(string? lpClassName, string? lpWindowName);
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto)]
+        private static extern IntPtr FindWindowEx(IntPtr hwndParent, IntPtr hwndChildAfter, string lpszClass, string? lpszWindow);
+
+        [DllImport("user32.dll")]
+        private static extern bool GetCursorPos(out POINT lpPoint);
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr WindowFromPoint(POINT point);
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr GetAncestor(IntPtr hwnd, uint gaFlags);
+
+        [DllImport("user32.dll")]
         private static extern bool IsZoomed(IntPtr hWnd);
+
+        [DllImport("user32.dll")]
+        private static extern bool IsIconic(IntPtr hWnd);
 
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
         private static extern int GetClassName(IntPtr hWnd, StringBuilder lpClassName, int nMaxCount);
 
         private IntPtr _hwnd;
-        private IntPtr _lastForegroundHwnd;
+        private IntPtr _desktopHwnd;
         private bool? _lastAppliedTopmostState;
         private bool _alwaysOnTop;
+        private bool _isOverlayInteractive;
         private bool _isDesktopOccluded;
 
         /// <summary>
-        /// Kullanıcı masaüstüne bakıyorsa veya "Pencerelerin Üstünde Göster" açıksa true döner.
-        /// Tarayıcı vb. pencerelerde gezinirken false döner ki fare hareketleri arka plandaki örümceği etkilemesin.
+        /// Fare doğrudan görünür masaüstünün üzerindeyse veya "Pencerelerin Üstünde Göster" açıksa true döner.
+        /// Pencereler simge durumuna küçültüldüğünde masaüstüne tekrar tıklamaya gerek kalmadan true olur.
         /// </summary>
-        public bool IsOverlayInteractive => _lastAppliedTopmostState == true;
+        public bool IsOverlayInteractive => _alwaysOnTop || _isOverlayInteractive;
 
         /// <summary>
-        /// Öndeki pencere tam ekran/büyütülmüş (maximized) ise ve "Pencerelerin Üstünde Göster" kapalıysa true döner.
-        /// Bu durumda masaüstü tamamen kapalı olduğu için GPU çizimi atlanarak güç tasarrufu sağlanır.
+        /// Öndeki pencere tam ekran/büyütülmüş (maximized) ise ve masaüstünü tamamen kapatıyorsa true döner.
         /// </summary>
         public bool IsDesktopOccluded => !_alwaysOnTop && _isDesktopOccluded;
 
@@ -71,7 +105,7 @@ namespace SpiderDesk.Infrastructure
                 if (_alwaysOnTop != value)
                 {
                     _alwaysOnTop = value;
-                    _lastAppliedTopmostState = null; // Değişikliği hemen uygula
+                    _lastAppliedTopmostState = null;
                     EnforceZOrder();
                 }
             }
@@ -82,6 +116,7 @@ namespace SpiderDesk.Infrastructure
             _hwnd = new WindowInteropHelper(window).Handle;
             int extendedStyle = GetWindowLong(_hwnd, GWL_EXSTYLE);
             SetWindowLong(_hwnd, GWL_EXSTYLE, extendedStyle | WS_EX_TRANSPARENT | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE);
+            _desktopHwnd = FindDesktopHostWindow();
             _lastAppliedTopmostState = null;
             EnforceZOrder();
         }
@@ -90,39 +125,101 @@ namespace SpiderDesk.Infrastructure
         {
             if (_hwnd == IntPtr.Zero) return;
 
-            IntPtr currentFg = GetForegroundWindow();
-            if (currentFg == _lastForegroundHwnd && _lastAppliedTopmostState.HasValue)
-            {
-                // Aynı pencere önde kalmaya devam ederken büyütülme (maximize) durumunu güncelle
-                if (_lastAppliedTopmostState == false && currentFg != IntPtr.Zero)
-                {
-                    _isDesktopOccluded = IsZoomed(currentFg);
-                }
-                return;
-            }
-
-            _lastForegroundHwnd = currentFg;
-            bool shouldBeTopmost = _alwaysOnTop || IsDesktopWindow(currentFg);
-            _isDesktopOccluded = !shouldBeTopmost && currentFg != IntPtr.Zero && IsZoomed(currentFg);
-
-            // Sadece Z-Order durumu gerçekten değiştiğinde SetWindowPos çağır
-            if (_lastAppliedTopmostState == shouldBeTopmost)
-            {
-                return;
-            }
-
-            _lastAppliedTopmostState = shouldBeTopmost;
             const uint flags = SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOSENDCHANGING;
 
-            if (shouldBeTopmost)
+            if (_alwaysOnTop)
             {
-                SetWindowPos(_hwnd, HWND_TOPMOST, 0, 0, 0, 0, flags);
+                if (_lastAppliedTopmostState != true)
+                {
+                    SetWindowPos(_hwnd, HWND_TOPMOST, 0, 0, 0, 0, flags);
+                    _lastAppliedTopmostState = true;
+                }
+                _isOverlayInteractive = true;
+                _isDesktopOccluded = false;
+                return;
             }
-            else
+
+            if (_lastAppliedTopmostState != false)
             {
                 SetWindowPos(_hwnd, HWND_NOTOPMOST, 0, 0, 0, 0, flags);
-                SetWindowPos(_hwnd, HWND_BOTTOM, 0, 0, 0, 0, flags);
+                _lastAppliedTopmostState = false;
             }
+
+            if (_desktopHwnd == IntPtr.Zero || !IsDesktopWindow(_desktopHwnd))
+            {
+                _desktopHwnd = FindDesktopHostWindow();
+            }
+
+            // Pencereyi her zaman masaüstü ikon katmanının (_desktopHwnd) hemen üstünde,
+            // normal pencerelerin ise altında tut (Topmost bayrağını hiç değiştirmeden, sıfır ekran titremesiyle)
+            if (_desktopHwnd != IntPtr.Zero)
+            {
+                IntPtr windowAboveDesktop = GetWindow(_desktopHwnd, GW_HWNDPREV);
+                if (windowAboveDesktop != _hwnd)
+                {
+                    bool aboveIsTopmost = windowAboveDesktop != IntPtr.Zero &&
+                                          (GetWindowLong(windowAboveDesktop, GWL_EXSTYLE) & WS_EX_TOPMOST) != 0;
+
+                    IntPtr insertAfter = (windowAboveDesktop == IntPtr.Zero || aboveIsTopmost)
+                        ? HWND_TOP
+                        : windowAboveDesktop;
+
+                    SetWindowPos(_hwnd, insertAfter, 0, 0, 0, 0, flags);
+                }
+            }
+
+            UpdateVisibilityAndInteractionState();
+        }
+
+        private void UpdateVisibilityAndInteractionState()
+        {
+            bool cursorOverDesktop = false;
+            if (GetCursorPos(out POINT pt))
+            {
+                IntPtr hitHwnd = WindowFromPoint(pt);
+                if (hitHwnd != IntPtr.Zero)
+                {
+                    IntPtr rootHwnd = GetAncestor(hitHwnd, GA_ROOT);
+                    cursorOverDesktop = (rootHwnd != IntPtr.Zero && rootHwnd == _desktopHwnd) ||
+                                        IsDesktopWindow(rootHwnd) ||
+                                        IsDesktopWindow(hitHwnd);
+                }
+            }
+
+            _isOverlayInteractive = cursorOverDesktop;
+
+            if (cursorOverDesktop)
+            {
+                _isDesktopOccluded = false;
+                return;
+            }
+
+            IntPtr currentFg = GetForegroundWindow();
+            _isDesktopOccluded = currentFg != IntPtr.Zero &&
+                                 currentFg != _desktopHwnd &&
+                                 !IsDesktopWindow(currentFg) &&
+                                 !IsIconic(currentFg) &&
+                                 IsZoomed(currentFg);
+        }
+
+        private static IntPtr FindDesktopHostWindow()
+        {
+            IntPtr progman = FindWindow("Progman", null);
+            if (progman != IntPtr.Zero && FindWindowEx(progman, IntPtr.Zero, "SHELLDLL_DefView", null) != IntPtr.Zero)
+            {
+                return progman;
+            }
+
+            IntPtr workerW = IntPtr.Zero;
+            while ((workerW = FindWindowEx(IntPtr.Zero, workerW, "WorkerW", null)) != IntPtr.Zero)
+            {
+                if (FindWindowEx(workerW, IntPtr.Zero, "SHELLDLL_DefView", null) != IntPtr.Zero)
+                {
+                    return workerW;
+                }
+            }
+
+            return progman;
         }
 
         private static bool IsDesktopWindow(IntPtr hwnd)
@@ -132,7 +229,7 @@ namespace SpiderDesk.Infrastructure
             StringBuilder sb = new StringBuilder(64);
             GetClassName(hwnd, sb, sb.Capacity);
             string cls = sb.ToString();
-            return cls == "Progman" || cls == "WorkerW";
+            return cls == "Progman" || cls == "WorkerW" || cls == "SHELLDLL_DefView" || cls == "SysListView32";
         }
     }
 }
