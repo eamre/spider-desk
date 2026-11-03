@@ -87,9 +87,10 @@ namespace SpiderDesk.Domain.Insects
             if (completedWebs.Count > 0 && rng.NextDouble() < 0.65)
             {
                 var web = completedWebs[rng.Next(completedWebs.Count)];
+                Point hub = web.HubPosition;
                 target = new Point(
-                    web.Center.X + (rng.NextDouble() - 0.5) * web.Radius * 1.1,
-                    web.Center.Y + (rng.NextDouble() - 0.5) * web.Radius * 1.1
+                    hub.X + (rng.NextDouble() - 0.5) * web.Radius * 0.9,
+                    hub.Y + (rng.NextDouble() - 0.5) * web.Radius * 0.9
                 );
             }
 

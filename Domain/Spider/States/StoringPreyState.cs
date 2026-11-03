@@ -28,7 +28,13 @@ namespace SpiderDesk.Domain.Spider.States
         {
             spider.ActiveWeb = _web;
             spider.CarriedCocoonSize = _cocoonSize;
-            _storageTarget = _web.Pantry.PickStoragePoint(_web.Center, _web.Radius, world.Random);
+            _storageTarget = _web.Pantry.PickStoragePoint(
+                _web.Center,
+                _web.Radius,
+                _web.StartAngle,
+                _web.EndAngle,
+                world.Random
+            );
             spider.DraglineAnchor = spider.Position;
         }
 

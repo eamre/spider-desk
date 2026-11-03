@@ -5,8 +5,8 @@ using SpiderDesk.Domain.Web;
 namespace SpiderDesk.Domain.Spider.States
 {
     /// <summary>
-    /// Örümceğin sadece ağın tam merkezine ulaştıktan sonra ağı güçlüce silkeleyerek
-    /// su damlalarını düşürdüğü durum (OCP & SRP).
+    /// Örümceğin sadece ağın nöbet merkezine ulaştıktan sonra ağı güçlüce silkeleyerek
+    /// su damlalarını düşürdüğü durum.
     /// </summary>
     public class ShakingWebState : ISpiderBehaviorState
     {
@@ -31,21 +31,18 @@ namespace SpiderDesk.Domain.Spider.States
 
         public void Update(SpiderEntity spider, WorldContext world, double dt)
         {
-            // Örümcek ağın tam ortasında değilse önce tam merkeze yürü (merkeze varmadan asla silkeleme yapmaz)
-            if ((spider.Position - _web.Center).Length > 3.0)
+            if ((spider.Position - _web.HubPosition).Length > 3.0)
             {
-                spider.MoveTowards(_web.Center, 175.0, dt, stopDistance: 2.0);
+                spider.MoveTowards(_web.HubPosition, 175.0, dt, stopDistance: 2.0);
                 return;
             }
 
             _shakePhase += dt * 45.0;
             _shakeTimer -= dt;
 
-            // Tam merkezdeyken gövdeyi hızla sağa sola salla ve ağa merkezden titreşim ver
             spider.RotateBy(Math.Sin(_shakePhase) * 9.0 * dt);
-            _web.TriggerVibration(_web.Center, 9.0);
+            _web.TriggerVibration(_web.HubPosition, 9.0);
 
-            // Silkelemenin ortasında tüm su damlaları telden kopup aşağı düşmeye başlar
             if (!_dropletsReleased && _shakeTimer <= 0.75)
             {
                 _dropletsReleased = true;

@@ -30,17 +30,30 @@ namespace SpiderDesk.Domain.Web
         public bool HasStoredFood => _storedCocoons.Count > 0;
 
         /// <summary>
-        /// Ağın dış-üst çemberine yakın uygun bir kiler asma noktası seçer.
+        /// Ağın açısal dilimi (StartAngle..EndAngle) içinde uygun bir kiler asma noktası seçer.
+        /// Köşe ağlarında kozaların ekran dışına taşmasını önler.
         /// </summary>
-        public Point PickStoragePoint(Point webCenter, double webRadius, Random rng)
+        public Point PickStoragePoint(Point webCenter, double webRadius, double startAngle, double endAngle, Random rng)
         {
-            // Üst yarıdaki (-150° ile -30° arası) dış halkalardan bir nokta seç
-            double baseAngle = -Math.PI * (0.22 + rng.NextDouble() * 0.56);
-            double dist = webRadius * (0.58 + rng.NextDouble() * 0.22);
+            double span = endAngle - startAngle;
+            double angle;
+
+            if (span >= Math.PI * 1.9)
+            {
+                // Tam daire ağlarda üst yarıyı tercih et
+                angle = -Math.PI * (0.22 + rng.NextDouble() * 0.56);
+            }
+            else
+            {
+                // Köşe yelpaze ağlarında yelpazenin iç dilimini (duvarlardan biraz içeriyi) seç
+                angle = startAngle + span * (0.18 + rng.NextDouble() * 0.64);
+            }
+
+            double dist = webRadius * (0.55 + rng.NextDouble() * 0.22);
 
             return new Point(
-                webCenter.X + Math.Cos(baseAngle) * dist,
-                webCenter.Y + Math.Sin(baseAngle) * dist
+                webCenter.X + Math.Cos(angle) * dist,
+                webCenter.Y + Math.Sin(angle) * dist
             );
         }
 

@@ -6,7 +6,7 @@ using SpiderDesk.Domain.Web;
 namespace SpiderDesk.Domain.Spider.States
 {
     /// <summary>
-    /// Örümceğin tamamladığı ağın merkezinde veya telleri üzerinde nöbet tuttuğu durum.
+    /// Örümceğin tamamladığı ağın nöbet merkezinde veya telleri üzerinde nöbet tuttuğu durum.
     /// </summary>
     public class WaitingOnWebState : ISpiderBehaviorState
     {
@@ -19,7 +19,7 @@ namespace SpiderDesk.Domain.Spider.States
         public WaitingOnWebState(SpiderWebEntity web)
         {
             _web = web;
-            _patrolTarget = web.Center;
+            _patrolTarget = web.HubPosition;
         }
 
         public void Enter(SpiderEntity spider, WorldContext world)
@@ -27,7 +27,7 @@ namespace SpiderDesk.Domain.Spider.States
             spider.ActiveWeb = _web;
             spider.ActiveSilkLine = null;
             spider.DraglineAnchor = null;
-            _patrolTarget = _web.Center;
+            _patrolTarget = _web.HubPosition;
             _patrolTimer = 8.0 + world.Random.NextDouble() * 6.0;
         }
 
@@ -40,12 +40,12 @@ namespace SpiderDesk.Domain.Spider.States
                 return;
             }
 
-            // 2. Ağda çok fazla çiy/su damlası biriktiyse önce ağın tam ortasına yürü,
-            // SADECE ağın tam ortasına vardığında silkeleme durumuna geç!
+            // 2. Ağda çok fazla çiy/su damlası biriktiyse önce ağın nöbet merkezine yürü,
+            // SADECE merkeze vardığında silkeleme durumuna geç!
             if (_web.Droplets.IsHeavyWithWater)
             {
-                _patrolTarget = _web.Center;
-                if (spider.MoveTowards(_web.Center, 155.0, dt, stopDistance: 2.5))
+                _patrolTarget = _web.HubPosition;
+                if (spider.MoveTowards(_web.HubPosition, 155.0, dt, stopDistance: 2.5))
                 {
                     spider.TransitionTo(new ShakingWebState(_web), world);
                 }
@@ -80,8 +80,10 @@ namespace SpiderDesk.Domain.Spider.States
                 }
                 else
                 {
-                    double angle = world.Random.NextDouble() * Math.PI * 2;
-                    double dist = world.Random.NextDouble() * _web.Radius * 0.35;
+                    double span = _web.EndAngle - _web.StartAngle;
+                    double angle = _web.StartAngle + span * (0.15 + world.Random.NextDouble() * 0.70);
+                    double dist = (0.18 + world.Random.NextDouble() * 0.28) * _web.Radius;
+
                     _patrolTarget = new Point(
                         _web.Center.X + Math.Cos(angle) * dist,
                         _web.Center.Y + Math.Sin(angle) * dist

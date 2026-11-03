@@ -5,12 +5,16 @@ using System.Windows;
 namespace SpiderDesk.Domain.Web
 {
     /// <summary>
-    /// Örümcek ağının durumunu, titreşim/rüzgar fiziğini, hasar/onarım kuyruğunu ve etkileşim geometrisini yönetir (SRP).
+    /// Örümcek ağının durumunu, titreşim/rüzgar fiziğini, hasar/onarım kuyruğunu ve etkileşim geometrisini yönetir.
     /// </summary>
     public class SpiderWebEntity
     {
         public Point Center { get; }
+        public Point HubPosition { get; }
         public double Radius { get; }
+        public double StartAngle { get; }
+        public double EndAngle { get; }
+
         public List<WebSegment> CompletedSegments { get; } = new();
         public Queue<WebBuildStep> BuildQueue { get; }
         public Queue<WebSegment> DamagedSegments { get; } = new();
@@ -31,11 +35,20 @@ namespace SpiderDesk.Domain.Web
 
         private double _pluckCooldown;
 
-        public SpiderWebEntity(Point center, double radius, Queue<WebBuildStep> buildPlan)
+        public SpiderWebEntity(
+            Point center,
+            Point hubPosition,
+            double radius,
+            Queue<WebBuildStep> buildPlan,
+            double startAngle = 0.0,
+            double endAngle = Math.PI * 2.0)
         {
             Center = center;
+            HubPosition = hubPosition;
             Radius = radius;
             BuildQueue = buildPlan;
+            StartAngle = startAngle;
+            EndAngle = endAngle;
         }
 
         public void TriggerVibration(Point origin, double strength = 6.0)
@@ -51,7 +64,6 @@ namespace SpiderDesk.Domain.Web
                 _pluckCooldown -= dt;
             }
 
-            // Doğal hafif rüzgar salınımı
             WindPhase += dt * 1.65;
             WindStrength = (Math.Sin(WindPhase * 0.45) + 1.0) * 0.85;
 
@@ -68,9 +80,6 @@ namespace SpiderDesk.Domain.Web
             }
         }
 
-        /// <summary>
-        /// Belirtilen darbe noktası yakınındaki sarmal ağ tellerini koparır ve tamir kuyruğuna ekler.
-        /// </summary>
         public void DamageNear(Point impactPoint, double damageRadius, int maxBrokenSegments)
         {
             if (!IsCompleted || maxBrokenSegments <= 0) return;
@@ -81,7 +90,6 @@ namespace SpiderDesk.Domain.Web
             for (int i = CompletedSegments.Count - 1; i >= 0 && brokenCount < maxBrokenSegments; i--)
             {
                 var seg = CompletedSegments[i];
-                // Ana taşıyıcı telleri koru, sarmal yakalayıcı telleri kopar
                 if (seg.IsAnchor) continue;
 
                 if (DistanceToSegmentSquared(impactPoint, seg.Start, seg.End) <= radiusSq)
@@ -98,20 +106,16 @@ namespace SpiderDesk.Domain.Web
             }
         }
 
-        /// <summary>
-        /// Sadece masaüstü aktifken çalışır: Fare imleci ağın üzerinden geçerse teli titretir,
-        /// çok hızlı savrulursa (1350+ px/sn) birkaç teli koparır.
-        /// </summary>
         public void CheckCursorPluck(Point cursorPos, double cursorSpeed)
         {
             if (!IsCompleted || cursorSpeed < 25.0 || _pluckCooldown > 0) return;
 
             Vector toCenter = cursorPos - Center;
-            if (toCenter.LengthSquared > Radius * Radius) return;
+            if (toCenter.LengthSquared > Radius * Radius * 1.35) return;
 
             foreach (var segment in CompletedSegments)
             {
-                if (DistanceToSegmentSquared(cursorPos, segment.Start, segment.End) < 100.0) // 10px mesafe
+                if (DistanceToSegmentSquared(cursorPos, segment.Start, segment.End) < 100.0)
                 {
                     if (cursorSpeed > 1350.0)
                     {
@@ -132,15 +136,14 @@ namespace SpiderDesk.Domain.Web
 
         public bool CanCatchPoint(Point point)
         {
-            // Sadece örümcek ağı örmeyi tamamen bitirdiğinde böcekler ağa yakalanabilir
             if (!IsCompleted) return false;
 
             Vector toCenter = point - Center;
-            if (toCenter.LengthSquared > Radius * Radius) return false;
+            if (toCenter.LengthSquared > Radius * Radius * 1.35) return false;
 
             foreach (var segment in CompletedSegments)
             {
-                if (DistanceToSegmentSquared(point, segment.Start, segment.End) < 196.0) // 14px yakalama yarıçapı
+                if (DistanceToSegmentSquared(point, segment.Start, segment.End) < 196.0)
                 {
                     return true;
                 }

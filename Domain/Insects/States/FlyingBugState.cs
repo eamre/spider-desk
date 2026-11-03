@@ -50,7 +50,7 @@ namespace SpiderDesk.Domain.Insects.States
                 var targetWeb = world.Webs[world.Random.Next(world.Webs.Count)];
                 if (targetWeb.IsCompleted)
                 {
-                    Vector toWeb = targetWeb.Center - bug.Position;
+                    Vector toWeb = targetWeb.HubPosition - bug.Position;
                     if (toWeb.Length > 10 && toWeb.Length < 480)
                     {
                         toWeb.Normalize();
