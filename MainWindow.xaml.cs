@@ -23,10 +23,9 @@ namespace SpiderDesk
         private readonly DispatcherTimer _timer;
 
         private static readonly TimeSpan ActiveFrameInterval = TimeSpan.FromMilliseconds(16);  // 60 FPS (Masaüstü görünürken)
-        private static readonly TimeSpan OccludedEcoInterval = TimeSpan.FromMilliseconds(100); // 10 Hz (Tam ekran pencere arkasındayken - %0 GPU)
+        private static readonly TimeSpan OccludedEcoInterval = TimeSpan.FromMilliseconds(50);  // 20 FPS (Tam ekran pencere arkasındayken düşük güç modu)
 
         private bool _isPaused;
-        private bool _wasOccluded;
         private DateTime _lastTick;
 
         public MainWindow(
@@ -63,11 +62,18 @@ namespace SpiderDesk
         {
             Title = "SpiderDesk";
             WindowStyle = WindowStyle.None;
+            ResizeMode = ResizeMode.NoResize;
             AllowsTransparency = true;
             Background = Brushes.Transparent;
             Topmost = false;
             ShowInTaskbar = false;
-            WindowState = WindowState.Maximized;
+            WindowState = WindowState.Normal;
+            Left = 0;
+            Top = 0;
+            Width = SystemParameters.PrimaryScreenWidth;
+            // Tam ekran (Maximized / 100% boy) pencereler Windows Explorer'da ABN_FULLSCREENAPP bildirimi
+            // tetikleyip masaüstü ikonlarının F5 yapılmış gibi yenilenmesine yol açtığı için 1 piksel kısa tutulur.
+            Height = Math.Max(100, SystemParameters.PrimaryScreenHeight - 1);
         }
 
         protected override void OnSourceInitialized(EventArgs e)
@@ -151,13 +157,7 @@ namespace SpiderDesk
                     effectiveCursorSpeed
                 );
 
-                // Masaüstü tam ekran bir pencerenin arkasında tamamen kapalıysa GPU çizimini tamamen atla (%0 GPU kullanımı).
-                // Masaüstü tekrar görünür olduğunda veya görünür durumdayken çizimi güncelle.
-                if (!isOccluded || _wasOccluded)
-                {
-                    _canvas.InvalidateVisual();
-                }
-                _wasOccluded = isOccluded;
+                _canvas.InvalidateVisual();
 
                 _trayMenuService.UpdateStatus(
                     _engine.Spider.Level,

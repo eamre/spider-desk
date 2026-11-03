@@ -16,7 +16,6 @@ namespace SpiderDesk.Infrastructure
     public class WindowLayerService : IWindowLayerService
     {
         private const int GWL_EXSTYLE = -20;
-        private const int GWLP_HWNDPARENT = -8;
         private const int WS_EX_TOPMOST = 0x00000008;
         private const int WS_EX_TRANSPARENT = 0x00000020;
         private const int WS_EX_TOOLWINDOW = 0x00000080;
@@ -32,8 +31,10 @@ namespace SpiderDesk.Infrastructure
 
         private const uint SWP_NOSIZE = 0x0001;
         private const uint SWP_NOMOVE = 0x0002;
+        private const uint SWP_NOREDRAW = 0x0008;
         private const uint SWP_NOACTIVATE = 0x0010;
         private const uint SWP_NOSENDCHANGING = 0x0400;
+        private const uint SWP_DEFERERASE = 0x2000;
 
         [StructLayout(LayoutKind.Sequential)]
         private struct POINT
@@ -47,9 +48,6 @@ namespace SpiderDesk.Infrastructure
 
         [DllImport("user32.dll")]
         private static extern int SetWindowLong(IntPtr hwnd, int index, int newStyle);
-
-        [DllImport("user32.dll", EntryPoint = "SetWindowLongPtr")]
-        private static extern IntPtr SetWindowLongPtr(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
 
         [DllImport("user32.dll")]
         private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
@@ -123,13 +121,6 @@ namespace SpiderDesk.Infrastructure
             SetWindowLong(_hwnd, GWL_EXSTYLE, extendedStyle | WS_EX_TRANSPARENT | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE);
 
             _desktopHwnd = FindDesktopHostWindow();
-            if (_desktopHwnd != IntPtr.Zero)
-            {
-                // Pencerenin sahibini (Owner) masaüstü penceresi yaparak Windows'un bizi her zaman
-                // masaüstü duvar kağıdının üstünde tutmasını sağla (masaüstüne tıklayınca SetWindowPos çağırmaya gerek kalmaz)
-                SetWindowLongPtr(_hwnd, GWLP_HWNDPARENT, _desktopHwnd);
-            }
-
             _lastAppliedTopmostState = null;
             EnforceZOrder();
         }
@@ -138,7 +129,9 @@ namespace SpiderDesk.Infrastructure
         {
             if (_hwnd == IntPtr.Zero) return;
 
-            const uint flags = SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOSENDCHANGING;
+            // SWP_NOREDRAW ve SWP_DEFERERASE: Z-sırası değişirken Windows'un alttaki masaüstü ikon listesini
+            // (SysListView32) silip baştan boyamasını (F5 yenilenme hissini) tamamen engeller.
+            const uint flags = SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOSENDCHANGING | SWP_NOREDRAW | SWP_DEFERERASE;
 
             if (_alwaysOnTop)
             {
@@ -160,8 +153,6 @@ namespace SpiderDesk.Infrastructure
             }
             else if (_desktopHwnd != IntPtr.Zero && IsBehindDesktop(_hwnd, _desktopHwnd))
             {
-                // Yalnızca pencere gerçekten masaüstünün arkasına düştüyse düzelt;
-                // masaüstüne tıklamalarda araya giren görünmez IME pencereleri için SetWindowPos çağırma!
                 PlaceDirectlyAboveDesktop(flags);
             }
 
@@ -173,10 +164,6 @@ namespace SpiderDesk.Infrastructure
             if (_desktopHwnd == IntPtr.Zero || !IsDesktopWindow(_desktopHwnd))
             {
                 _desktopHwnd = FindDesktopHostWindow();
-                if (_desktopHwnd != IntPtr.Zero)
-                {
-                    SetWindowLongPtr(_hwnd, GWLP_HWNDPARENT, _desktopHwnd);
-                }
             }
 
             if (_desktopHwnd == IntPtr.Zero) return;
