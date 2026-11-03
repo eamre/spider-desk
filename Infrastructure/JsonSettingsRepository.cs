@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
 using SpiderDesk.Core;
@@ -6,7 +7,7 @@ using SpiderDesk.Core;
 namespace SpiderDesk.Infrastructure
 {
     /// <summary>
-    /// Kullanıcı ayarlarını ve yakalanan toplam böcek skorunu JSON olarak kalıcı kaydeder (SRP & DIP).
+    /// Kullanıcı ayarlarını ve yakalanan toplam böcek skorunu JSON olarak kalıcı kaydeder.
     /// </summary>
     public class JsonSettingsRepository : ISettingsRepository
     {
@@ -15,6 +16,8 @@ namespace SpiderDesk.Infrastructure
         {
             WriteIndented = true
         };
+
+        public string? LastError { get; private set; }
 
         public JsonSettingsRepository()
         {
@@ -31,27 +34,46 @@ namespace SpiderDesk.Infrastructure
                 if (File.Exists(_filePath))
                 {
                     string json = File.ReadAllText(_filePath);
-                    return JsonSerializer.Deserialize<UserSettings>(json, JsonOptions) ?? new UserSettings();
+                    var loaded = JsonSerializer.Deserialize<UserSettings>(json, JsonOptions);
+                    if (loaded != null)
+                    {
+                        LastError = null;
+                        return loaded;
+                    }
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                // Bozuk dosya durumunda varsayılan ayarlarla devam et
+                LastError = ex.Message;
+                Trace.TraceWarning($"[SpiderDesk] Ayar dosyası okunamadı ({_filePath}): {ex.Message}");
             }
 
             return new UserSettings();
         }
 
-        public void Save(UserSettings settings)
+        public bool Save(UserSettings settings)
         {
             try
             {
+                string? dir = Path.GetDirectoryName(_filePath);
+                if (!string.IsNullOrEmpty(dir))
+                {
+                    Directory.CreateDirectory(dir);
+                }
+
+                string tempPath = _filePath + ".tmp";
                 string json = JsonSerializer.Serialize(settings, JsonOptions);
-                File.WriteAllText(_filePath, json);
+                File.WriteAllText(tempPath, json);
+                File.Move(tempPath, _filePath, overwrite: true);
+
+                LastError = null;
+                return true;
             }
-            catch
+            catch (Exception ex)
             {
-                // Disk yazma hatalarını sessizce geç
+                LastError = ex.Message;
+                Trace.TraceError($"[SpiderDesk] Ayar dosyası kaydedilemedi ({_filePath}): {ex.Message}");
+                return false;
             }
         }
     }

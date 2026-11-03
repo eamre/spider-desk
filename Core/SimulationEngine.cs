@@ -136,6 +136,12 @@ namespace SpiderDesk.Core
             _settingsRepository.Save(_settings);
         }
 
+        public void SetRunOnStartupPreference(bool runOnStartup)
+        {
+            _settings.RunOnStartup = runOnStartup;
+            _settingsRepository.Save(_settings);
+        }
+
         public void CommandNewWeb() => Spider.RequestNewWeb(World);
 
         public void CommandRappel() => Spider.RequestRappel(World);

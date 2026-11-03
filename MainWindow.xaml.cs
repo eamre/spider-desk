@@ -99,7 +99,11 @@ namespace SpiderDesk
                 _engine.SetAlwaysOnTopPreference(alwaysOnTop);
             };
 
-            _trayMenuService.StartupChanged += enabled => _startupService.SetEnabled(enabled);
+            _trayMenuService.StartupChanged += enabled =>
+            {
+                _startupService.SetEnabled(enabled);
+                _engine.SetRunOnStartupPreference(enabled);
+            };
             _trayMenuService.PauseChanged += paused => _isPaused = paused;
             _trayMenuService.ExitRequested += () =>
             {

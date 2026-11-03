@@ -21,7 +21,8 @@ namespace SpiderDesk.Domain.Web
         public WebDropletController Droplets { get; } = new();
         public WebPantryController Pantry { get; } = new();
 
-        public bool IsCompleted => BuildQueue.Count == 0;
+        public bool IsStepInProgress { get; set; }
+        public bool IsCompleted => BuildQueue.Count == 0 && !IsStepInProgress;
         public bool HasDamage => DamagedSegments.Count > 0;
 
         public double VibrationAmplitude { get; private set; }

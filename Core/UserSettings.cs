@@ -24,11 +24,13 @@ namespace SpiderDesk.Core
         public double SpeedMultiplier { get; set; } = 1.0;
         public EnvironmentTimeMode TimeMode { get; set; } = EnvironmentTimeMode.AutoBySystemClock;
         public bool AlwaysOnTop { get; set; }
+        public bool RunOnStartup { get; set; } = true;
     }
 
     public interface ISettingsRepository
     {
+        string? LastError { get; }
         UserSettings Load();
-        void Save(UserSettings settings);
+        bool Save(UserSettings settings);
     }
 }

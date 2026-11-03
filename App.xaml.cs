@@ -8,16 +8,17 @@ using SpiderDesk.Rendering;
 namespace SpiderDesk
 {
     /// <summary>
-    /// Uygulamanın Composition Root (Bağımlılık Enjeksiyonu Başlangıç Noktası) sınıfı (DIP).
+    /// Uygulamanın Composition Root (Bağımlılık Enjeksiyonu Başlangıç Noktası) sınıfı.
     /// </summary>
     public partial class App : Application
     {
         private Mutex? _singleInstanceMutex;
+        private bool _ownsMutex;
 
         protected override void OnStartup(StartupEventArgs e)
         {
-            _singleInstanceMutex = new Mutex(true, "SpiderDesk_SingleInstance_Mutex", out bool isNewInstance);
-            if (!isNewInstance)
+            _singleInstanceMutex = new Mutex(true, "SpiderDesk_SingleInstance_Mutex", out _ownsMutex);
+            if (!_ownsMutex)
             {
                 Shutdown();
                 return;
@@ -32,14 +33,14 @@ namespace SpiderDesk
             IEnvironmentService environmentService = new SystemEnvironmentService();
             ISettingsRepository settingsRepository = new JsonSettingsRepository();
 
-            if (!startupService.IsEnabled())
-            {
-                startupService.SetEnabled(true);
-            }
-
             // Domain ve Görselleştirme bileşenlerinin oluşturulması
             IBugSpeciesProvider speciesProvider = new BugSpeciesCatalog();
             var engine = new SimulationEngine(speciesProvider, environmentService, settingsRepository);
+
+            if (startupService.IsEnabled() != engine.Settings.RunOnStartup)
+            {
+                startupService.SetEnabled(engine.Settings.RunOnStartup);
+            }
 
             windowLayerService.AlwaysOnTop = engine.Settings.AlwaysOnTop;
 
@@ -73,7 +74,11 @@ namespace SpiderDesk
 
         protected override void OnExit(ExitEventArgs e)
         {
-            _singleInstanceMutex?.ReleaseMutex();
+            if (_ownsMutex)
+            {
+                _singleInstanceMutex?.ReleaseMutex();
+                _ownsMutex = false;
+            }
             _singleInstanceMutex?.Dispose();
             base.OnExit(e);
         }
