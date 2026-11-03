@@ -31,10 +31,15 @@ namespace SpiderDesk.Domain.Spider
         public Point? DraglineAnchor { get; set; }
         public double? CarriedCocoonSize { get; set; }
 
+        public const int MaxAutoWebs = 5;
+
         public int BugsCaught { get; private set; }
         public int Level => 1 + (BugsCaught / 5);
         public double SpeedMultiplier { get; set; } = 1.0;
         public int PendingWebRequests { get; private set; }
+
+        private double _autoWebTimer;
+        private int _scheduledForWebCount;
 
         public event Action<int>? PreyCaught;
 
@@ -79,6 +84,8 @@ namespace SpiderDesk.Domain.Spider
         public void ClearPendingWebRequests()
         {
             PendingWebRequests = 0;
+            _scheduledForWebCount = 0;
+            _autoWebTimer = 0;
         }
 
         public void TransitionTo(ISpiderBehaviorState nextState, WorldContext world)
@@ -124,8 +131,48 @@ namespace SpiderDesk.Domain.Spider
             }
 
             CurrentState.Update(this, world, dt);
+            UpdateAutoWebSchedule(world, dt);
             Metabolism.Update(dt, CurrentSpeed);
             _gaitController.UpdateGait(this, dt);
+        }
+
+        private void UpdateAutoWebSchedule(WorldContext world, double dt)
+        {
+            int webCount = world.Webs.Count;
+            if (webCount == 0)
+            {
+                _scheduledForWebCount = 0;
+                _autoWebTimer = 0;
+                return;
+            }
+
+            if (webCount >= MaxAutoWebs ||
+                CurrentState is SpinningWebState ||
+                PendingWebRequests > 0 ||
+                world.Webs.Any(w => !w.IsCompleted))
+            {
+                return;
+            }
+
+            if (_scheduledForWebCount != webCount)
+            {
+                _scheduledForWebCount = webCount;
+                _autoWebTimer = webCount switch
+                {
+                    1 => 2.5,      // Önce 2 ağ örülsün: 1. ağ biter bitmez (2.5 sn sonra) 2. ağa başlar
+                    2 => 300.0,    // 2. ağdan 5 dakika (300 sn) sonra 3. ağ örülsün
+                    3 => 600.0,    // 3. ağdan 10 dakika (600 sn) sonra 4. ağ örülsün
+                    4 => 1800.0,   // 4. ağdan 30 dakika (1800 sn) sonra 5. ağ örülsün
+                    _ => double.MaxValue
+                };
+            }
+
+            _autoWebTimer -= dt;
+            if (_autoWebTimer <= 0 &&
+                CurrentState is WaitingOnWebState or WanderingState or InvestigatingVibrationState)
+            {
+                TransitionTo(SpinningWebState.CreateForBestSite(world), world);
+            }
         }
 
         private bool ShouldFleeFromCursor(WorldContext world)

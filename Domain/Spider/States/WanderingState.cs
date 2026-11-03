@@ -34,13 +34,10 @@ namespace SpiderDesk.Domain.Spider.States
 
             if (spider.MoveTowards(_targetPoint, 130.0, dt) || _timer <= 0)
             {
-                if (world.Webs.Count < 3 && world.Random.NextDouble() < 0.45)
+                var completedWebs = world.Webs.Where(w => w.IsCompleted).ToList();
+                if (completedWebs.Count > 0 && world.Random.NextDouble() < 0.60)
                 {
-                    spider.TransitionTo(SpinningWebState.CreateForBestSite(world), world);
-                }
-                else if (world.Webs.Count > 0 && world.Random.NextDouble() < 0.50)
-                {
-                    var web = world.Webs[world.Random.Next(world.Webs.Count)];
+                    var web = completedWebs[world.Random.Next(completedWebs.Count)];
                     spider.ActiveWeb = web;
                     spider.TransitionTo(new WaitingOnWebState(web), world);
                 }

@@ -66,15 +66,11 @@ namespace SpiderDesk.Domain.Spider.States
             if (_patrolTimer <= 0)
             {
                 double roll = world.Random.NextDouble();
-                if (world.Webs.Count < 3 && roll < 0.25)
-                {
-                    spider.TransitionTo(SpinningWebState.CreateForBestSite(world), world);
-                }
-                else if (roll < 0.40)
+                if (roll < 0.16)
                 {
                     spider.TransitionTo(new RappellingState(), world);
                 }
-                else if (roll < 0.58)
+                else if (roll < 0.36)
                 {
                     spider.TransitionTo(new WanderingState(), world);
                 }

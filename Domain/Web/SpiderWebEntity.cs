@@ -14,6 +14,7 @@ namespace SpiderDesk.Domain.Web
         public double Radius { get; }
         public double StartAngle { get; }
         public double EndAngle { get; }
+        public bool IsCornerFan => (EndAngle - StartAngle) < Math.PI;
 
         public List<WebSegment> CompletedSegments { get; } = new();
         public Queue<WebBuildStep> BuildQueue { get; }

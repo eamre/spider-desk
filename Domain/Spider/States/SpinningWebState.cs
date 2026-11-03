@@ -13,6 +13,7 @@ namespace SpiderDesk.Domain.Spider.States
     {
         private readonly record struct WebSiteCandidate(
             Point Vertex,
+            double Radius,
             bool IsCornerFan,
             double StartAngle,
             double EndAngle);
@@ -37,14 +38,13 @@ namespace SpiderDesk.Domain.Spider.States
 
             if (candidate.IsCornerFan)
             {
-                double radius = 225.0 + world.Random.NextDouble() * 35.0;
                 double midAngle = (candidate.StartAngle + candidate.EndAngle) * 0.5;
                 Point restingHub = WebBlueprintGenerator.PolarToCartesian(candidate.Vertex, midAngle, 58.0);
 
                 var plan = WebBlueprintGenerator.CreateCornerFanPlan(
                     candidate.Vertex,
                     restingHub,
-                    radius,
+                    candidate.Radius,
                     candidate.StartAngle,
                     candidate.EndAngle,
                     world.Random
@@ -53,7 +53,7 @@ namespace SpiderDesk.Domain.Spider.States
                 web = new SpiderWebEntity(
                     candidate.Vertex,
                     restingHub,
-                    radius,
+                    candidate.Radius,
                     plan,
                     candidate.StartAngle,
                     candidate.EndAngle
@@ -61,15 +61,14 @@ namespace SpiderDesk.Domain.Spider.States
             }
             else
             {
-                double radius = 105.0 + world.Random.NextDouble() * 35.0;
-                var plan = WebBlueprintGenerator.CreateOrbPlan(candidate.Vertex, radius, world.Random);
-                web = new SpiderWebEntity(candidate.Vertex, candidate.Vertex, radius, plan);
+                var plan = WebBlueprintGenerator.CreateOrbPlan(candidate.Vertex, candidate.Radius, world.Random);
+                web = new SpiderWebEntity(candidate.Vertex, candidate.Vertex, candidate.Radius, plan);
             }
 
             web.Droplets.SpawnRate = world.DewSpawnRate;
             world.Webs.Add(web);
 
-            if (world.Webs.Count > 4)
+            if (world.Webs.Count > 6)
             {
                 world.Webs.RemoveAt(0);
             }
@@ -170,44 +169,137 @@ namespace SpiderDesk.Domain.Spider.States
 
             const double cornerMargin = 3.0;
             const double taskbarPad = 48.0;
-            const double orbPad = 165.0;
 
-            WebSiteCandidate[] candidates =
+            Point[] cornerVertices =
             {
-                // 4 Ekran Köşesi (90 derecelik Köşe Yelpaze Ağları)
-                new(new Point(cornerMargin, cornerMargin), true, 0.0, Math.PI * 0.5),
-                new(new Point(w - cornerMargin, cornerMargin), true, Math.PI * 0.5, Math.PI),
-                new(new Point(w - cornerMargin, h - taskbarPad), true, Math.PI, Math.PI * 1.5),
-                new(new Point(cornerMargin, h - taskbarPad), true, Math.PI * 1.5, Math.PI * 2.0),
-
-                // Masaüstü İç Bölgeleri (Tam Dairesel Ağlar)
-                new(new Point(
-                    orbPad + rng.NextDouble() * (w - orbPad * 2),
-                    orbPad + rng.NextDouble() * (h - orbPad * 2 - 40)),
-                    false, 0.0, Math.PI * 2.0),
-                new(new Point(
-                    w * (0.28 + rng.NextDouble() * 0.44),
-                    h * (0.25 + rng.NextDouble() * 0.45)),
-                    false, 0.0, Math.PI * 2.0)
+                new(cornerMargin, cornerMargin),
+                new(w - cornerMargin, cornerMargin),
+                new(w - cornerMargin, h - taskbarPad),
+                new(cornerMargin, h - taskbarPad)
             };
 
-            WebSiteCandidate best = candidates[rng.Next(candidates.Length)];
-            double bestMinDist = -1;
-
-            foreach (var cand in candidates.OrderBy(_ => rng.Next()))
+            // 1. Köşe Yelpaze Ağı Adayları (Mevcut ağlarla kesişmeyen boş köşeler)
+            double cornerRadius = 215.0 + rng.NextDouble() * 30.0;
+            WebSiteCandidate[] allCorners =
             {
-                double minDist = world.Webs.Count == 0
-                    ? double.MaxValue
-                    : world.Webs.Min(existing => (existing.Center - cand.Vertex).Length);
+                new(cornerVertices[0], cornerRadius, true, 0.0, Math.PI * 0.5),
+                new(cornerVertices[1], cornerRadius, true, Math.PI * 0.5, Math.PI),
+                new(cornerVertices[2], cornerRadius, true, Math.PI, Math.PI * 1.5),
+                new(cornerVertices[3], cornerRadius, true, Math.PI * 1.5, Math.PI * 2.0)
+            };
 
-                if (minDist > bestMinDist)
+            var validCorners = allCorners
+                .Where(c => !OverlapsAnyExistingWeb(world, c))
+                .OrderBy(_ => rng.Next())
+                .ToList();
+
+            // 2. Tam Dairesel (Orb) Ağ Adayları (Mevcut ağlara ve köşe bölgelerine değmeyen iç noktalar)
+            WebSiteCandidate? bestOrbCandidate = FindNonOverlappingOrbCandidate(world, cornerVertices, rng);
+
+            // 3. Köşe / Orta Dengesi:
+            // Ekrandaki tüm ağlar köşeyse sıradaki orta olsun; tümü ortaysa sıradaki köşe olsun; aksi halde %50-%50 seç.
+            bool preferCorner;
+            if (world.Webs.Count > 0 && world.Webs.All(existing => existing.IsCornerFan))
+            {
+                preferCorner = false;
+            }
+            else if (world.Webs.Count > 0 && world.Webs.All(existing => !existing.IsCornerFan))
+            {
+                preferCorner = true;
+            }
+            else
+            {
+                preferCorner = rng.NextDouble() < 0.50;
+            }
+
+            if (preferCorner)
+            {
+                if (validCorners.Count > 0) return validCorners[0];
+                if (bestOrbCandidate is { } orbFallback) return orbFallback;
+            }
+            else
+            {
+                if (bestOrbCandidate is { } orb) return orb;
+                if (validCorners.Count > 0) return validCorners[0];
+            }
+
+            return allCorners[rng.Next(allCorners.Length)];
+        }
+
+        private static WebSiteCandidate? FindNonOverlappingOrbCandidate(
+            WorldContext world,
+            Point[] cornerVertices,
+            Random rng)
+        {
+            double w = world.ScreenWidth;
+            double h = world.ScreenHeight;
+
+            // Önce standart yarıçapla (105-130 px), ekran çok doluysa biraz daha kompakt yarıçapla (85-100 px) dene
+            double[] radiusAttempts = { 105.0 + rng.NextDouble() * 25.0, 88.0 + rng.NextDouble() * 14.0 };
+
+            foreach (double orbRadius in radiusAttempts)
+            {
+                double marginX = orbRadius * 1.25 + 25.0;
+                double marginY = orbRadius * 1.25 + 55.0;
+
+                WebSiteCandidate? best = null;
+                double bestClearance = -1;
+
+                for (int i = 0; i < 45; i++)
                 {
-                    bestMinDist = minDist;
-                    best = cand;
+                    Point pt = new Point(
+                        marginX + rng.NextDouble() * Math.Max(80.0, w - marginX * 2),
+                        marginY + rng.NextDouble() * Math.Max(80.0, h - marginY * 2)
+                    );
+
+                    // Köşe ağlarının kurulacağı 4 köşeye de çok yaklaşmasın ki sonradan örülecek köşe ağlarına değmesin
+                    bool tooCloseToAnyCorner = cornerVertices.Any(cv => (cv - pt).Length < 250.0 + orbRadius * 1.15);
+                    if (tooCloseToAnyCorner) continue;
+
+                    var candidate = new WebSiteCandidate(pt, orbRadius, false, 0.0, Math.PI * 2.0);
+                    if (OverlapsAnyExistingWeb(world, candidate)) continue;
+
+                    double minClearance = world.Webs.Count == 0
+                        ? double.MaxValue
+                        : world.Webs.Min(existing => (existing.HubPosition - pt).Length);
+
+                    if (minClearance > bestClearance)
+                    {
+                        bestClearance = minClearance;
+                        best = candidate;
+                    }
+                }
+
+                if (best != null)
+                {
+                    return best;
                 }
             }
 
-            return best;
+            return null;
+        }
+
+        private static bool OverlapsAnyExistingWeb(WorldContext world, WebSiteCandidate candidate)
+        {
+            const double safetyGap = 38.0;
+            double candidateExtent = candidate.IsCornerFan
+                ? candidate.Radius * 1.18
+                : candidate.Radius * 1.15;
+
+            foreach (var existing in world.Webs)
+            {
+                double existingExtent = existing.IsCornerFan
+                    ? existing.Radius * 1.18
+                    : existing.Radius * 1.15;
+
+                double centerDist = (existing.Center - candidate.Vertex).Length;
+                if (centerDist < existingExtent + candidateExtent + safetyGap)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }
