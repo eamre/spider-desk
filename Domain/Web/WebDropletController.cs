@@ -18,6 +18,7 @@ namespace SpiderDesk.Domain.Web
 
         public IReadOnlyList<WaterDroplet> AttachedDroplets => _attachedDroplets;
         public IReadOnlyList<WaterDroplet> FallingDroplets => _fallingDroplets;
+        public int Revision { get; private set; }
 
         public DewSpawnRatePreset SpawnRate
         {
@@ -103,30 +104,9 @@ namespace SpiderDesk.Domain.Web
             }
 
             var seg = segments[droplet.SegmentIndex];
-            double t = droplet.NormalizedT;
             double sag = GetSegmentSag(droplet.SegmentIndex);
-
-            Point mid = new Point((seg.Start.X + seg.End.X) * 0.5, (seg.Start.Y + seg.End.Y) * 0.5);
-            double segLen = (seg.End - seg.Start).Length;
-
-            Vector toCenter = webCenter - mid;
-            double distToCenter = toCenter.Length;
-            if (distToCenter > 0.001)
-            {
-                toCenter /= distToCenter;
-            }
-
-            double inwardPull = seg.IsAnchor ? 0.0 : Math.Min(11.0, segLen * 0.13);
-            Point control = new Point(
-                mid.X + toCenter.X * inwardPull * 1.8,
-                mid.Y + toCenter.Y * inwardPull * 1.8 + sag * 1.6 + 0.6
-            );
-
-            double inv = 1.0 - t;
-            return new Point(
-                inv * inv * seg.Start.X + 2.0 * inv * t * control.X + t * t * seg.End.X,
-                inv * inv * seg.Start.Y + 2.0 * inv * t * control.Y + t * t * seg.End.Y
-            );
+            Point control = WebSegmentGeometry.ComputeControlPoint(seg.Start, seg.End, seg.IsAnchor, webCenter, sag);
+            return WebSegmentGeometry.EvaluateQuadraticBezier(seg.Start, control, seg.End, droplet.NormalizedT);
         }
 
         public void ShakeOffAllDroplets(IReadOnlyList<WebSegment> segments, Point webCenter, Random rng)
@@ -142,6 +122,7 @@ namespace SpiderDesk.Domain.Web
                 }
             }
             _attachedDroplets.Clear();
+            Revision++;
         }
 
         private void SpawnDropletOnRandomSegment(IReadOnlyList<WebSegment> segments, Random rng, double initialRadius = 2.0)
@@ -153,6 +134,7 @@ namespace SpiderDesk.Domain.Web
                 {
                     double t = 0.25 + rng.NextDouble() * 0.5;
                     _attachedDroplets.Add(new WaterDroplet(idx, t, initialRadius));
+                    Revision++;
                     return;
                 }
             }

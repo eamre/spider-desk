@@ -17,10 +17,19 @@ namespace SpiderDesk.Rendering
         private readonly Pen _silkPen = DrawingResources.CreateFrozenPen(Color.FromArgb(220, 255, 255, 255), 1.2);
         private readonly Dictionary<Color, SolidColorBrush> _brushCache = new();
 
+        private readonly TranslateTransform _bugTranslate = new();
+        private readonly RotateTransform _bugRotate = new();
+        private readonly RotateTransform _leftWingRotate = new();
+        private readonly RotateTransform _rightWingRotate = new();
+
         public void Render(DrawingContext dc, BugEntity bug)
         {
-            dc.PushTransform(new TranslateTransform(bug.Position.X, bug.Position.Y));
-            dc.PushTransform(new RotateTransform(bug.Angle * 180.0 / Math.PI));
+            _bugTranslate.X = bug.Position.X;
+            _bugTranslate.Y = bug.Position.Y;
+            _bugRotate.Angle = bug.Angle * 180.0 / Math.PI;
+
+            dc.PushTransform(_bugTranslate);
+            dc.PushTransform(_bugRotate);
 
             // 1. Ateş Böceği (Firefly) Işık Halesi (Bioluminescence)
             if (bug.Species.GlowColor is { } glowColor)
@@ -41,11 +50,13 @@ namespace SpiderDesk.Rendering
             double wingSpread = Math.Sin(bug.WingPhase) * 32.0;
             double baseWingAngle = Math.Abs(bug.WingPhase) < 0.001 ? 14.0 : 35.0;
 
-            dc.PushTransform(new RotateTransform(-baseWingAngle - wingSpread));
+            _leftWingRotate.Angle = -baseWingAngle - wingSpread;
+            dc.PushTransform(_leftWingRotate);
             dc.DrawEllipse(_wingBrush, null, new Point(-1, -bug.Size * 0.75), bug.Size * 0.9, bug.Size * 0.46);
             dc.Pop();
 
-            dc.PushTransform(new RotateTransform(baseWingAngle + wingSpread));
+            _rightWingRotate.Angle = baseWingAngle + wingSpread;
+            dc.PushTransform(_rightWingRotate);
             dc.DrawEllipse(_wingBrush, null, new Point(-1, bug.Size * 0.75), bug.Size * 0.9, bug.Size * 0.46);
             dc.Pop();
 

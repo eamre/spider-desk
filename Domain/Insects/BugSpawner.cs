@@ -32,7 +32,17 @@ namespace SpiderDesk.Domain.Insects
 
         public void Update(WorldContext world, double dt)
         {
-            if (!world.Webs.Any(w => w.IsCompleted))
+            bool hasCompletedWeb = false;
+            for (int i = 0; i < world.Webs.Count; i++)
+            {
+                if (world.Webs[i].IsCompleted)
+                {
+                    hasCompletedWeb = true;
+                    break;
+                }
+            }
+
+            if (!hasCompletedWeb)
             {
                 return;
             }

@@ -82,12 +82,14 @@ namespace SpiderDesk.Infrastructure
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
         private static extern int GetClassName(IntPtr hWnd, StringBuilder lpClassName, int nMaxCount);
 
+        private readonly StringBuilder _classNameBuffer = new(64);
         private IntPtr _hwnd;
         private IntPtr _desktopHwnd;
         private bool? _lastAppliedTopmostState;
         private bool _alwaysOnTop;
         private bool _isOverlayInteractive;
         private bool _isDesktopOccluded;
+        private int _tickCounter;
 
         /// <summary>
         /// Fare doğrudan görünür masaüstünün üzerindeyse veya "Pencerelerin Üstünde Göster" açıksa true döner.
@@ -151,9 +153,19 @@ namespace SpiderDesk.Infrastructure
                 PlaceDirectlyAboveDesktop(flags);
                 _lastAppliedTopmostState = false;
             }
-            else if (_desktopHwnd != IntPtr.Zero && IsBehindDesktop(_hwnd, _desktopHwnd))
+            else
             {
-                PlaceDirectlyAboveDesktop(flags);
+                // Win32 pencere sorgularını her kare yerine 3 karede bir (~50 ms) çalıştırarak P/Invoke yükünü azalt
+                _tickCounter++;
+                if ((_tickCounter & 3) != 0)
+                {
+                    return;
+                }
+
+                if (_desktopHwnd != IntPtr.Zero && IsBehindDesktop(_hwnd, _desktopHwnd))
+                {
+                    PlaceDirectlyAboveDesktop(flags);
+                }
             }
 
             UpdateVisibilityAndInteractionState();
@@ -200,12 +212,13 @@ namespace SpiderDesk.Infrastructure
         private void UpdateVisibilityAndInteractionState()
         {
             bool cursorOverDesktop = false;
+            IntPtr rootHwnd = IntPtr.Zero;
             if (GetCursorPos(out POINT pt))
             {
                 IntPtr hitHwnd = WindowFromPoint(pt);
                 if (hitHwnd != IntPtr.Zero)
                 {
-                    IntPtr rootHwnd = GetAncestor(hitHwnd, GA_ROOT);
+                    rootHwnd = GetAncestor(hitHwnd, GA_ROOT);
                     cursorOverDesktop = (rootHwnd != IntPtr.Zero && rootHwnd == _desktopHwnd) ||
                                         IsDesktopWindow(rootHwnd) ||
                                         IsDesktopWindow(hitHwnd);
@@ -221,11 +234,19 @@ namespace SpiderDesk.Infrastructure
             }
 
             IntPtr currentFg = GetForegroundWindow();
-            _isDesktopOccluded = currentFg != IntPtr.Zero &&
-                                 currentFg != _desktopHwnd &&
-                                 !IsDesktopWindow(currentFg) &&
-                                 !IsIconic(currentFg) &&
-                                 IsZoomed(currentFg);
+            bool fgMaximized = currentFg != IntPtr.Zero &&
+                               currentFg != _desktopHwnd &&
+                               !IsDesktopWindow(currentFg) &&
+                               !IsIconic(currentFg) &&
+                               IsZoomed(currentFg);
+
+            bool cursorWinMaximized = rootHwnd != IntPtr.Zero &&
+                                      rootHwnd != _desktopHwnd &&
+                                      !IsDesktopWindow(rootHwnd) &&
+                                      !IsIconic(rootHwnd) &&
+                                      IsZoomed(rootHwnd);
+
+            _isDesktopOccluded = fgMaximized || cursorWinMaximized;
         }
 
         private static IntPtr FindDesktopHostWindow()
@@ -248,13 +269,13 @@ namespace SpiderDesk.Infrastructure
             return progman;
         }
 
-        private static bool IsDesktopWindow(IntPtr hwnd)
+        private bool IsDesktopWindow(IntPtr hwnd)
         {
             if (hwnd == IntPtr.Zero) return false;
 
-            StringBuilder sb = new StringBuilder(64);
-            GetClassName(hwnd, sb, sb.Capacity);
-            string cls = sb.ToString();
+            _classNameBuffer.Clear();
+            GetClassName(hwnd, _classNameBuffer, _classNameBuffer.Capacity);
+            string cls = _classNameBuffer.ToString();
             return cls == "Progman" || cls == "WorkerW" || cls == "SHELLDLL_DefView" || cls == "SysListView32";
         }
     }

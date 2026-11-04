@@ -21,6 +21,42 @@ namespace SpiderDesk.Core
         public SpiderEntity Spider { get; }
         public UserSettings Settings => _settings;
 
+        /// <summary>
+        /// Ekranda hareket eden bir nesne (örümcek, böcek, titreşen ağ veya düşen damla) olup olmadığını bildirir.
+        /// </summary>
+        public bool HasVisualActivity
+        {
+            get
+            {
+                if (Spider.HasVisualMotion || World.Bugs.Count > 0)
+                {
+                    return true;
+                }
+
+                for (int i = 0; i < World.Webs.Count; i++)
+                {
+                    var web = World.Webs[i];
+                    if (web.VibrationAmplitude > 0.05 || web.Droplets.FallingDroplets.Count > 0)
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+        }
+
+        public int GetStaticSceneRevision()
+        {
+            int rev = Spider.BugsCaught * 397;
+            for (int i = 0; i < World.Webs.Count; i++)
+            {
+                var web = World.Webs[i];
+                rev = (rev * 31) + web.CompletedSegments.Count + (web.Droplets.Revision * 17) + (web.DamagedSegments.Count * 7);
+            }
+            return rev;
+        }
+
         public SimulationEngine(
             IBugSpeciesProvider speciesProvider,
             IEnvironmentService environmentService,

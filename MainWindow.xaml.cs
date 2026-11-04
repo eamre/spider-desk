@@ -22,10 +22,12 @@ namespace SpiderDesk
         private readonly TrayMenuService _trayMenuService;
         private readonly DispatcherTimer _timer;
 
-        private static readonly TimeSpan ActiveFrameInterval = TimeSpan.FromMilliseconds(16);  // 60 FPS (Masaüstü görünürken)
-        private static readonly TimeSpan OccludedEcoInterval = TimeSpan.FromMilliseconds(50);  // 20 FPS (Tam ekran pencere arkasındayken düşük güç modu)
+        private static readonly TimeSpan ActiveFrameInterval = TimeSpan.FromMilliseconds(16);  // 60 FPS (Hareket varken)
+        private static readonly TimeSpan IdleFrameInterval = TimeSpan.FromMilliseconds(50);    // 20 Hz (Sahne tamamen durağanken veya arka plandayken)
 
         private bool _isPaused;
+        private bool _wasOccluded;
+        private int _lastRenderedRevision = -1;
         private DateTime _lastTick;
 
         public MainWindow(
@@ -157,7 +159,22 @@ namespace SpiderDesk
                     effectiveCursorSpeed
                 );
 
-                _canvas.InvalidateVisual();
+                // 1. Tam ekran bir uygulama öndeyken (isOccluded == true):
+                // Simülasyon (ağ örme, avlanma, sayaçlar) arka planda kesintisiz çalışır,
+                // ancak görünmeyen ekranı GPU'ya çizdirmeyerek %0 GPU kullanımı sağlanır.
+                // 2. Masaüstüne dönüldüğü ilk karede (_wasOccluded) veya ekranda aktif hareket varken çizim yapılır.
+                // 3. Sahne tamamen durağansa (örümcek nöbette sabit, böcek yok), yalnızca yeni çiy damlası vb. oluştuğunda çizilir.
+                int currentRevision = _engine.GetStaticSceneRevision();
+                bool shouldRender = !isOccluded &&
+                                    (_wasOccluded || _engine.HasVisualActivity || currentRevision != _lastRenderedRevision);
+
+                if (shouldRender)
+                {
+                    _lastRenderedRevision = currentRevision;
+                    _canvas.InvalidateVisual();
+                }
+
+                _wasOccluded = isOccluded;
 
                 _trayMenuService.UpdateStatus(
                     _engine.Spider.Level,
@@ -170,11 +187,8 @@ namespace SpiderDesk
 
         private void UpdateAdaptiveFrameRate()
         {
-            // Masaüstü kısmen veya tamamen görünür olduğu her an 60 FPS çalışır;
-            // yalnızca tam ekran büyütülmüş bir pencere masaüstünü tamamen kapattığında 10 Hz Eco moduna geçer.
-            TimeSpan desiredInterval = _windowLayerService.IsDesktopOccluded
-                ? OccludedEcoInterval
-                : ActiveFrameInterval;
+            bool needsHighFps = !_windowLayerService.IsDesktopOccluded && _engine.HasVisualActivity;
+            TimeSpan desiredInterval = needsHighFps ? ActiveFrameInterval : IdleFrameInterval;
 
             if (_timer.Interval != desiredInterval)
             {

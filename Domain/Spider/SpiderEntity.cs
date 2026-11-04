@@ -38,6 +38,29 @@ namespace SpiderDesk.Domain.Spider
         public double SpeedMultiplier { get; set; } = 1.0;
         public int PendingWebRequests { get; private set; }
 
+        public bool HasVisualMotion
+        {
+            get
+            {
+                if (CurrentSpeed > 0.05 || ActiveSilkLine != null || DraglineAnchor != null)
+                {
+                    return true;
+                }
+
+                if (CurrentState is SpinningWebState or HuntingState or ShakingWebState or EatingFromPantryState or RappellingState or RepairingWebState or StoringPreyState or StartledByMouseState)
+                {
+                    return true;
+                }
+
+                for (int i = 0; i < Legs.Length; i++)
+                {
+                    if (Legs[i].IsStepping) return true;
+                }
+
+                return false;
+            }
+        }
+
         private double _autoWebTimer;
         private int _scheduledForWebCount;
 
@@ -148,10 +171,14 @@ namespace SpiderDesk.Domain.Spider
 
             if (webCount >= MaxAutoWebs ||
                 CurrentState is SpinningWebState ||
-                PendingWebRequests > 0 ||
-                world.Webs.Any(w => !w.IsCompleted))
+                PendingWebRequests > 0)
             {
                 return;
+            }
+
+            for (int i = 0; i < webCount; i++)
+            {
+                if (!world.Webs[i].IsCompleted) return;
             }
 
             if (_scheduledForWebCount != webCount)
@@ -241,11 +268,24 @@ namespace SpiderDesk.Domain.Spider
                 return ActiveWeb;
             }
 
-            // 2. Bulunduğu ağda koza yoksa, kozası olan en yakın diğer ağa git!
-            return world.Webs
-                .Where(w => w.Pantry.HasStoredFood)
-                .OrderBy(w => (w.Center - Position).LengthSquared)
-                .FirstOrDefault();
+            // 2. Bulunduğu ağda koza yoksa, kozası olan en yakın diğer ağa git! (Sıfır LINQ tahsisi)
+            SpiderWebEntity? nearest = null;
+            double bestDistSq = double.MaxValue;
+
+            for (int i = 0; i < world.Webs.Count; i++)
+            {
+                var web = world.Webs[i];
+                if (!web.Pantry.HasStoredFood) continue;
+
+                double distSq = (web.Center - Position).LengthSquared;
+                if (distSq < bestDistSq)
+                {
+                    bestDistSq = distSq;
+                    nearest = web;
+                }
+            }
+
+            return nearest;
         }
 
         private BugEntity? FindPrey(WorldContext world)
@@ -257,24 +297,31 @@ namespace SpiderDesk.Domain.Spider
                 return null;
             }
 
-            // 1. Öncelik: Örümcek yürürken / gezinirken hemen yakınında (52 px) denk geldiği serbest böcek
             const double encounterRadiusSq = 52.0 * 52.0;
-            BugEntity? nearbyEncounterBug = world.Bugs
-                .Where(b => b.CurrentState.Status == BugLifecycleStatus.ActiveInWorld &&
-                            (b.Position - Position).LengthSquared <= encounterRadiusSq)
-                .OrderBy(b => (b.Position - Position).LengthSquared)
-                .FirstOrDefault();
+            BugEntity? nearestEncounter = null;
+            double bestEncounterDistSq = encounterRadiusSq;
 
-            if (nearbyEncounterBug != null)
+            BugEntity? nearestTrapped = null;
+            double bestTrappedDistSq = double.MaxValue;
+
+            for (int i = 0; i < world.Bugs.Count; i++)
             {
-                return nearbyEncounterBug;
+                var bug = world.Bugs[i];
+                double distSq = (bug.Position - Position).LengthSquared;
+
+                if (bug.CurrentState.Status == BugLifecycleStatus.ActiveInWorld && distSq <= bestEncounterDistSq)
+                {
+                    bestEncounterDistSq = distSq;
+                    nearestEncounter = bug;
+                }
+                else if (bug.IsReadyToBeHunted && distSq < bestTrappedDistSq)
+                {
+                    bestTrappedDistSq = distSq;
+                    nearestTrapped = bug;
+                }
             }
 
-            // 2. Öncelik: Ağa yakalanmış ve bekleme süresini (3.5 - 6.5 sn) doldurmuş en yakın böceği seç
-            return world.Bugs
-                .Where(b => b.IsReadyToBeHunted)
-                .OrderBy(b => (b.Position - Position).LengthSquared)
-                .FirstOrDefault();
+            return nearestEncounter ?? nearestTrapped;
         }
 
         private static double NormalizeAngle(double angle)
