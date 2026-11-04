@@ -1,5 +1,10 @@
+using System;
+using System.Diagnostics;
+using System.Runtime;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows;
+using System.Windows.Threading;
 using SpiderDesk.Core;
 using SpiderDesk.Domain.Insects.Species;
 using SpiderDesk.Infrastructure;
@@ -12,6 +17,9 @@ namespace SpiderDesk
     /// </summary>
     public partial class App : Application
     {
+        [DllImport("psapi.dll")]
+        private static extern bool EmptyWorkingSet(IntPtr hwProc);
+
         private Mutex? _singleInstanceMutex;
         private bool _ownsMutex;
 
@@ -70,6 +78,33 @@ namespace SpiderDesk
                 trayMenuService
             );
             mainWindow.Show();
+            SchedulePostStartupMemoryTrim();
+        }
+
+        private static void SchedulePostStartupMemoryTrim()
+        {
+            var trimTimer = new DispatcherTimer(DispatcherPriority.Background)
+            {
+                Interval = TimeSpan.FromSeconds(2.5)
+            };
+
+            trimTimer.Tick += (_, _) =>
+            {
+                trimTimer.Stop();
+                try
+                {
+                    GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
+                    GC.Collect(GC.MaxGeneration, GCCollectionMode.Aggressive, blocking: true, compacting: true);
+                    GC.WaitForPendingFinalizers();
+                    EmptyWorkingSet(Process.GetCurrentProcess().Handle);
+                }
+                catch
+                {
+                    // Bellek sıkıştırma isteğe bağlıdır
+                }
+            };
+
+            trimTimer.Start();
         }
 
         protected override void OnExit(ExitEventArgs e)

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using SpiderDesk.Core;
 using SpiderDesk.Domain.Spider.Themes;
@@ -12,6 +13,9 @@ namespace SpiderDesk.Infrastructure
     /// </summary>
     public sealed class TrayMenuService : IDisposable
     {
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern bool DestroyIcon(IntPtr hIcon);
+
         private readonly NotifyIcon _notifyIcon;
         private readonly ToolStripMenuItem _statusMenuItem;
         private string _lastStatusText = string.Empty;
@@ -231,7 +235,10 @@ namespace SpiderDesk.Infrastructure
 
         public void Dispose()
         {
+            Icon? icon = _notifyIcon.Icon;
+            _notifyIcon.Visible = false;
             _notifyIcon.Dispose();
+            icon?.Dispose();
         }
 
         private static Icon CreateSpiderTrayIcon()
@@ -257,7 +264,16 @@ namespace SpiderDesk.Infrastructure
             g.FillEllipse(Brushes.Red, 13, 11, 2, 2);
             g.FillEllipse(Brushes.Red, 17, 11, 2, 2);
 
-            return Icon.FromHandle(bmp.GetHicon());
+            IntPtr hIcon = bmp.GetHicon();
+            try
+            {
+                using Icon wrapped = Icon.FromHandle(hIcon);
+                return (Icon)wrapped.Clone();
+            }
+            finally
+            {
+                DestroyIcon(hIcon);
+            }
         }
     }
 }
