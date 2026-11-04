@@ -1,6 +1,4 @@
-using SpiderDesk.Domain.Insects;
-
-namespace SpiderDesk.Core
+namespace SpiderDesk.Domain.Insects
 {
     public enum BugLifecycleStatus
     {

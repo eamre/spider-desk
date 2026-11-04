@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Windows;
+using SpiderDesk.Domain.Spider;
 
 namespace SpiderDesk.Domain.Web
 {
@@ -117,11 +118,11 @@ namespace SpiderDesk.Domain.Web
 
             foreach (var segment in CompletedSegments)
             {
-                if (DistanceToSegmentSquared(cursorPos, segment.Start, segment.End) < 100.0)
+                if (DistanceToSegmentSquared(cursorPos, segment.Start, segment.End) < SpiderTuning.WebCursorHitDistanceSquared)
                 {
-                    if (cursorSpeed > 1350.0)
+                    if (cursorSpeed > SpiderTuning.WebCursorTearSpeed)
                     {
-                        DamageNear(cursorPos, 28.0, maxBrokenSegments: 2);
+                        DamageNear(cursorPos, SpiderTuning.WebCursorDamageRadius, maxBrokenSegments: 2);
                     }
                     else
                     {
@@ -130,7 +131,7 @@ namespace SpiderDesk.Domain.Web
                         RecentCursorPluckPoint = cursorPos;
                     }
 
-                    _pluckCooldown = 0.25;
+                    _pluckCooldown = SpiderTuning.WebPluckCooldownSeconds;
                     break;
                 }
             }
@@ -145,7 +146,7 @@ namespace SpiderDesk.Domain.Web
 
             foreach (var segment in CompletedSegments)
             {
-                if (DistanceToSegmentSquared(point, segment.Start, segment.End) < 196.0)
+                if (DistanceToSegmentSquared(point, segment.Start, segment.End) < SpiderTuning.WebCatchDistanceSquared)
                 {
                     return true;
                 }

@@ -1,6 +1,5 @@
 using System;
 using System.Windows;
-using SpiderDesk.Core;
 using SpiderDesk.Domain.Web;
 
 namespace SpiderDesk.Domain.Spider.States
@@ -47,7 +46,7 @@ namespace SpiderDesk.Domain.Spider.States
             if (_web.Droplets.IsHeavyWithWater)
             {
                 _patrolTarget = _web.HubPosition;
-                if (spider.MoveTowards(_web.HubPosition, 155.0, dt, stopDistance: 2.5))
+                if (spider.MoveTowards(_web.HubPosition, SpiderTuning.ApproachHubSpeed, dt, stopDistance: 2.5))
                 {
                     spider.TransitionTo(new ShakingWebState(_web), world);
                 }
@@ -62,7 +61,7 @@ namespace SpiderDesk.Domain.Spider.States
                 return;
             }
 
-            spider.MoveTowards(_patrolTarget, 110.0, dt);
+            spider.MoveTowards(_patrolTarget, SpiderTuning.PatrolMoveSpeed, dt);
             _patrolTimer -= dt;
 
             if (_patrolTimer <= 0)

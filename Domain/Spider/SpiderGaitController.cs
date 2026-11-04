@@ -1,4 +1,3 @@
-using System;
 using System.Windows;
 
 namespace SpiderDesk.Domain.Spider
@@ -9,9 +8,6 @@ namespace SpiderDesk.Domain.Spider
     /// </summary>
     public class SpiderGaitController
     {
-        private const double NormalStepTriggerDistance = 11.5;
-        private const double EmergencyStepDistance = 19.0;
-
         public SpiderLeg[] CreateLegs(SpiderEntity spider)
         {
             var legs = new SpiderLeg[8];
@@ -52,7 +48,7 @@ namespace SpiderDesk.Domain.Spider
         {
             var legs = spider.Legs;
             // Adım hızı örümceğin yürüme hızına göre dinamik ölçeklenir (Hızlı koşarken hızlı adım atar)
-            double stepRate = 12.0 + spider.CurrentSpeed * 0.065;
+            double stepRate = SpiderTuning.BaseStepRate + spider.CurrentSpeed * SpiderTuning.SpeedStepRateFactor;
 
             bool group0Busy = false;
             bool group1Busy = false;
@@ -73,7 +69,7 @@ namespace SpiderDesk.Domain.Spider
                         double t = leg.StepProgress;
                         double smooth = t * t * (3.0 - 2.0 * t);
                         // Adım hedefi örümcek hareket ettikçe güncel ideal konuma doğru kayar
-                        Point dynamicTarget = spider.LocalToWorld(leg.LocalRestFoot) + spider.VelocityVector * 0.045;
+                        Point dynamicTarget = spider.LocalToWorld(leg.LocalRestFoot) + spider.VelocityVector * SpiderTuning.DynamicStepLeadTime;
                         leg.StepTarget = dynamicTarget;
 
                         leg.CurrentFoot = new Point(
@@ -99,13 +95,13 @@ namespace SpiderDesk.Domain.Spider
                 if (!leg.IsStepping)
                 {
                     double distFromIdeal = (idealFoot - leg.CurrentFoot).Length;
-                    bool isEmergency = distFromIdeal >= EmergencyStepDistance;
+                    bool isEmergency = distFromIdeal >= SpiderTuning.EmergencyStepDistance;
                     bool canGroupStep = (leg.TetrapodGroup == 0 && !group1Busy) || (leg.TetrapodGroup == 1 && !group0Busy);
 
-                    if (isEmergency || (distFromIdeal >= NormalStepTriggerDistance && canGroupStep))
+                    if (isEmergency || (distFromIdeal >= SpiderTuning.NormalStepTriggerDistance && canGroupStep))
                     {
                         leg.StepStart = leg.CurrentFoot;
-                        leg.StepTarget = idealFoot + spider.VelocityVector * 0.05;
+                        leg.StepTarget = idealFoot + spider.VelocityVector * SpiderTuning.InitialStepLeadTime;
                         leg.StepProgress = 0.0;
 
                         if (leg.TetrapodGroup == 0) group0Busy = true;

@@ -1,5 +1,4 @@
 using System;
-using SpiderDesk.Core;
 using SpiderDesk.Domain.Web;
 
 namespace SpiderDesk.Domain.Spider.States
@@ -33,7 +32,7 @@ namespace SpiderDesk.Domain.Spider.States
         {
             if ((spider.Position - _web.HubPosition).Length > 3.0)
             {
-                spider.MoveTowards(_web.HubPosition, 175.0, dt, stopDistance: 2.0);
+                spider.MoveTowards(_web.HubPosition, SpiderTuning.ApproachWebSiteSpeed, dt, stopDistance: 2.0);
                 return;
             }
 

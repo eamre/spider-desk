@@ -1,6 +1,5 @@
 using System;
 using System.Windows;
-using SpiderDesk.Core;
 
 namespace SpiderDesk.Domain.Spider.States
 {
@@ -11,7 +10,7 @@ namespace SpiderDesk.Domain.Spider.States
     {
         private readonly ISpiderBehaviorState _returnState;
         private Point _escapeTarget;
-        private double _alertPauseTimer = 0.8;
+        private double _alertPauseTimer = SpiderTuning.StartleAlertPauseSeconds;
         private bool _reachedSafety;
 
         public string DisplayName => "Fareden Ürktü!";
@@ -36,7 +35,7 @@ namespace SpiderDesk.Domain.Spider.States
             }
             awayFromMouse.Normalize();
 
-            double fleeDistance = 150.0 + world.Random.NextDouble() * 70.0;
+            double fleeDistance = SpiderTuning.StartleFleeMinDistance + world.Random.NextDouble() * SpiderTuning.StartleFleeDistanceRange;
             Point rawTarget = spider.Position + awayFromMouse * fleeDistance;
 
             // Ekran sınırları içinde tut
@@ -50,7 +49,7 @@ namespace SpiderDesk.Domain.Spider.States
         {
             if (!_reachedSafety)
             {
-                if (spider.MoveTowards(_escapeTarget, 285.0, dt, stopDistance: 6.0))
+                if (spider.MoveTowards(_escapeTarget, SpiderTuning.StartleFleeSpeed, dt, stopDistance: 6.0))
                 {
                     _reachedSafety = true;
                 }

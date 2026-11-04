@@ -1,5 +1,4 @@
 using System.Windows;
-using SpiderDesk.Core;
 using SpiderDesk.Domain.Web;
 
 namespace SpiderDesk.Domain.Spider.States
@@ -42,7 +41,7 @@ namespace SpiderDesk.Domain.Spider.States
 
         public void Update(SpiderEntity spider, WorldContext world, double dt)
         {
-            if (spider.MoveTowards(_storageTarget, 155.0, dt, stopDistance: 6.0))
+            if (spider.MoveTowards(_storageTarget, SpiderTuning.StorePreyMoveSpeed, dt, stopDistance: 6.0))
             {
                 // 1. Kozayı ağın kilerine (erzak deposuna) ekle
                 _web.Pantry.StoreCocoon(_storageTarget, _cocoonSize, spider.Angle);

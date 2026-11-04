@@ -1,10 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Windows;
+using SpiderDesk.Core;
 using SpiderDesk.Domain.Insects;
 using SpiderDesk.Domain.Web;
 
-namespace SpiderDesk.Core
+namespace SpiderDesk.Domain
 {
     public class WorldContext
     {

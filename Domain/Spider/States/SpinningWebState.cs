@@ -1,4 +1,3 @@
-using SpiderDesk.Core;
 using SpiderDesk.Domain.Web;
 
 namespace SpiderDesk.Domain.Spider.States
@@ -45,7 +44,7 @@ namespace SpiderDesk.Domain.Spider.States
         {
             if (!_reachedSite)
             {
-                if (spider.MoveTowards(_web.Center, 175.0, dt))
+                if (spider.MoveTowards(_web.Center, SpiderTuning.ApproachWebSiteSpeed, dt))
                 {
                     _reachedSite = true;
                     spider.DraglineAnchor = null;
@@ -83,7 +82,7 @@ namespace SpiderDesk.Domain.Spider.States
                 }
             }
 
-            double buildSpeed = _currentStep.IsAnchor ? 195.0 : 230.0;
+            double buildSpeed = _currentStep.IsAnchor ? SpiderTuning.SpinAnchorSpeed : SpiderTuning.SpinSpiralSpeed;
             if (_currentStep.DrawSilk)
             {
                 spider.ActiveSilkLine = (_currentStep.From, spider.GetSpinneretPosition());

@@ -7,28 +7,28 @@ namespace SpiderDesk.Domain.Spider
     /// </summary>
     public class SpiderMetabolism
     {
-        public double Satiety { get; private set; } = 70.0; // Başlangıçta %70 tok
+        public double Satiety { get; private set; } = SpiderTuning.InitialSatiety;
 
         /// <summary>
-        /// Tokluk %75 ve üzerindeyse örümcek tamamen doymuştur.
+        /// Tokluk eşik değerinin (%75 ve üzeri) üstündeyse örümcek tamamen doymuştur.
         /// </summary>
-        public bool IsFull => Satiety >= 75.0;
+        public bool IsFull => Satiety >= SpiderTuning.FullSatietyThreshold;
 
         /// <summary>
-        /// Tokluk %50 ve altına düştüğünde örümcek acıkır ve erzak deposundaki kozaları yemeye başlar.
+        /// Tokluk açlık eşiğine (%50 ve altı) düştüğünde örümcek acıkır ve erzak deposundaki kozaları yemeye başlar.
         /// </summary>
-        public bool IsHungry => Satiety <= 50.0;
+        public bool IsHungry => Satiety <= SpiderTuning.HungrySatietyThreshold;
 
         public int SatietyPercent => (int)Math.Round(Satiety);
 
         public void Update(double dt, double currentMovementSpeed)
         {
-            // Dururken bazal metabolizma (%0.65/sn), hareket ederken ekstra enerji harcar
-            double burnRate = 0.65 + (currentMovementSpeed * 0.0045);
+            // Dururken bazal metabolizma, hareket ederken ekstra enerji harcar
+            double burnRate = SpiderTuning.BasalBurnRatePerSecond + (currentMovementSpeed * SpiderTuning.MovementBurnFactor);
             Satiety = Math.Max(0.0, Satiety - burnRate * dt);
         }
 
-        public void Feed(double nutritionAmount = 25.0)
+        public void Feed(double nutritionAmount = SpiderTuning.PreyNutrition)
         {
             Satiety = Math.Min(100.0, Satiety + nutritionAmount);
         }

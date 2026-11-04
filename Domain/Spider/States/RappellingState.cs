@@ -1,6 +1,5 @@
 using System;
 using System.Windows;
-using SpiderDesk.Core;
 
 namespace SpiderDesk.Domain.Spider.States
 {
@@ -43,7 +42,7 @@ namespace SpiderDesk.Domain.Spider.States
             switch (_phase)
             {
                 case Phase.ClimbingToCeiling:
-                    if (spider.MoveTowards(new Point(_ceilingAnchor.X, 24), 165.0, dt))
+                    if (spider.MoveTowards(new Point(_ceilingAnchor.X, 24), SpiderTuning.RappelClimbSpeed, dt))
                     {
                         _currentDropLength = 24;
                         _phase = Phase.Descending;
@@ -51,7 +50,7 @@ namespace SpiderDesk.Domain.Spider.States
                     break;
 
                 case Phase.Descending:
-                    _currentDropLength += 115.0 * dt;
+                    _currentDropLength += SpiderTuning.RappelDescendSpeed * dt;
                     UpdateHangingPosition(spider, dt);
 
                     // İnerken fare yaklaşırsa hemen yukarı tırmanmaya geç
@@ -88,7 +87,7 @@ namespace SpiderDesk.Domain.Spider.States
                     break;
 
                 case Phase.Ascending:
-                    _currentDropLength -= 145.0 * dt;
+                    _currentDropLength -= SpiderTuning.RappelAscendSpeed * dt;
                     UpdateHangingPosition(spider, dt, facingUp: true);
 
                     if (_currentDropLength <= 28)
@@ -128,8 +127,9 @@ namespace SpiderDesk.Domain.Spider.States
 
         private static bool IsCursorPushingSpider(SpiderEntity spider, WorldContext world)
         {
+            const double pushRadiusSq = SpiderTuning.RappelCursorPushDistance * SpiderTuning.RappelCursorPushDistance;
             double distSq = (world.CursorPosition - spider.Position).LengthSquared;
-            return distSq < 72.0 * 72.0 && world.CursorSpeed > 80.0;
+            return distSq < pushRadiusSq && world.CursorSpeed > SpiderTuning.RappelCursorPushSpeed;
         }
     }
 }

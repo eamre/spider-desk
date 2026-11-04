@@ -1,6 +1,5 @@
 using System;
 using System.Windows;
-using SpiderDesk.Core;
 using SpiderDesk.Domain.Web;
 
 namespace SpiderDesk.Domain.Spider.States
@@ -44,7 +43,7 @@ namespace SpiderDesk.Domain.Spider.States
 
             if (!_arrivedAtPoint)
             {
-                if (spider.MoveTowards(_investigatePoint, 185.0, dt, stopDistance: 8.0))
+                if (spider.MoveTowards(_investigatePoint, SpiderTuning.InvestigateMoveSpeed, dt, stopDistance: 8.0))
                 {
                     _arrivedAtPoint = true;
                 }

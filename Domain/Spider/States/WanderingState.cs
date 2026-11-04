@@ -1,7 +1,5 @@
 using System.Linq;
 using System.Windows;
-using SpiderDesk.Core;
-using SpiderDesk.Domain.Web;
 
 namespace SpiderDesk.Domain.Spider.States
 {
@@ -34,7 +32,7 @@ namespace SpiderDesk.Domain.Spider.States
                 return;
             }
 
-            if (spider.MoveTowards(_targetPoint, 130.0, dt) || _timer <= 0)
+            if (spider.MoveTowards(_targetPoint, SpiderTuning.WanderMoveSpeed, dt) || _timer <= 0)
             {
                 var completedWebs = world.Webs.Where(w => w.IsCompleted).ToList();
                 if (completedWebs.Count > 0 && world.Random.NextDouble() < 0.60)

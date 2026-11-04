@@ -33,7 +33,7 @@ namespace SpiderDesk.Domain.Spider
         public double? CarriedCocoonSize { get; set; }
 
         public int BugsCaught { get; private set; }
-        public int Level => 1 + (BugsCaught / 5);
+        public int Level => 1 + (BugsCaught / SpiderTuning.BugsPerLevel);
         public double SpeedMultiplier { get; set; } = 1.0;
         public int PendingWebRequests { get; private set; }
 
@@ -152,10 +152,11 @@ namespace SpiderDesk.Domain.Spider
             }
 
             double distSq = (world.CursorPosition - Position).LengthSquared;
-            return distSq < 62.0 * 62.0 && world.CursorSpeed > 420.0;
+            const double startleRadiusSq = SpiderTuning.CursorStartleDistance * SpiderTuning.CursorStartleDistance;
+            return distSq < startleRadiusSq && world.CursorSpeed > SpiderTuning.CursorStartleMinSpeed;
         }
 
-        public bool MoveTowards(Point target, double speed, double dt, double stopDistance = 4.0)
+        public bool MoveTowards(Point target, double speed, double dt, double stopDistance = SpiderTuning.DefaultStopDistance)
         {
             Vector toTarget = target - Position;
             double dist = toTarget.Length;
@@ -169,7 +170,7 @@ namespace SpiderDesk.Domain.Spider
 
             double effectiveSpeed = speed * SpeedMultiplier;
             double desiredAngle = Math.Atan2(toTarget.Y, toTarget.X);
-            RotateTowards(desiredAngle, 12.5 * SpeedMultiplier, dt);
+            RotateTowards(desiredAngle, SpiderTuning.DefaultTurnSpeed * SpeedMultiplier, dt);
 
             Vector dir = toTarget / dist;
             double step = Math.Min(dist, effectiveSpeed * dt);
@@ -229,7 +230,7 @@ namespace SpiderDesk.Domain.Spider
 
         private BugEntity? FindPrey(WorldContext world)
         {
-            const double encounterRadiusSq = 52.0 * 52.0;
+            const double encounterRadiusSq = SpiderTuning.DesktopEncounterRadius * SpiderTuning.DesktopEncounterRadius;
             BugEntity? nearestEncounter = null;
             double bestEncounterDistSq = encounterRadiusSq;
 

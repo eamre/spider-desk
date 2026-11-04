@@ -1,11 +1,12 @@
 using System.Windows;
+using SpiderDesk.Core;
 using SpiderDesk.Domain.Insects;
 using SpiderDesk.Domain.Insects.Species;
 using SpiderDesk.Domain.Spider;
 using SpiderDesk.Domain.Spider.States;
 using SpiderDesk.Domain.Spider.Themes;
 
-namespace SpiderDesk.Core
+namespace SpiderDesk.Domain
 {
     /// <summary>
     /// Simülasyon döngüsünü, ortam zamanını (IEnvironmentService) ve kalıcı kullanıcı ayarlarını koordine eder (SRP & DIP).

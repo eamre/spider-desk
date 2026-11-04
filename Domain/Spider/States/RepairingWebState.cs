@@ -1,4 +1,3 @@
-using SpiderDesk.Core;
 using SpiderDesk.Domain.Web;
 
 namespace SpiderDesk.Domain.Spider.States
@@ -49,7 +48,7 @@ namespace SpiderDesk.Domain.Spider.States
             if (!_atSegmentStart)
             {
                 spider.ActiveSilkLine = null;
-                if (spider.MoveTowards(_targetSegment.Start, 185.0, dt))
+                if (spider.MoveTowards(_targetSegment.Start, SpiderTuning.RepairWalkSpeed, dt))
                 {
                     _atSegmentStart = true;
                 }
@@ -59,7 +58,7 @@ namespace SpiderDesk.Domain.Spider.States
             // 2. Başlangıç düğümünden bitiş düğümüne ip çekerek yürü ve teli onar
             spider.ActiveSilkLine = (_targetSegment.Start, spider.GetSpinneretPosition());
 
-            if (spider.MoveTowards(_targetSegment.End, 200.0, dt))
+            if (spider.MoveTowards(_targetSegment.End, SpiderTuning.RepairSpinSpeed, dt))
             {
                 _web.CompletedSegments.Add(_targetSegment);
                 spider.ActiveSilkLine = null;

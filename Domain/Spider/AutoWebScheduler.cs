@@ -1,4 +1,3 @@
-using SpiderDesk.Core;
 using SpiderDesk.Domain.Spider.States;
 
 namespace SpiderDesk.Domain.Spider

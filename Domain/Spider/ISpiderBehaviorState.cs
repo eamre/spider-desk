@@ -1,6 +1,4 @@
-using SpiderDesk.Domain.Spider;
-
-namespace SpiderDesk.Core
+namespace SpiderDesk.Domain.Spider
 {
     /// <summary>
     /// Örümcek davranış durumu arayüzü. Her durum kendi kesilebilirlik ve animasyon

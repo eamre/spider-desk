@@ -1,4 +1,3 @@
-using SpiderDesk.Core;
 using SpiderDesk.Domain.Web;
 
 namespace SpiderDesk.Domain.Spider.States
@@ -34,19 +33,19 @@ namespace SpiderDesk.Domain.Spider.States
         {
             if (!_reachedCocoon)
             {
-                if (spider.MoveTowards(_cocoon.Position, 170.0, dt, stopDistance: 12.0))
+                if (spider.MoveTowards(_cocoon.Position, SpiderTuning.EatMoveSpeed, dt, stopDistance: 12.0))
                 {
                     _reachedCocoon = true;
                 }
                 return;
             }
 
-            // Kozayı tüket ve enerjini doldur (+%25 tokluk)
-            _cocoon.ConsumeProgress += dt * 0.65;
+            // Kozayı tüket ve enerjini doldur
+            _cocoon.ConsumeProgress += dt * SpiderTuning.CocoonConsumeRate;
             if (_cocoon.ConsumeProgress >= 1.0)
             {
                 _web.Pantry.RemoveCocoon(_cocoon);
-                spider.Metabolism.Feed(25.0);
+                spider.Metabolism.Feed(SpiderTuning.PreyNutrition);
 
                 // Hâlâ tam doymadıysa (%75'in altındaysa) ve bu ağda veya başka bir ağda koza varsa yemeye devam et!
                 if (!spider.Metabolism.IsFull)

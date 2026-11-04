@@ -1,5 +1,4 @@
 using System.Windows;
-using SpiderDesk.Core;
 
 namespace SpiderDesk.Domain.Insects.States
 {

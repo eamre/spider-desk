@@ -3,9 +3,11 @@ using System.Diagnostics;
 using System.Runtime;
 using System.Runtime.InteropServices;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
 using SpiderDesk.Core;
+using SpiderDesk.Domain;
 using SpiderDesk.Domain.Insects.Species;
 using SpiderDesk.Infrastructure;
 using SpiderDesk.Rendering;
@@ -13,7 +15,7 @@ using SpiderDesk.Rendering;
 namespace SpiderDesk
 {
     /// <summary>
-    /// Uygulamanın Composition Root (Bağımlılık Enjeksiyonu Başlangıç Noktası) sınıfı.
+    /// Uygulamanın Composition Root (Bağımlılık Enjeksiyonu Başlangıç Noktası) ve global hata yakalama sınıfı.
     /// </summary>
     public partial class App : Application
     {
@@ -22,9 +24,12 @@ namespace SpiderDesk
 
         private Mutex? _singleInstanceMutex;
         private bool _ownsMutex;
+        private OverlaySessionController? _sessionController;
 
         protected override void OnStartup(StartupEventArgs e)
         {
+            RegisterGlobalExceptionHandlers();
+
             _singleInstanceMutex = new Mutex(true, "SpiderDesk_SingleInstance_Mutex", out _ownsMutex);
             if (!_ownsMutex)
             {
@@ -68,7 +73,9 @@ namespace SpiderDesk
                 initialStartupEnabled: startupService.IsEnabled()
             );
 
-            var mainWindow = new MainWindow(
+            var mainWindow = new MainWindow(canvas, windowLayerService);
+            _sessionController = new OverlaySessionController(
+                mainWindow,
                 engine,
                 canvas,
                 webRenderer,
@@ -77,8 +84,37 @@ namespace SpiderDesk
                 startupService,
                 trayMenuService
             );
+
+            mainWindow.Closed += (_, _) => _sessionController.Dispose();
             mainWindow.Show();
+            _sessionController.Start();
+
             SchedulePostStartupMemoryTrim();
+        }
+
+        private void RegisterGlobalExceptionHandlers()
+        {
+            DispatcherUnhandledException += (_, args) =>
+            {
+                AppDiagnostics.LogError("DispatcherUnhandledException", args.Exception);
+                // Şeffaf masaüstü katmanında geçici bir çizim/Win32 hatası olduğunda uygulamanın
+                // sessizce çökmesini önle; hatayı logla ve döngüye devam et.
+                args.Handled = true;
+            };
+
+            AppDomain.CurrentDomain.UnhandledException += (_, args) =>
+            {
+                if (args.ExceptionObject is Exception ex)
+                {
+                    AppDiagnostics.LogError("AppDomain.UnhandledException", ex);
+                }
+            };
+
+            TaskScheduler.UnobservedTaskException += (_, args) =>
+            {
+                AppDiagnostics.LogError("TaskScheduler.UnobservedTaskException", args.Exception);
+                args.SetObserved();
+            };
         }
 
         private static void SchedulePostStartupMemoryTrim()
@@ -98,9 +134,9 @@ namespace SpiderDesk
                     GC.WaitForPendingFinalizers();
                     EmptyWorkingSet(Process.GetCurrentProcess().Handle);
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // Bellek sıkıştırma isteğe bağlıdır
+                    AppDiagnostics.LogWarning("MemoryTrim", ex.Message);
                 }
             };
 
@@ -109,6 +145,7 @@ namespace SpiderDesk
 
         protected override void OnExit(ExitEventArgs e)
         {
+            _sessionController?.Dispose();
             if (_ownsMutex)
             {
                 _singleInstanceMutex?.ReleaseMutex();

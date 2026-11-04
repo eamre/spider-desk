@@ -1,6 +1,5 @@
 using System;
 using System.Linq;
-using SpiderDesk.Core;
 using SpiderDesk.Domain.Insects;
 using SpiderDesk.Domain.Insects.States;
 using SpiderDesk.Domain.Web;
@@ -35,9 +34,11 @@ namespace SpiderDesk.Domain.Spider.States
 
         public void Update(SpiderEntity spider, WorldContext world, double dt)
         {
+            const double maxWildChaseDistSq = SpiderTuning.WildBugMaxChaseDistance * SpiderTuning.WildBugMaxChaseDistance;
+
             bool isTrapped = _targetBug.CurrentState.Status == BugLifecycleStatus.TrappedInWeb;
             bool isReachableWildBug = _targetBug.CurrentState.Status == BugLifecycleStatus.ActiveInWorld &&
-                                      (_targetBug.Position - spider.Position).LengthSquared <= 135.0 * 135.0;
+                                      (_targetBug.Position - spider.Position).LengthSquared <= maxWildChaseDistSq;
 
             // Eğer böcek yenildiyse, güçlü bir böcek olup ağdan kurtulduysa veya masaüstünde biz yetişemeden uzağa uçtuysa:
             if (_targetBug.IsEaten || (!_isWrapping && !isTrapped && !isReachableWildBug))
@@ -48,8 +49,8 @@ namespace SpiderDesk.Domain.Spider.States
 
             if (!_isWrapping)
             {
-                double chaseSpeed = isTrapped ? 260.0 : 310.0;
-                double catchDistance = isTrapped ? 14.0 : 18.0;
+                double chaseSpeed = isTrapped ? SpiderTuning.ChaseTrappedBugSpeed : SpiderTuning.ChaseWildBugSpeed;
+                double catchDistance = isTrapped ? SpiderTuning.TrappedCatchStopDistance : SpiderTuning.WildCatchStopDistance;
                 if (spider.MoveTowards(_targetBug.Position, chaseSpeed, dt, stopDistance: catchDistance))
                 {
                     _isWrapping = true;
@@ -59,7 +60,7 @@ namespace SpiderDesk.Domain.Spider.States
             else
             {
                 spider.RotateBy(Math.Sin(_targetBug.WrapProgress * Math.PI * 6) * 4.5 * dt);
-                _targetBug.WrapProgress += dt * 0.85;
+                _targetBug.WrapProgress += dt * SpiderTuning.WrapProgressRate;
                 _targetBug.TrappedWeb?.TriggerVibration(_targetBug.Position, 3.0);
 
                 if (_targetBug.WrapProgress >= 1.0)
@@ -83,7 +84,7 @@ namespace SpiderDesk.Domain.Spider.States
 
                     if (eatOnTheSpot || targetWeb == null)
                     {
-                        spider.Metabolism.Feed(25.0);
+                        spider.Metabolism.Feed(SpiderTuning.PreyNutrition);
                         FinishHunt(spider, world);
                     }
                     else if (!targetWeb.IsCompleted)

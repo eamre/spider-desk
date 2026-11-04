@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
 using SpiderDesk.Core;
@@ -45,7 +44,7 @@ namespace SpiderDesk.Infrastructure
             catch (Exception ex)
             {
                 LastError = ex.Message;
-                Trace.TraceWarning($"[SpiderDesk] Ayar dosyası okunamadı ({_filePath}): {ex.Message}");
+                AppDiagnostics.LogWarning(nameof(JsonSettingsRepository), $"Ayar dosyası okunamadı ({_filePath}): {ex.Message}");
             }
 
             return new UserSettings();
@@ -72,7 +71,7 @@ namespace SpiderDesk.Infrastructure
             catch (Exception ex)
             {
                 LastError = ex.Message;
-                Trace.TraceError($"[SpiderDesk] Ayar dosyası kaydedilemedi ({_filePath}): {ex.Message}");
+                AppDiagnostics.LogError(nameof(JsonSettingsRepository), ex);
                 return false;
             }
         }

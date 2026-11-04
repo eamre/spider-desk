@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics;
 using Microsoft.Win32;
 using SpiderDesk.Core;
@@ -12,15 +13,20 @@ namespace SpiderDesk.Infrastructure
         private const string RunKeyPath = @"Software\Microsoft\Windows\CurrentVersion\Run";
         private const string AppName = "SpiderDesk";
 
+        public string? LastError { get; private set; }
+
         public bool IsEnabled()
         {
             try
             {
                 using RegistryKey? key = Registry.CurrentUser.OpenSubKey(RunKeyPath, false);
+                LastError = null;
                 return key?.GetValue(AppName) != null;
             }
-            catch
+            catch (Exception ex)
             {
+                LastError = ex.Message;
+                AppDiagnostics.LogWarning(nameof(StartupRegistrationService), $"Başlangıç kaydı okunamadı: {ex.Message}");
                 return false;
             }
         }
@@ -30,7 +36,12 @@ namespace SpiderDesk.Infrastructure
             try
             {
                 using RegistryKey? key = Registry.CurrentUser.OpenSubKey(RunKeyPath, true);
-                if (key == null) return;
+                if (key == null)
+                {
+                    LastError = $"Registry anahtarı açılamadı: {RunKeyPath}";
+                    AppDiagnostics.LogWarning(nameof(StartupRegistrationService), LastError);
+                    return;
+                }
 
                 if (enable)
                 {
@@ -44,10 +55,13 @@ namespace SpiderDesk.Infrastructure
                 {
                     key.DeleteValue(AppName, false);
                 }
+
+                LastError = null;
             }
-            catch
+            catch (Exception ex)
             {
-                // Kayıt defteri erişim kısıtlamalarını sessizce geç
+                LastError = ex.Message;
+                AppDiagnostics.LogError(nameof(StartupRegistrationService), ex);
             }
         }
     }

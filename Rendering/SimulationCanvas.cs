@@ -1,5 +1,6 @@
 using System.Windows.Controls;
 using SpiderDesk.Core;
+using SpiderDesk.Domain;
 using SpiderDesk.Domain.Insects;
 using SpiderDesk.Domain.Spider;
 using SpiderDesk.Domain.Web;
