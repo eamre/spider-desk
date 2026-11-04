@@ -26,6 +26,7 @@ namespace SpiderDesk.Domain.Spider.States
         private double _hangTimer;
 
         public string DisplayName => "İple Sarkıyor";
+        public bool CanBeStartledByCursor => false;
 
         public void Enter(SpiderEntity spider, WorldContext world)
         {

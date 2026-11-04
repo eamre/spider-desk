@@ -1,5 +1,4 @@
-using System.Windows;
-using System.Windows.Media;
+using System.Windows.Controls;
 using SpiderDesk.Core;
 using SpiderDesk.Domain.Insects;
 using SpiderDesk.Domain.Spider;
@@ -8,15 +7,13 @@ using SpiderDesk.Domain.Web;
 namespace SpiderDesk.Rendering
 {
     /// <summary>
-    /// Simülasyon dünyasını kendisine enjekte edilen IRenderer uygulamalarıyla çizer (DIP & SRP).
+    /// Durağan ağ katmanı (WebLayerCanvas) ile hareketli karakter katmanını (ActorLayerCanvas)
+    /// bir araya getiren ana görsel bileşen. Her katman yalnızca kendi verisi değiştiğinde güncellenir.
     /// </summary>
-    public class SimulationCanvas : FrameworkElement
+    public class SimulationCanvas : Grid
     {
-        private readonly WorldContext _world;
-        private readonly SpiderEntity _spider;
-        private readonly IRenderer<SpiderWebEntity> _webRenderer;
-        private readonly IRenderer<BugEntity> _bugRenderer;
-        private readonly IRenderer<SpiderEntity> _spiderRenderer;
+        private readonly WebLayerCanvas _webLayer;
+        private readonly ActorLayerCanvas _actorLayer;
 
         public SimulationCanvas(
             WorldContext world,
@@ -26,28 +23,18 @@ namespace SpiderDesk.Rendering
             IRenderer<SpiderEntity> spiderRenderer)
         {
             IsHitTestVisible = false;
-            _world = world;
-            _spider = spider;
-            _webRenderer = webRenderer;
-            _bugRenderer = bugRenderer;
-            _spiderRenderer = spiderRenderer;
+
+            _webLayer = new WebLayerCanvas(world, webRenderer);
+            _actorLayer = new ActorLayerCanvas(world, spider, bugRenderer, spiderRenderer);
+
+            Children.Add(_webLayer);
+            Children.Add(_actorLayer);
         }
 
-        protected override void OnRender(DrawingContext dc)
+        public void RefreshLayers(bool forceAll = false)
         {
-            base.OnRender(dc);
-
-            foreach (var web in _world.Webs)
-            {
-                _webRenderer.Render(dc, web);
-            }
-
-            foreach (var bug in _world.Bugs)
-            {
-                _bugRenderer.Render(dc, bug);
-            }
-
-            _spiderRenderer.Render(dc, _spider);
+            _webLayer.RefreshIfNeeded(forceAll);
+            _actorLayer.RefreshIfNeeded(forceAll);
         }
     }
 }

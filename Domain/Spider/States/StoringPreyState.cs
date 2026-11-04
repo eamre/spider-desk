@@ -16,6 +16,8 @@ namespace SpiderDesk.Domain.Spider.States
         private Point _storageTarget;
 
         public string DisplayName => "Avı Kilere Taşıyor";
+        public bool CanHuntPrey => false;
+        public bool CanEatFromPantry => false;
 
         public StoringPreyState(SpiderWebEntity web, double cocoonSize, ISpiderBehaviorState returnState)
         {

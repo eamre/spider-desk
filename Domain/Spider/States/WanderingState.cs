@@ -14,6 +14,8 @@ namespace SpiderDesk.Domain.Spider.States
         private double _timer;
 
         public string DisplayName => "Geziniyor";
+        public bool CanStartScheduledWeb => true;
+        public bool IsAlwaysAnimating => false;
 
         public void Enter(SpiderEntity spider, WorldContext world)
         {

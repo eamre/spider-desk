@@ -15,6 +15,8 @@ namespace SpiderDesk.Domain.Spider.States
         private double _patrolTimer;
 
         public string DisplayName => "Ağda Nöbette";
+        public bool CanStartScheduledWeb => true;
+        public bool IsAlwaysAnimating => false;
 
         public WaitingOnWebState(SpiderWebEntity web)
         {

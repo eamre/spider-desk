@@ -17,6 +17,9 @@ namespace SpiderDesk.Domain.Spider.States
         private bool _isWrapping;
 
         public string DisplayName => _isWrapping ? "Avı İpekle Sarıyor" : "Avlanıyor!";
+        public bool CanBeStartledByCursor => false;
+        public bool CanHuntPrey => false;
+        public bool CanEatFromPantry => false;
 
         public HuntingState(BugEntity targetBug, ISpiderBehaviorState previousState)
         {

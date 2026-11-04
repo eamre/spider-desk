@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using System.Windows;
 using SpiderDesk.Core;
 using SpiderDesk.Domain.Insects;
@@ -10,11 +9,13 @@ using SpiderDesk.Domain.Web;
 namespace SpiderDesk.Domain.Spider
 {
     /// <summary>
-    /// Örümceğin fiziksel konumunu, hareketini, seviyesini ve aktif davranış durumunu (State Pattern) yönetir.
+    /// Örümceğin fiziksel konumunu, hareketini, seviyesini ve aktif davranış durumunu yönetir.
+    /// Durum geçiş izinleri ISpiderBehaviorState üzerinden okunur, otomatik ağ takvimi AutoWebScheduler tarafından yönetilir.
     /// </summary>
     public class SpiderEntity
     {
         private readonly SpiderGaitController _gaitController;
+        private readonly AutoWebScheduler _autoWebScheduler = new();
 
         public Point Position { get; private set; }
         public double Angle { get; private set; }
@@ -31,8 +32,6 @@ namespace SpiderDesk.Domain.Spider
         public Point? DraglineAnchor { get; set; }
         public double? CarriedCocoonSize { get; set; }
 
-        public const int MaxAutoWebs = 5;
-
         public int BugsCaught { get; private set; }
         public int Level => 1 + (BugsCaught / 5);
         public double SpeedMultiplier { get; set; } = 1.0;
@@ -42,12 +41,7 @@ namespace SpiderDesk.Domain.Spider
         {
             get
             {
-                if (CurrentSpeed > 0.05 || ActiveSilkLine != null || DraglineAnchor != null)
-                {
-                    return true;
-                }
-
-                if (CurrentState is SpinningWebState or HuntingState or ShakingWebState or EatingFromPantryState or RappellingState or RepairingWebState or StoringPreyState or StartledByMouseState)
+                if (CurrentSpeed > 0.05 || ActiveSilkLine != null || DraglineAnchor != null || CurrentState.IsAlwaysAnimating)
                 {
                     return true;
                 }
@@ -60,9 +54,6 @@ namespace SpiderDesk.Domain.Spider
                 return false;
             }
         }
-
-        private double _autoWebTimer;
-        private int _scheduledForWebCount;
 
         public event Action<int>? PreyCaught;
 
@@ -84,7 +75,6 @@ namespace SpiderDesk.Domain.Spider
 
         public void RequestNewWeb(WorldContext world)
         {
-            // Eğer şu an zaten bir ağ örüyorsa (veya yarım kalan bir ağı varsa), önce onu bitirmesi için sıraya al
             if (CurrentState is SpinningWebState || (ActiveWeb != null && !ActiveWeb.IsCompleted))
             {
                 PendingWebRequests++;
@@ -107,8 +97,7 @@ namespace SpiderDesk.Domain.Spider
         public void ClearPendingWebRequests()
         {
             PendingWebRequests = 0;
-            _scheduledForWebCount = 0;
-            _autoWebTimer = 0;
+            _autoWebScheduler.Reset();
         }
 
         public void TransitionTo(ISpiderBehaviorState nextState, WorldContext world)
@@ -120,7 +109,7 @@ namespace SpiderDesk.Domain.Spider
 
         public void RequestRappel(WorldContext world)
         {
-            if (CurrentState is SpinningWebState) return;
+            if (!CurrentState.CanBeStartledByCursor) return;
             TransitionTo(new RappellingState(), world);
         }
 
@@ -128,22 +117,18 @@ namespace SpiderDesk.Domain.Spider
         {
             VelocityVector = new Vector(0, 0);
 
-            // 1. Fare İle Ürkütme Sensörü: Fare örümceğin üzerine hızla gelirse kaç!
             if (ShouldFleeFromCursor(world))
             {
                 TransitionTo(new StartledByMouseState(CurrentState), world);
             }
-            // 2. Av ve Açlık Sensörü:
-            else if (CurrentState is not HuntingState and not StartledByMouseState and not StoringPreyState and not EatingFromPantryState)
+            else
             {
-                BugEntity? targetBug = FindPrey(world);
+                BugEntity? targetBug = CurrentState.CanHuntPrey ? FindPrey(world) : null;
                 if (targetBug != null)
                 {
                     TransitionTo(new HuntingState(targetBug, CurrentState), world);
                 }
-                // 3. Açlık Sensörü: Tokluk %50 ve altına indiğinde önce bulunduğu ağdaki kozaları,
-                // o ağda koza yoksa diğer ağdaki kozaları yemeye gider!
-                else if (Metabolism.IsHungry && CurrentState is not SpinningWebState)
+                else if (Metabolism.IsHungry && CurrentState.CanEatFromPantry)
                 {
                     SpiderWebEntity? webWithFood = FindWebWithStoredFood(world);
                     if (webWithFood?.Pantry.PeekNextMeal() is { } storedCocoon)
@@ -154,58 +139,14 @@ namespace SpiderDesk.Domain.Spider
             }
 
             CurrentState.Update(this, world, dt);
-            UpdateAutoWebSchedule(world, dt);
+            _autoWebScheduler.Update(this, world, dt);
             Metabolism.Update(dt, CurrentSpeed);
             _gaitController.UpdateGait(this, dt);
         }
 
-        private void UpdateAutoWebSchedule(WorldContext world, double dt)
-        {
-            int webCount = world.Webs.Count;
-            if (webCount == 0)
-            {
-                _scheduledForWebCount = 0;
-                _autoWebTimer = 0;
-                return;
-            }
-
-            if (webCount >= MaxAutoWebs ||
-                CurrentState is SpinningWebState ||
-                PendingWebRequests > 0)
-            {
-                return;
-            }
-
-            for (int i = 0; i < webCount; i++)
-            {
-                if (!world.Webs[i].IsCompleted) return;
-            }
-
-            if (_scheduledForWebCount != webCount)
-            {
-                _scheduledForWebCount = webCount;
-                _autoWebTimer = webCount switch
-                {
-                    1 => 2.5,      // Önce 2 ağ örülsün: 1. ağ biter bitmez (2.5 sn sonra) 2. ağa başlar
-                    2 => 300.0,    // 2. ağdan 5 dakika (300 sn) sonra 3. ağ örülsün
-                    3 => 600.0,    // 3. ağdan 10 dakika (600 sn) sonra 4. ağ örülsün
-                    4 => 1800.0,   // 4. ağdan 30 dakika (1800 sn) sonra 5. ağ örülsün
-                    _ => double.MaxValue
-                };
-            }
-
-            _autoWebTimer -= dt;
-            if (_autoWebTimer <= 0 &&
-                CurrentState is WaitingOnWebState or WanderingState or InvestigatingVibrationState)
-            {
-                TransitionTo(SpinningWebState.CreateForBestSite(world), world);
-            }
-        }
-
         private bool ShouldFleeFromCursor(WorldContext world)
         {
-            // Ağ örerken, avlanırken, iple sarkarken veya zaten kaçıyorken bölünmesin
-            if (CurrentState is SpinningWebState or HuntingState or StartledByMouseState or RappellingState)
+            if (!CurrentState.CanBeStartledByCursor)
             {
                 return false;
             }
@@ -262,13 +203,11 @@ namespace SpiderDesk.Domain.Spider
 
         public SpiderWebEntity? FindWebWithStoredFood(WorldContext world)
         {
-            // 1. Öncelik: Örümcek şu an hangi ağda bulunuyorsa ve orada koza varsa önce oradakini seç!
             if (ActiveWeb != null && ActiveWeb.Pantry.HasStoredFood)
             {
                 return ActiveWeb;
             }
 
-            // 2. Bulunduğu ağda koza yoksa, kozası olan en yakın diğer ağa git! (Sıfır LINQ tahsisi)
             SpiderWebEntity? nearest = null;
             double bestDistSq = double.MaxValue;
 
@@ -290,13 +229,6 @@ namespace SpiderDesk.Domain.Spider
 
         private BugEntity? FindPrey(WorldContext world)
         {
-            // Örümcek ağın iplerini aktif olarak örüyorken işini yarım bırakmasın;
-            // ancak ağ öreceği yere doğru henüz yürüyorsa (HasReachedSite == false) yolda denk geldiği böceği yakalayabilir.
-            if (CurrentState is SpinningWebState { HasReachedSite: true })
-            {
-                return null;
-            }
-
             const double encounterRadiusSq = 52.0 * 52.0;
             BugEntity? nearestEncounter = null;
             double bestEncounterDistSq = encounterRadiusSq;

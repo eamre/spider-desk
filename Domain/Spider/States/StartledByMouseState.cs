@@ -15,6 +15,9 @@ namespace SpiderDesk.Domain.Spider.States
         private bool _reachedSafety;
 
         public string DisplayName => "Fareden Ürktü!";
+        public bool CanBeStartledByCursor => false;
+        public bool CanHuntPrey => false;
+        public bool CanEatFromPantry => false;
 
         public StartledByMouseState(ISpiderBehaviorState returnState)
         {

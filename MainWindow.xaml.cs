@@ -27,7 +27,6 @@ namespace SpiderDesk
 
         private bool _isPaused;
         private bool _wasOccluded;
-        private int _lastRenderedRevision = -1;
         private DateTime _lastTick;
 
         public MainWindow(
@@ -96,7 +95,7 @@ namespace SpiderDesk
             {
                 _engine.SetTheme(theme);
                 _webRenderer.ApplyTheme(theme);
-                _canvas.InvalidateVisual();
+                _canvas.RefreshLayers(forceAll: true);
             };
 
             _trayMenuService.SpawnRateSelected += rate => _engine.SetSpawnRate(rate);
@@ -159,19 +158,13 @@ namespace SpiderDesk
                     effectiveCursorSpeed
                 );
 
-                // 1. Tam ekran bir uygulama öndeyken (isOccluded == true):
+                // Tam ekran bir uygulama öndeyken (isOccluded == true):
                 // Simülasyon (ağ örme, avlanma, sayaçlar) arka planda kesintisiz çalışır,
                 // ancak görünmeyen ekranı GPU'ya çizdirmeyerek %0 GPU kullanımı sağlanır.
-                // 2. Masaüstüne dönüldüğü ilk karede (_wasOccluded) veya ekranda aktif hareket varken çizim yapılır.
-                // 3. Sahne tamamen durağansa (örümcek nöbette sabit, böcek yok), yalnızca yeni çiy damlası vb. oluştuğunda çizilir.
-                int currentRevision = _engine.GetStaticSceneRevision();
-                bool shouldRender = !isOccluded &&
-                                    (_wasOccluded || _engine.HasVisualActivity || currentRevision != _lastRenderedRevision);
-
-                if (shouldRender)
+                // Masaüstündeyken ise her katman (WebLayer ve ActorLayer) yalnızca kendi verisi değiştiğinde güncellenir.
+                if (!isOccluded)
                 {
-                    _lastRenderedRevision = currentRevision;
-                    _canvas.InvalidateVisual();
+                    _canvas.RefreshLayers(forceAll: _wasOccluded);
                 }
 
                 _wasOccluded = isOccluded;

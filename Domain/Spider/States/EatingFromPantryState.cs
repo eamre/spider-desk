@@ -14,6 +14,8 @@ namespace SpiderDesk.Domain.Spider.States
         private bool _reachedCocoon;
 
         public string DisplayName => "Kilerden Besleniyor";
+        public bool CanHuntPrey => false;
+        public bool CanEatFromPantry => false;
 
         public EatingFromPantryState(SpiderWebEntity web, StoredCocoon cocoon)
         {
