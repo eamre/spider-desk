@@ -19,7 +19,7 @@ namespace SpiderDesk.Domain.Insects.Species
         public double MinSpeed => 105.0;
         public double MaxSpeed => 185.0;
         public int WebDamageOnImpact => 0;
-        public double EscapeChance => 0.05;
+        public double EscapeChance => 0.0;
         public bool CanPerchOnDesktop => true;
     }
 
@@ -31,8 +31,8 @@ namespace SpiderDesk.Domain.Insects.Species
         public double BaseSize => 5.8;
         public double MinSpeed => 115.0;
         public double MaxSpeed => 200.0;
-        public int WebDamageOnImpact => 1;
-        public double EscapeChance => 0.08;
+        public int WebDamageOnImpact => 0;
+        public double EscapeChance => 0.18;
         public bool CanPerchOnDesktop => true;
     }
 
@@ -44,8 +44,8 @@ namespace SpiderDesk.Domain.Insects.Species
         public double BaseSize => 6.4;
         public double MinSpeed => 95.0;
         public double MaxSpeed => 165.0;
-        public int WebDamageOnImpact => 2;
-        public double EscapeChance => 0.12;
+        public int WebDamageOnImpact => 0;
+        public double EscapeChance => 0.0;
         public bool CanPerchOnDesktop => true;
     }
 
@@ -61,12 +61,12 @@ namespace SpiderDesk.Domain.Insects.Species
         public double MinSpeed => 85.0;
         public double MaxSpeed => 150.0;
         public int WebDamageOnImpact => 0;
-        public double EscapeChance => 0.05;
+        public double EscapeChance => 0.0;
         public bool CanPerchOnDesktop => true;
     }
 
     /// <summary>
-    /// Güçlü İri Böcek / Yaban Arısı: Ağa çarptığında telleri koparır ve yüksek ihtimalle (%35) ağdan kurtulabilir!
+    /// Güçlü İri Böcek / Yaban Arısı: Sadece bu tür ağa çarptığında telleri koparabilir ve ağı yırtıp kurtulabilir!
     /// </summary>
     public sealed class HornetSpecies : IBugSpecies
     {
@@ -76,7 +76,7 @@ namespace SpiderDesk.Domain.Insects.Species
         public double BaseSize => 7.4;
         public double MinSpeed => 125.0;
         public double MaxSpeed => 215.0;
-        public int WebDamageOnImpact => 3;
+        public int WebDamageOnImpact => 2;
         public double EscapeChance => 0.35;
         public bool CanPerchOnDesktop => false;
     }

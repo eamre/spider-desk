@@ -64,15 +64,18 @@ namespace SpiderDesk.Domain.Insects.States
                 _web?.TriggerVibration(bug.Position, 5.5);
             }
 
-            // 2. Güçlü böcekler periyodik olarak ağdan kurtulmayı dener!
+            // 2. Sadece güçlü böcekler (Eşek/Yaban Arısı) periyodik olarak ağdan kurtulmayı dener!
             _escapeTimer -= dt;
             if (_escapeTimer <= 0)
             {
                 _escapeTimer = 3.5 + world.Random.NextDouble() * 1.5;
-                if (world.Random.NextDouble() < bug.Species.EscapeChance)
+                if (bug.Species.EscapeChance > 0 && world.Random.NextDouble() < bug.Species.EscapeChance)
                 {
-                    // Ağı yırtıp kurtuldu!
-                    _web?.DamageNear(_anchor, damageRadius: 32.0, maxBrokenSegments: 2);
+                    // Ağı yırtıp kurtuldu (sadece eşek arısı telleri koparabilir)
+                    if (bug.Species.WebDamageOnImpact > 0)
+                    {
+                        _web?.DamageNear(_anchor, damageRadius: 32.0, maxBrokenSegments: 2);
+                    }
                     FreeBug(bug, world);
                     return;
                 }
