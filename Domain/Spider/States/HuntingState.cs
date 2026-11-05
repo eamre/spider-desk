@@ -99,9 +99,10 @@ namespace SpiderDesk.Domain.Spider.States
                     }
                     else
                     {
-                        ISpiderBehaviorState nextStateAfterStore = _previousState is WanderingState
-                            ? new WaitingOnWebState(targetWeb)
-                            : _previousState;
+                        // Av paketlenip bu ağa asıldıktan sonra eski ağa geri dönülmez; örümcek artık bu ağdadır.
+                        ISpiderBehaviorState nextStateAfterStore = _previousState is SpinningWebState
+                            ? _previousState
+                            : new WaitingOnWebState(targetWeb);
 
                         if (spider.Metabolism.IsHungry && !anyPantryHasFood)
                         {
@@ -124,9 +125,19 @@ namespace SpiderDesk.Domain.Spider.States
         private void FinishHunt(SpiderEntity spider, WorldContext world)
         {
             var trappedWeb = _targetBug.TrappedWeb;
-            if (trappedWeb is { HasDamage: true } && _previousState is not SpinningWebState)
+            if (_previousState is SpinningWebState)
             {
+                spider.TransitionTo(_previousState, world);
+            }
+            else if (trappedWeb is { HasDamage: true })
+            {
+                spider.ActiveWeb = trappedWeb;
                 spider.TransitionTo(new RepairingWebState(trappedWeb), world);
+            }
+            else if (trappedWeb != null)
+            {
+                spider.ActiveWeb = trappedWeb;
+                spider.TransitionTo(new WaitingOnWebState(trappedWeb), world);
             }
             else
             {

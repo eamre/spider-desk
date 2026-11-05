@@ -1,4 +1,5 @@
 using System.Windows;
+using SpiderDesk.Domain.Insects;
 using SpiderDesk.Domain.Web;
 
 namespace SpiderDesk.Domain.Spider.States
@@ -47,11 +48,23 @@ namespace SpiderDesk.Domain.Spider.States
                 _web.Pantry.StoreCocoon(_storageTarget, _cocoonSize, spider.Angle);
                 spider.CarriedCocoonSize = null;
 
-                // 2. Eğer örümcek açsa, önce bulunduğu ağdaki (yoksa diğer ağdaki) eski erzaktan beslenmeye geçer!
-                if (spider.Metabolism.IsHungry)
+                // Ağda şu an çırpınan canlı/yakalanmış başka böcek var mı kontrol et:
+                bool hasLivePreyOnWeb = false;
+                for (int i = 0; i < world.Bugs.Count; i++)
+                {
+                    if (world.Bugs[i].CurrentState.Status == BugLifecycleStatus.TrappedInWeb && world.Bugs[i].TrappedWeb == _web)
+                    {
+                        hasLivePreyOnWeb = true;
+                        break;
+                    }
+                }
+
+                // 2. Eğer ağda başka canlı böcek YOKSA ve örümcek açsa, bulunduğu ağdaki eski erzakla beslensin:
+                // Ağda canlı böcek varken asla yemeye dalmaz; canlı avı kaçırmamak birinci önceliktir.
+                if (!hasLivePreyOnWeb && spider.Metabolism.IsHungry)
                 {
                     var foodWeb = spider.FindWebWithStoredFood(world);
-                    if (foodWeb?.Pantry.PeekNextMeal() is { } nextMeal)
+                    if (foodWeb == _web && foodWeb.Pantry.PeekNextMeal() is { } nextMeal)
                     {
                         spider.TransitionTo(new EatingFromPantryState(foodWeb, nextMeal), world);
                         return;

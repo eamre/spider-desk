@@ -1,5 +1,6 @@
 using System;
 using System.Windows;
+using SpiderDesk.Domain.Insects;
 using SpiderDesk.Domain.Web;
 
 namespace SpiderDesk.Domain.Spider.States
@@ -61,15 +62,23 @@ namespace SpiderDesk.Domain.Spider.States
                 _web.Pantry.RemoveCocoon(_cocoon);
                 spider.Metabolism.Feed(SpiderTuning.PreyNutrition);
 
-                // Hâlâ tam doymadıysa (%75'in altındaysa) ve bu ağda veya başka bir ağda koza varsa yemeye devam et!
-                if (!spider.Metabolism.IsFull)
+                // Ağda şu an çırpınan canlı böcek var mı kontrol et:
+                bool hasLivePreyOnWeb = false;
+                for (int i = 0; i < world.Bugs.Count; i++)
                 {
-                    var nextFoodWeb = spider.FindWebWithStoredFood(world);
-                    if (nextFoodWeb?.Pantry.PeekNextMeal() is { } nextCocoon)
+                    if (world.Bugs[i].CurrentState.Status == BugLifecycleStatus.TrappedInWeb && world.Bugs[i].TrappedWeb == _web)
                     {
-                        spider.TransitionTo(new EatingFromPantryState(nextFoodWeb, nextCocoon), world);
-                        return;
+                        hasLivePreyOnWeb = true;
+                        break;
                     }
+                }
+
+                // Canlı böcek yoksa, hâlâ tam doymadıysa ve BU AĞIN kilerinde başka koza varsa yemeye devam et!
+                // Başka ağa koşmasın, bu ağdaki işini bitirsin.
+                if (!hasLivePreyOnWeb && !spider.Metabolism.IsFull && _web.Pantry.PeekNextMeal() is { } nextCocoon)
+                {
+                    spider.TransitionTo(new EatingFromPantryState(_web, nextCocoon), world);
+                    return;
                 }
 
                 spider.TransitionTo(new WaitingOnWebState(_web), world);
