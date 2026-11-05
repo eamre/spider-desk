@@ -1,5 +1,6 @@
 using System;
 using System.Windows;
+using SpiderDesk.Domain.Insects;
 using SpiderDesk.Domain.Web;
 
 namespace SpiderDesk.Domain.Spider.States
@@ -34,10 +35,35 @@ namespace SpiderDesk.Domain.Spider.States
 
         public void Update(SpiderEntity spider, WorldContext world, double dt)
         {
-            // 1. Ağda kopuk/hasarlı tel varsa öncelikle gidip onu onar!
+            // 1. Bulunduğu ağda kopuk/hasarlı tel varsa öncelikle gidip onu onar!
             if (_web.HasDamage)
             {
                 spider.TransitionTo(new RepairingWebState(_web), world);
+                return;
+            }
+
+            // 1.1. Bulunduğu ağ sağlamsa, dünyadaki diğer tamamlanmış ağlarda hasar var mı kontrol et!
+            // Hasarlı bir ağ varsa hemen oraya yönelip tamire başla.
+            SpiderWebEntity? nearestDamagedWeb = null;
+            double bestDamagedDistSq = double.MaxValue;
+            for (int i = 0; i < world.Webs.Count; i++)
+            {
+                var otherWeb = world.Webs[i];
+                if (otherWeb != _web && otherWeb.IsCompleted && otherWeb.HasDamage)
+                {
+                    double distSq = (otherWeb.Center - spider.Position).LengthSquared;
+                    if (distSq < bestDamagedDistSq)
+                    {
+                        bestDamagedDistSq = distSq;
+                        nearestDamagedWeb = otherWeb;
+                    }
+                }
+            }
+
+            if (nearestDamagedWeb != null)
+            {
+                spider.ActiveWeb = nearestDamagedWeb;
+                spider.TransitionTo(new RepairingWebState(nearestDamagedWeb), world);
                 return;
             }
 
@@ -66,12 +92,22 @@ namespace SpiderDesk.Domain.Spider.States
 
             if (_patrolTimer <= 0)
             {
+                bool hasTrappedOnCurrentWeb = false;
+                for (int i = 0; i < world.Bugs.Count; i++)
+                {
+                    if (world.Bugs[i].CurrentState.Status == BugLifecycleStatus.TrappedInWeb && world.Bugs[i].TrappedWeb == _web)
+                    {
+                        hasTrappedOnCurrentWeb = true;
+                        break;
+                    }
+                }
+
                 double roll = world.Random.NextDouble();
-                if (roll < 0.16)
+                if (!hasTrappedOnCurrentWeb && roll < 0.16)
                 {
                     spider.TransitionTo(new RappellingState(), world);
                 }
-                else if (roll < 0.36)
+                else if (!hasTrappedOnCurrentWeb && roll < 0.36)
                 {
                     spider.TransitionTo(new WanderingState(), world);
                 }

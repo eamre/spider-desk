@@ -28,6 +28,10 @@ namespace SpiderDesk.Domain.Spider.States
 
         public void Enter(SpiderEntity spider, WorldContext world)
         {
+            if (_targetBug.TrappedWeb != null)
+            {
+                spider.ActiveWeb = _targetBug.TrappedWeb;
+            }
             spider.ActiveSilkLine = null;
             spider.DraglineAnchor = spider.Position;
         }

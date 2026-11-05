@@ -80,7 +80,7 @@ namespace SpiderDesk.Domain.Insects.States
                 {
                     if (web.CanCatchPoint(bug.Position))
                     {
-                        double huntDelay = 3.5 + world.Random.NextDouble() * 3.0;
+                        double huntDelay = 1.0 + world.Random.NextDouble() * 1.5;
                         bug.TransitionTo(new TrappedBugState(web, huntDelay), world);
                         return;
                     }

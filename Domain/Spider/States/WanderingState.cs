@@ -26,6 +26,18 @@ namespace SpiderDesk.Domain.Spider.States
         {
             _timer -= dt;
 
+            // Gezinirken herhangi bir ağda hasar oluşursa hemen gidip tamir et!
+            for (int i = 0; i < world.Webs.Count; i++)
+            {
+                var web = world.Webs[i];
+                if (web.IsCompleted && web.HasDamage)
+                {
+                    spider.ActiveWeb = web;
+                    spider.TransitionTo(new RepairingWebState(web), world);
+                    return;
+                }
+            }
+
             if (world.Webs.Count == 0 && _timer <= 0)
             {
                 spider.TransitionTo(SpinningWebState.CreateForBestSite(world), world);

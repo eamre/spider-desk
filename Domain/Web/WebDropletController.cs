@@ -125,6 +125,32 @@ namespace SpiderDesk.Domain.Web
             Revision++;
         }
 
+        /// <summary>
+        /// Bir tel koptuğunda (fare yırtması veya böcek darbesi):
+        /// Bu tele tutunmuş olan çiy damlalarını serbest bırakıp aşağı düşürür,
+        /// kopan telden sonraki damlaların indeks kaymasını düzeltir.
+        /// </summary>
+        public void OnSegmentBroken(int brokenSegmentIndex, IReadOnlyList<WebSegment> segments, Point webCenter, Random rng)
+        {
+            for (int i = _attachedDroplets.Count - 1; i >= 0; i--)
+            {
+                var drop = _attachedDroplets[i];
+                if (drop.SegmentIndex == brokenSegmentIndex)
+                {
+                    Point worldPos = CalculateDropletWorldPosition(drop, segments, webCenter);
+                    double initialVy = 35.0 + rng.NextDouble() * 55.0;
+                    drop.Detach(worldPos, initialVy);
+                    _fallingDroplets.Add(drop);
+                    _attachedDroplets.RemoveAt(i);
+                }
+                else if (drop.SegmentIndex > brokenSegmentIndex)
+                {
+                    drop.SegmentIndex--;
+                }
+            }
+            Revision++;
+        }
+
         private void SpawnDropletOnRandomSegment(IReadOnlyList<WebSegment> segments, Random rng, double initialRadius = 2.0)
         {
             for (int attempt = 0; attempt < 10; attempt++)

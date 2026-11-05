@@ -234,27 +234,74 @@ namespace SpiderDesk.Domain.Spider
             BugEntity? nearestEncounter = null;
             double bestEncounterDistSq = encounterRadiusSq;
 
-            BugEntity? nearestTrapped = null;
-            double bestTrappedDistSq = double.MaxValue;
+            // 1. Masaüstünde örümceğin hemen yanından geçen vahşi böceğe refleksle saldır
+            for (int i = 0; i < world.Bugs.Count; i++)
+            {
+                var bug = world.Bugs[i];
+                if (bug.CurrentState.Status == BugLifecycleStatus.ActiveInWorld)
+                {
+                    double distSq = (bug.Position - Position).LengthSquared;
+                    if (distSq <= bestEncounterDistSq)
+                    {
+                        bestEncounterDistSq = distSq;
+                        nearestEncounter = bug;
+                    }
+                }
+            }
+
+            if (nearestEncounter != null)
+            {
+                return nearestEncounter;
+            }
+
+            // 2. Örümcek şu an bir ağın üzerindeyse (ActiveWeb != null):
+            // ÖNCELİKLE bulunduğu ağdaki çırpınan tüm böcekleri temizle!
+            // Kendi ağındaki tüm avları bitirmeden asla ekranın diğer ucundaki başka bir ağa gitmez.
+            if (ActiveWeb != null)
+            {
+                BugEntity? nearestHomeTrapped = null;
+                double bestHomeDistSq = double.MaxValue;
+
+                for (int i = 0; i < world.Bugs.Count; i++)
+                {
+                    var bug = world.Bugs[i];
+                    if (bug.CurrentState.Status == BugLifecycleStatus.TrappedInWeb && bug.TrappedWeb == ActiveWeb)
+                    {
+                        double distSq = (bug.Position - Position).LengthSquared;
+                        if (distSq < bestHomeDistSq)
+                        {
+                            bestHomeDistSq = distSq;
+                            nearestHomeTrapped = bug;
+                        }
+                    }
+                }
+
+                if (nearestHomeTrapped != null)
+                {
+                    return nearestHomeTrapped;
+                }
+            }
+
+            // 3. Bulunduğu ağda hiç böcek kalmadıysa (veya örümcek masaüstünde geziyorsa):
+            // Diğer ağlara takılmış ve avlanmaya hazır böceklerden en yakındakine git!
+            BugEntity? nearestOtherTrapped = null;
+            double bestOtherDistSq = double.MaxValue;
 
             for (int i = 0; i < world.Bugs.Count; i++)
             {
                 var bug = world.Bugs[i];
-                double distSq = (bug.Position - Position).LengthSquared;
-
-                if (bug.CurrentState.Status == BugLifecycleStatus.ActiveInWorld && distSq <= bestEncounterDistSq)
+                if (bug.IsReadyToBeHunted)
                 {
-                    bestEncounterDistSq = distSq;
-                    nearestEncounter = bug;
-                }
-                else if (bug.IsReadyToBeHunted && distSq < bestTrappedDistSq)
-                {
-                    bestTrappedDistSq = distSq;
-                    nearestTrapped = bug;
+                    double distSq = (bug.Position - Position).LengthSquared;
+                    if (distSq < bestOtherDistSq)
+                    {
+                        bestOtherDistSq = distSq;
+                        nearestOtherTrapped = bug;
+                    }
                 }
             }
 
-            return nearestEncounter ?? nearestTrapped;
+            return nearestOtherTrapped;
         }
 
         private static double NormalizeAngle(double angle)

@@ -7,7 +7,7 @@ namespace SpiderDesk.Domain.Web
     /// </summary>
     public class WaterDroplet
     {
-        public int SegmentIndex { get; }
+        public int SegmentIndex { get; set; }
         public double NormalizedT { get; } // Tel üzerindeki konumu (0.2 .. 0.8)
         public double Radius { get; private set; }
         public bool IsFalling { get; private set; }

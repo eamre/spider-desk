@@ -97,6 +97,9 @@ namespace SpiderDesk.Domain.Web
 
                 if (DistanceToSegmentSquared(impactPoint, seg.Start, seg.End) <= radiusSq)
                 {
+                    // Tel kopmadan önce üzerindeki çiy damlası varsa onu serbest bırakıp düşür!
+                    Droplets.OnSegmentBroken(i, CompletedSegments, Center, new Random());
+
                     CompletedSegments.RemoveAt(i);
                     DamagedSegments.Enqueue(seg);
                     brokenCount++;
