@@ -13,9 +13,6 @@ namespace SpiderDesk.Infrastructure
     /// </summary>
     public sealed class OverlaySessionController : IDisposable
     {
-        private static readonly TimeSpan ActiveFrameInterval = TimeSpan.FromMilliseconds(16);  // 60 FPS (Hareket varken)
-        private static readonly TimeSpan IdleFrameInterval = TimeSpan.FromMilliseconds(50);    // 20 Hz (Sahne tamamen durağanken veya arka plandayken)
-
         private readonly Window _hostWindow;
         private readonly SimulationEngine _engine;
         private readonly SimulationCanvas _canvas;
@@ -55,7 +52,7 @@ namespace SpiderDesk.Infrastructure
             _lastTick = DateTime.Now;
             _timer = new DispatcherTimer(DispatcherPriority.Render)
             {
-                Interval = ActiveFrameInterval
+                Interval = FrameRatePolicy.ActiveFrameInterval
             };
             _timer.Tick += OnFrameTick;
         }
@@ -110,18 +107,26 @@ namespace SpiderDesk.Infrastructure
             _lastTick = now;
 
             _windowLayerService.EnforceZOrder();
-            UpdateAdaptiveFrameRate();
 
-            if (_isPaused)
+            bool isInteractive = _windowLayerService.IsOverlayInteractive;
+            bool isOccluded = _windowLayerService.IsDesktopOccluded;
+            bool hasActivity = _engine.HasVisualActivity;
+
+            // Kare hızı ve render kararlarını saf kural sınıfına (FrameRatePolicy) devret (SRP)
+            var decision = FrameRatePolicy.Decide(_isPaused, isOccluded, hasActivity);
+
+            if (_timer.Interval != decision.TargetInterval)
+            {
+                _timer.Interval = decision.TargetInterval;
+            }
+
+            if (!decision.ShouldUpdateEngine)
             {
                 return;
             }
 
             double width = _hostWindow.ActualWidth > 100 ? _hostWindow.ActualWidth : SystemParameters.PrimaryScreenWidth;
             double height = _hostWindow.ActualHeight > 100 ? _hostWindow.ActualHeight : SystemParameters.PrimaryScreenHeight;
-
-            bool isInteractive = _windowLayerService.IsOverlayInteractive;
-            bool isOccluded = _windowLayerService.IsDesktopOccluded;
 
             if (isInteractive)
             {
@@ -141,10 +146,10 @@ namespace SpiderDesk.Infrastructure
                 effectiveCursorSpeed
             );
 
-            // Tam ekran bir uygulama öndeyken (isOccluded == true):
+            // Tam ekran bir uygulama öndeyken veya render kapalıyken:
             // Simülasyon (ağ örme, avlanma, sayaçlar) arka planda kesintisiz çalışır,
             // ancak görünmeyen ekranı GPU'ya çizdirmeyerek %0 GPU kullanımı sağlanır.
-            if (!isOccluded)
+            if (decision.ShouldRenderCanvas)
             {
                 _canvas.RefreshLayers(forceAll: _wasOccluded);
             }
@@ -157,17 +162,6 @@ namespace SpiderDesk.Infrastructure
                 _engine.Spider.CurrentState.DisplayName,
                 _engine.Spider.BugsCaught
             );
-        }
-
-        private void UpdateAdaptiveFrameRate()
-        {
-            bool needsHighFps = !_windowLayerService.IsDesktopOccluded && _engine.HasVisualActivity;
-            TimeSpan desiredInterval = needsHighFps ? ActiveFrameInterval : IdleFrameInterval;
-
-            if (_timer.Interval != desiredInterval)
-            {
-                _timer.Interval = desiredInterval;
-            }
         }
 
         public void Dispose()

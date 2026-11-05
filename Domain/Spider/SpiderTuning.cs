@@ -71,5 +71,37 @@ namespace SpiderDesk.Domain.Spider
         public const double WebCursorTearSpeed = 1350.0;
         public const double WebCursorDamageRadius = 28.0;
         public const double WebPluckCooldownSeconds = 0.25;
+
+        // Ağ Nöbeti ve Devriye (WaitingOnWebState)
+        public const double WebPatrolInitialDurationBase = 10.0;
+        public const double WebPatrolInitialDurationVariance = 8.0;
+        public const double WebPatrolSubsequentDurationBase = 6.0;
+        public const double WebPatrolSubsequentDurationVariance = 6.0;
+        public const double WebRotationChance = 0.45;
+        public const double WebPatrolRadiusMinRatio = 0.18;
+        public const double WebPatrolRadiusSpanRatio = 0.28;
+        public const double HubApproachStopDistance = 3.5;
+
+        // Kiler ve Erzak Depolama (WebPantryController & WebRenderer)
+        public const double CocoonClearanceDistance = 28.0;
+        public const double CocoonClearanceDistanceSquared = CocoonClearanceDistance * CocoonClearanceDistance;
+        public const double PantryInnerRadiusRatio = 0.36;
+        public const double PantryOuterRadiusSpan = 0.46;
+        public const double CocoonConsumedScaleReduction = 0.85;
+
+        // Çiy Damlası Fiziği (WebDropletController)
+        public const int MaxAttachedDropletsPerWeb = 12;
+        public const double MaxDropletSag = 14.0;
+        public const double DropletSagMultiplier = 2.4;
+        public const double InitialDropletRadiusBase = 2.8;
+        public const double InitialDropletRadiusVariance = 0.9;
+
+        // Rüzgar Esintisi Fiziği (SpiderWebEntity)
+        public const double BreezeCooldownBase = 22.0;
+        public const double BreezeCooldownVariance = 28.0;
+        public const double BreezeDurationBase = 2.2;
+        public const double BreezeDurationVariance = 0.8;
+        public const double BreezeStrengthBase = 3.5;
+        public const double BreezeStrengthVariance = 2.0;
     }
 }

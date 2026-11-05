@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Windows;
 using SpiderDesk.Core;
+using SpiderDesk.Domain.Spider;
 
 namespace SpiderDesk.Domain.Web
 {
@@ -77,9 +78,9 @@ namespace SpiderDesk.Domain.Web
         {
             if (segments.Count == 0) return;
 
-            for (int i = 0; i < count && _attachedDroplets.Count < 12; i++)
+            for (int i = 0; i < count && _attachedDroplets.Count < SpiderTuning.MaxAttachedDropletsPerWeb; i++)
             {
-                SpawnDropletOnRandomSegment(segments, rng, initialRadius: 2.8 + rng.NextDouble() * 0.9);
+                SpawnDropletOnRandomSegment(segments, rng, initialRadius: SpiderTuning.InitialDropletRadiusBase + rng.NextDouble() * SpiderTuning.InitialDropletRadiusVariance);
             }
         }
 
@@ -90,10 +91,10 @@ namespace SpiderDesk.Domain.Web
             {
                 if (_attachedDroplets[i].SegmentIndex == segmentIndex)
                 {
-                    totalSag += _attachedDroplets[i].Radius * 2.4;
+                    totalSag += _attachedDroplets[i].Radius * SpiderTuning.DropletSagMultiplier;
                 }
             }
-            return Math.Min(14.0, totalSag);
+            return Math.Min(SpiderTuning.MaxDropletSag, totalSag);
         }
 
         public Point CalculateDropletWorldPosition(WaterDroplet droplet, IReadOnlyList<WebSegment> segments, Point webCenter)

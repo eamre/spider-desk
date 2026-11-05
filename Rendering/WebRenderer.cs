@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Media;
 using SpiderDesk.Core;
+using SpiderDesk.Domain.Spider;
 using SpiderDesk.Domain.Spider.Themes;
 using SpiderDesk.Domain.Web;
 
@@ -133,7 +134,7 @@ namespace SpiderDesk.Rendering
                     angleOffset = web.BreezeOffset * 0.02 * f;
                 }
 
-                double scale = Math.Max(0.2, 1.0 - cocoon.ConsumeProgress * 0.85);
+                double scale = Math.Max(0.2, 1.0 - cocoon.ConsumeProgress * SpiderTuning.CocoonConsumedScaleReduction);
                 double r = cocoon.Size * 1.15 * scale;
 
                 // Her koza için bağımsız, dondurulmuş (Frozen) matris dönüşümü:

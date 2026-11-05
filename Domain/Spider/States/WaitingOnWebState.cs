@@ -92,10 +92,10 @@ namespace SpiderDesk.Domain.Spider.States
             // 4. Henüz ağın merkezine varmadıysa, önce merkezine doğru yürü
             if (!_reachedHub)
             {
-                if (spider.MoveTowards(_web.HubPosition, SpiderTuning.ApproachHubSpeed, dt, stopDistance: 3.5))
+                if (spider.MoveTowards(_web.HubPosition, SpiderTuning.ApproachHubSpeed, dt, stopDistance: SpiderTuning.HubApproachStopDistance))
                 {
                     _reachedHub = true;
-                    _patrolTimer = 10.0 + world.Random.NextDouble() * 8.0;
+                    _patrolTimer = SpiderTuning.WebPatrolInitialDurationBase + world.Random.NextDouble() * SpiderTuning.WebPatrolInitialDurationVariance;
                 }
                 return;
             }
@@ -120,7 +120,7 @@ namespace SpiderDesk.Domain.Spider.States
                     var otherCompletedWebs = world.Webs.Where(w => w.IsCompleted && w != _web).ToList();
                     double roll = world.Random.NextDouble();
 
-                    if (otherCompletedWebs.Count > 0 && roll < 0.45)
+                    if (otherCompletedWebs.Count > 0 && roll < SpiderTuning.WebRotationChance)
                     {
                         // Diğer bir ağa nöbet rotasyonuna / kontrole git!
                         var nextWeb = otherCompletedWebs[world.Random.Next(otherCompletedWebs.Count)];
@@ -143,13 +143,13 @@ namespace SpiderDesk.Domain.Spider.States
                 // Bu ağ üzerinde devriye gezmeye devam et
                 double span = _web.EndAngle - _web.StartAngle;
                 double angle = _web.StartAngle + span * (0.15 + world.Random.NextDouble() * 0.70);
-                double dist = (0.18 + world.Random.NextDouble() * 0.28) * _web.Radius;
+                double dist = (SpiderTuning.WebPatrolRadiusMinRatio + world.Random.NextDouble() * SpiderTuning.WebPatrolRadiusSpanRatio) * _web.Radius;
 
                 _patrolTarget = new Point(
                     _web.Center.X + Math.Cos(angle) * dist,
                     _web.Center.Y + Math.Sin(angle) * dist
                 );
-                _patrolTimer = 6.0 + world.Random.NextDouble() * 6.0;
+                _patrolTimer = SpiderTuning.WebPatrolSubsequentDurationBase + world.Random.NextDouble() * SpiderTuning.WebPatrolSubsequentDurationVariance;
             }
         }
 

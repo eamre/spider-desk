@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Windows;
+using SpiderDesk.Domain.Spider;
 
 namespace SpiderDesk.Domain.Web
 {
@@ -36,7 +37,7 @@ namespace SpiderDesk.Domain.Web
         public Point PickStoragePoint(Point webCenter, double webRadius, double startAngle, double endAngle, Random rng)
         {
             double span = endAngle - startAngle;
-            const double requiredClearanceSq = 28.0 * 28.0; // Kozalar arasında en az 28 piksel net açıklık
+            double requiredClearanceSq = SpiderTuning.CocoonClearanceDistanceSquared;
 
             Point bestFallbackPoint = new Point(webCenter.X, webCenter.Y);
             double bestMinDistSq = -1.0;
@@ -56,7 +57,7 @@ namespace SpiderDesk.Domain.Web
                 }
 
                 // Tek bir dar çember yerine iç, orta ve dış kiler katmanlarına kademeli dağıt
-                double dist = webRadius * (0.36 + rng.NextDouble() * 0.46);
+                double dist = webRadius * (SpiderTuning.PantryInnerRadiusRatio + rng.NextDouble() * SpiderTuning.PantryOuterRadiusSpan);
                 Point candidate = new Point(
                     webCenter.X + Math.Cos(angle) * dist,
                     webCenter.Y + Math.Sin(angle) * dist

@@ -33,10 +33,10 @@ namespace SpiderDesk.Domain.Web
 
         public double BreezeOffset { get; private set; }
         public Vector BreezeDirection { get; private set; }
-        private double _breezeCooldown = 18.0;
-        private double _breezeDuration = 2.4;
+        private double _breezeCooldown = SpiderTuning.BreezeCooldownBase;
+        private double _breezeDuration = SpiderTuning.BreezeDurationBase;
         private double _breezeElapsedTime = 999.0;
-        private double _breezeMaxStrength = 4.5;
+        private double _breezeMaxStrength = SpiderTuning.BreezeStrengthBase;
 
         public Point? RecentCursorPluckPoint { get; set; }
 
@@ -83,7 +83,7 @@ namespace SpiderDesk.Domain.Web
                 if (progress >= 1.0)
                 {
                     BreezeOffset = 0;
-                    _breezeCooldown = 22.0 + rng.NextDouble() * 28.0; // 22..50 saniye sonra yeni esinti
+                    _breezeCooldown = SpiderTuning.BreezeCooldownBase + rng.NextDouble() * SpiderTuning.BreezeCooldownVariance;
                 }
                 else
                 {
@@ -100,8 +100,8 @@ namespace SpiderDesk.Domain.Web
                 if (_breezeCooldown <= 0)
                 {
                     _breezeElapsedTime = 0;
-                    _breezeDuration = 2.2 + rng.NextDouble() * 0.8;
-                    _breezeMaxStrength = 3.5 + rng.NextDouble() * 2.0; // 3.5 - 5.5 piksel hafif ve zarif esneme
+                    _breezeDuration = SpiderTuning.BreezeDurationBase + rng.NextDouble() * SpiderTuning.BreezeDurationVariance;
+                    _breezeMaxStrength = SpiderTuning.BreezeStrengthBase + rng.NextDouble() * SpiderTuning.BreezeStrengthVariance;
                     double dirX = rng.NextDouble() > 0.5 ? 1.0 : -1.0;
                     double dirY = (rng.NextDouble() - 0.4) * 0.5;
                     Vector dir = new Vector(dirX, dirY);
