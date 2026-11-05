@@ -36,6 +36,7 @@ namespace SpiderDesk
             WindowState = WindowState.Normal;
             Left = 0;
             Top = 0;
+            Icon = new System.Windows.Media.Imaging.BitmapImage(new Uri("pack://application:,,,/spider.ico"));
             Width = SystemParameters.PrimaryScreenWidth;
             // Tam ekran (Maximized / 100% boy) pencereler Windows Explorer'da ABN_FULLSCREENAPP bildirimi
             // tetikleyip masaüstü ikonlarının F5 yapılmış gibi yenilenmesine yol açtığı için 1 piksel kısa tutulur.

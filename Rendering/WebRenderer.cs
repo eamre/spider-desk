@@ -35,9 +35,6 @@ namespace SpiderDesk.Rendering
         private readonly Dictionary<byte, SolidColorBrush> _fallingDropBrushes = new();
         private readonly ConditionalWeakTable<SpiderWebEntity, CachedWebGeometry> _geometryCache = new();
 
-        private readonly TranslateTransform _cocoonTranslate = new();
-        private readonly RotateTransform _cocoonRotate = new();
-
         private Pen _anchorPen = null!;
         private Pen _spiralPen = null!;
 
@@ -112,16 +109,18 @@ namespace SpiderDesk.Rendering
                 double scale = Math.Max(0.2, 1.0 - cocoon.ConsumeProgress * 0.85);
                 double r = cocoon.Size * 1.15 * scale;
 
-                _cocoonTranslate.X = cocoon.Position.X;
-                _cocoonTranslate.Y = cocoon.Position.Y;
-                _cocoonRotate.Angle = cocoon.Angle * 180.0 / Math.PI;
+                // Her koza için bağımsız, dondurulmuş (Frozen) matris dönüşümü:
+                // Paylaşımlı TranslateTransform nesnesi kullanılmadığı için tüm kozalar doğru konumlarında kalır.
+                var matrix = Matrix.Identity;
+                matrix.Rotate(cocoon.Angle * 180.0 / Math.PI);
+                matrix.Translate(cocoon.Position.X, cocoon.Position.Y);
+                var transform = new MatrixTransform(matrix);
+                transform.Freeze();
 
-                dc.PushTransform(_cocoonTranslate);
-                dc.PushTransform(_cocoonRotate);
+                dc.PushTransform(transform);
                 dc.DrawEllipse(_cocoonFillBrush, _cocoonSilkPen, new Point(0, 0), r * 1.2, r * 0.82);
                 dc.DrawLine(_cocoonSilkPen, new Point(-r * 0.7, -r * 0.5), new Point(r * 0.7, r * 0.5));
                 dc.DrawLine(_cocoonSilkPen, new Point(-r * 0.7, r * 0.5), new Point(r * 0.7, -r * 0.5));
-                dc.Pop();
                 dc.Pop();
             }
         }
