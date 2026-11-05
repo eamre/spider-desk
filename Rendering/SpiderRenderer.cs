@@ -16,10 +16,6 @@ namespace SpiderDesk.Rendering
         private readonly Pen _draglinePen = DrawingResources.CreateFrozenPen(Color.FromArgb(75, 240, 248, 255), 0.8);
         private readonly SolidColorBrush _carriedCocoonBrush = DrawingResources.CreateFrozenBrush(Color.FromArgb(235, 245, 250, 255));
 
-        private readonly TranslateTransform _bodyTranslate = new();
-        private readonly RotateTransform _bodyRotate = new();
-        private readonly ScaleTransform _bodyScale = new();
-
         private string _cachedThemeId = string.Empty;
         private Pen _legUpperPen = null!;
         private Pen _legLowerPen = null!;
@@ -65,15 +61,14 @@ namespace SpiderDesk.Rendering
             // 3. Gövde (Seviyeye göre çok hafif olgunlaşma ölçeği)
             double bodyScale = Math.Min(1.25, 1.0 + (spider.Level - 1) * 0.03);
 
-            _bodyTranslate.X = spider.Position.X;
-            _bodyTranslate.Y = spider.Position.Y;
-            _bodyRotate.Angle = spider.Angle * 180.0 / Math.PI;
-            _bodyScale.ScaleX = bodyScale;
-            _bodyScale.ScaleY = bodyScale;
+            var bodyMatrix = Matrix.Identity;
+            bodyMatrix.Scale(bodyScale, bodyScale);
+            bodyMatrix.Rotate(spider.Angle * 180.0 / Math.PI);
+            bodyMatrix.Translate(spider.Position.X, spider.Position.Y);
+            var bodyTransform = new MatrixTransform(bodyMatrix);
+            bodyTransform.Freeze();
 
-            dc.PushTransform(_bodyTranslate);
-            dc.PushTransform(_bodyRotate);
-            dc.PushTransform(_bodyScale);
+            dc.PushTransform(bodyTransform);
 
             dc.DrawEllipse(_thoraxBrush, null, new Point(12, -2.6), 3.2, 1.6);
             dc.DrawEllipse(_thoraxBrush, null, new Point(12, 2.6), 3.2, 1.6);
@@ -95,8 +90,6 @@ namespace SpiderDesk.Rendering
             dc.DrawEllipse(_eyeBrush, null, new Point(8.0, -3.8), 0.9, 0.9);
             dc.DrawEllipse(_eyeBrush, null, new Point(8.0, 3.8), 0.9, 0.9);
 
-            dc.Pop();
-            dc.Pop();
             dc.Pop();
         }
 

@@ -17,19 +17,15 @@ namespace SpiderDesk.Rendering
         private readonly Pen _silkPen = DrawingResources.CreateFrozenPen(Color.FromArgb(220, 255, 255, 255), 1.2);
         private readonly Dictionary<Color, SolidColorBrush> _brushCache = new();
 
-        private readonly TranslateTransform _bugTranslate = new();
-        private readonly RotateTransform _bugRotate = new();
-        private readonly RotateTransform _leftWingRotate = new();
-        private readonly RotateTransform _rightWingRotate = new();
-
         public void Render(DrawingContext dc, BugEntity bug)
         {
-            _bugTranslate.X = bug.Position.X;
-            _bugTranslate.Y = bug.Position.Y;
-            _bugRotate.Angle = bug.Angle * 180.0 / Math.PI;
+            var bugMatrix = Matrix.Identity;
+            bugMatrix.Rotate(bug.Angle * 180.0 / Math.PI);
+            bugMatrix.Translate(bug.Position.X, bug.Position.Y);
+            var bugTransform = new MatrixTransform(bugMatrix);
+            bugTransform.Freeze();
 
-            dc.PushTransform(_bugTranslate);
-            dc.PushTransform(_bugRotate);
+            dc.PushTransform(bugTransform);
 
             // 1. Ateş Böceği (Firefly) Işık Halesi (Bioluminescence)
             if (bug.Species.GlowColor is { } glowColor)
@@ -50,13 +46,19 @@ namespace SpiderDesk.Rendering
             double wingSpread = Math.Sin(bug.WingPhase) * 32.0;
             double baseWingAngle = Math.Abs(bug.WingPhase) < 0.001 ? 14.0 : 35.0;
 
-            _leftWingRotate.Angle = -baseWingAngle - wingSpread;
-            dc.PushTransform(_leftWingRotate);
+            var leftWingMatrix = Matrix.Identity;
+            leftWingMatrix.Rotate(-baseWingAngle - wingSpread);
+            var leftWingTransform = new MatrixTransform(leftWingMatrix);
+            leftWingTransform.Freeze();
+            dc.PushTransform(leftWingTransform);
             dc.DrawEllipse(_wingBrush, null, new Point(-1, -bug.Size * 0.75), bug.Size * 0.9, bug.Size * 0.46);
             dc.Pop();
 
-            _rightWingRotate.Angle = baseWingAngle + wingSpread;
-            dc.PushTransform(_rightWingRotate);
+            var rightWingMatrix = Matrix.Identity;
+            rightWingMatrix.Rotate(baseWingAngle + wingSpread);
+            var rightWingTransform = new MatrixTransform(rightWingMatrix);
+            rightWingTransform.Freeze();
+            dc.PushTransform(rightWingTransform);
             dc.DrawEllipse(_wingBrush, null, new Point(-1, bug.Size * 0.75), bug.Size * 0.9, bug.Size * 0.46);
             dc.Pop();
 
@@ -76,7 +78,6 @@ namespace SpiderDesk.Rendering
                 dc.DrawEllipse(cocoonBrush, _silkPen, new Point(0, 0), r * 1.2, r * 0.85);
             }
 
-            dc.Pop();
             dc.Pop();
         }
 

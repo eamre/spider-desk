@@ -26,6 +26,8 @@ namespace SpiderDesk.Domain.Spider.States
 
         public string DisplayName => "İple Sarkıyor";
         public bool CanBeStartledByCursor => false;
+        public bool CanHuntPrey => false;
+        public bool CanEatFromPantry => false;
 
         public void Enter(SpiderEntity spider, WorldContext world)
         {

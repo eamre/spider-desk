@@ -99,7 +99,14 @@ namespace SpiderDesk.Domain.Spider.States
                             ? new WaitingOnWebState(targetWeb)
                             : _previousState;
 
-                        spider.TransitionTo(new StoringPreyState(targetWeb, _targetBug.Size, nextStateAfterStore), world);
+                        if (spider.Metabolism.IsHungry && !anyPantryHasFood)
+                        {
+                            spider.TransitionTo(new CarryingPreyHomeToEatState(targetWeb, _targetBug.Size, nextStateAfterStore), world);
+                        }
+                        else
+                        {
+                            spider.TransitionTo(new StoringPreyState(targetWeb, _targetBug.Size, nextStateAfterStore), world);
+                        }
                     }
                 }
             }

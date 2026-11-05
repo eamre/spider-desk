@@ -13,6 +13,7 @@ namespace SpiderDesk.Domain.Spider.States
         private bool _atSegmentStart;
 
         public string DisplayName => "Ağı Tamir Ediyor";
+        public bool CanEatFromPantry => false;
 
         public RepairingWebState(SpiderWebEntity web)
         {

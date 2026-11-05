@@ -1,3 +1,5 @@
+using System;
+using System.Windows;
 using SpiderDesk.Domain.Web;
 
 namespace SpiderDesk.Domain.Spider.States
@@ -11,6 +13,7 @@ namespace SpiderDesk.Domain.Spider.States
         private readonly SpiderWebEntity _web;
         private readonly StoredCocoon _cocoon;
         private bool _reachedCocoon;
+        private double _chewPhase;
 
         public string DisplayName => "Kilerden Besleniyor";
         public bool CanHuntPrey => false;
@@ -39,6 +42,17 @@ namespace SpiderDesk.Domain.Spider.States
                 }
                 return;
             }
+
+            // Kozaya doğru dön ve çiğneme animasyonu yap
+            Vector toCocoon = _cocoon.Position - spider.Position;
+            if (toCocoon.Length > 1.0)
+            {
+                double desiredAngle = Math.Atan2(toCocoon.Y, toCocoon.X);
+                spider.RotateTowards(desiredAngle, 10.0, dt);
+            }
+
+            _chewPhase += dt * 14.0;
+            spider.RotateBy(Math.Sin(_chewPhase) * 0.45 * dt);
 
             // Kozayı tüket ve enerjini doldur
             _cocoon.ConsumeProgress += dt * SpiderTuning.CocoonConsumeRate;

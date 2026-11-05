@@ -15,6 +15,9 @@ namespace SpiderDesk.Domain.Spider.States
         private double _shakePhase;
 
         public string DisplayName => "Ağdaki Suları Silkeliyor";
+        public bool CanHuntPrey => false;
+        public bool CanEatFromPantry => false;
+        public bool CanBeStartledByCursor => false;
 
         public ShakingWebState(SpiderWebEntity web)
         {
