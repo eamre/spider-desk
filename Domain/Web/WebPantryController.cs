@@ -36,43 +36,62 @@ namespace SpiderDesk.Domain.Web
         public Point PickStoragePoint(Point webCenter, double webRadius, double startAngle, double endAngle, Random rng)
         {
             double span = endAngle - startAngle;
-            Point bestPoint = new Point(webCenter.X, webCenter.Y);
+            const double requiredClearanceSq = 28.0 * 28.0; // Kozalar arasında en az 28 piksel net açıklık
 
-            for (int attempt = 0; attempt < 10; attempt++)
+            Point bestFallbackPoint = new Point(webCenter.X, webCenter.Y);
+            double bestMinDistSq = -1.0;
+
+            for (int attempt = 0; attempt < 40; attempt++)
             {
                 double angle;
                 if (span >= Math.PI * 1.9)
                 {
-                    // Tam daire ağlarda üst yarıyı tercih et
-                    angle = -Math.PI * (0.22 + rng.NextDouble() * 0.56);
+                    // Tam daire ağlarda üst yarıyı geniş açıyla kullan (-15° .. -165°)
+                    angle = -Math.PI * (0.08 + rng.NextDouble() * 0.84);
                 }
                 else
                 {
-                    // Köşe yelpaze ağlarında yelpazenin iç dilimini (duvarlardan biraz içeriyi) seç
-                    angle = startAngle + span * (0.18 + rng.NextDouble() * 0.64);
+                    // Köşe yelpaze ağlarında duvar kenarlarından emniyetli mesafede geniş yay
+                    angle = startAngle + span * (0.12 + rng.NextDouble() * 0.76);
                 }
 
-                double dist = webRadius * (0.52 + rng.NextDouble() * 0.26);
+                // Tek bir dar çember yerine iç, orta ve dış kiler katmanlarına kademeli dağıt
+                double dist = webRadius * (0.36 + rng.NextDouble() * 0.46);
                 Point candidate = new Point(
                     webCenter.X + Math.Cos(angle) * dist,
                     webCenter.Y + Math.Sin(angle) * dist
                 );
 
-                bool tooClose = false;
+                if (_storedCocoons.Count == 0)
+                {
+                    return candidate;
+                }
+
+                double minDistSq = double.MaxValue;
                 for (int i = 0; i < _storedCocoons.Count; i++)
                 {
-                    if ((_storedCocoons[i].Position - candidate).LengthSquared < 26.0 * 26.0)
+                    double dSq = (_storedCocoons[i].Position - candidate).LengthSquared;
+                    if (dSq < minDistSq)
                     {
-                        tooClose = true;
-                        break;
+                        minDistSq = dSq;
                     }
                 }
 
-                bestPoint = candidate;
-                if (!tooClose) break;
+                // İstenen 28 piksel emniyet mesafesini sağlayan ilk adayı anında seç
+                if (minDistSq >= requiredClearanceSq)
+                {
+                    return candidate;
+                }
+
+                // Çok fazla koza birikmişse, mevcut kozalardan en uzakta kalan (en ferah) noktayı hafızada tut
+                if (minDistSq > bestMinDistSq)
+                {
+                    bestMinDistSq = minDistSq;
+                    bestFallbackPoint = candidate;
+                }
             }
 
-            return bestPoint;
+            return bestFallbackPoint;
         }
 
         public void StoreCocoon(Point position, double size, double angle)
