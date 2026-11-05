@@ -47,9 +47,14 @@ namespace SpiderDesk.Domain.Spider.States
             if (spider.MoveTowards(_targetPoint, SpiderTuning.WanderMoveSpeed, dt) || _timer <= 0)
             {
                 var completedWebs = world.Webs.Where(w => w.IsCompleted).ToList();
-                if (completedWebs.Count > 0 && world.Random.NextDouble() < 0.60)
+                if (completedWebs.Count > 0 && world.Random.NextDouble() < 0.65)
                 {
-                    var web = completedWebs[world.Random.Next(completedWebs.Count)];
+                    // Daha önce bulunduğu ağ yerine diğer tamamlanmış ağları tercih et
+                    var otherWebs = completedWebs.Where(w => w != spider.ActiveWeb).ToList();
+                    var web = otherWebs.Count > 0
+                        ? otherWebs[world.Random.Next(otherWebs.Count)]
+                        : completedWebs[world.Random.Next(completedWebs.Count)];
+
                     spider.ActiveWeb = web;
                     spider.TransitionTo(new WaitingOnWebState(web), world);
                 }

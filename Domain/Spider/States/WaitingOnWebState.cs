@@ -13,8 +13,9 @@ namespace SpiderDesk.Domain.Spider.States
         private readonly SpiderWebEntity _web;
         private Point _patrolTarget;
         private double _patrolTimer;
+        private bool _reachedHub;
 
-        public string DisplayName => "Ağda Nöbette";
+        public string DisplayName => _reachedHub ? "Ağda Nöbette" : "Ağa Gidiyor";
         public bool CanStartScheduledWeb => true;
         public bool IsAlwaysAnimating => false;
 
@@ -30,7 +31,8 @@ namespace SpiderDesk.Domain.Spider.States
             spider.ActiveSilkLine = null;
             spider.DraglineAnchor = null;
             _patrolTarget = _web.HubPosition;
-            _patrolTimer = 8.0 + world.Random.NextDouble() * 6.0;
+            _reachedHub = (spider.Position - _web.HubPosition).Length < 25.0;
+            _patrolTimer = 10.0 + world.Random.NextDouble() * 8.0;
         }
 
         public void Update(SpiderEntity spider, WorldContext world, double dt)
@@ -87,6 +89,17 @@ namespace SpiderDesk.Domain.Spider.States
                 return;
             }
 
+            // 4. Henüz ağın merkezine varmadıysa, önce merkezine doğru yürü
+            if (!_reachedHub)
+            {
+                if (spider.MoveTowards(_web.HubPosition, SpiderTuning.ApproachHubSpeed, dt, stopDistance: 3.5))
+                {
+                    _reachedHub = true;
+                    _patrolTimer = 10.0 + world.Random.NextDouble() * 8.0;
+                }
+                return;
+            }
+
             spider.MoveTowards(_patrolTarget, SpiderTuning.PatrolMoveSpeed, dt);
             _patrolTimer -= dt;
 
@@ -102,27 +115,41 @@ namespace SpiderDesk.Domain.Spider.States
                     }
                 }
 
-                double roll = world.Random.NextDouble();
-                if (!hasTrappedOnCurrentWeb && roll < 0.16)
+                if (!hasTrappedOnCurrentWeb)
                 {
-                    spider.TransitionTo(new RappellingState(), world);
-                }
-                else if (!hasTrappedOnCurrentWeb && roll < 0.36)
-                {
-                    spider.TransitionTo(new WanderingState(), world);
-                }
-                else
-                {
-                    double span = _web.EndAngle - _web.StartAngle;
-                    double angle = _web.StartAngle + span * (0.15 + world.Random.NextDouble() * 0.70);
-                    double dist = (0.18 + world.Random.NextDouble() * 0.28) * _web.Radius;
+                    var otherCompletedWebs = world.Webs.Where(w => w.IsCompleted && w != _web).ToList();
+                    double roll = world.Random.NextDouble();
 
-                    _patrolTarget = new Point(
-                        _web.Center.X + Math.Cos(angle) * dist,
-                        _web.Center.Y + Math.Sin(angle) * dist
-                    );
-                    _patrolTimer = 5.0 + world.Random.NextDouble() * 6.0;
+                    if (otherCompletedWebs.Count > 0 && roll < 0.45)
+                    {
+                        // Diğer bir ağa nöbet rotasyonuna / kontrole git!
+                        var nextWeb = otherCompletedWebs[world.Random.Next(otherCompletedWebs.Count)];
+                        spider.ActiveWeb = nextWeb;
+                        spider.TransitionTo(new WaitingOnWebState(nextWeb), world);
+                        return;
+                    }
+                    else if (roll < (otherCompletedWebs.Count > 0 ? 0.60 : 0.16))
+                    {
+                        spider.TransitionTo(new RappellingState(), world);
+                        return;
+                    }
+                    else if (roll < (otherCompletedWebs.Count > 0 ? 0.75 : 0.36))
+                    {
+                        spider.TransitionTo(new WanderingState(), world);
+                        return;
+                    }
                 }
+
+                // Bu ağ üzerinde devriye gezmeye devam et
+                double span = _web.EndAngle - _web.StartAngle;
+                double angle = _web.StartAngle + span * (0.15 + world.Random.NextDouble() * 0.70);
+                double dist = (0.18 + world.Random.NextDouble() * 0.28) * _web.Radius;
+
+                _patrolTarget = new Point(
+                    _web.Center.X + Math.Cos(angle) * dist,
+                    _web.Center.Y + Math.Sin(angle) * dist
+                );
+                _patrolTimer = 6.0 + world.Random.NextDouble() * 6.0;
             }
         }
 
