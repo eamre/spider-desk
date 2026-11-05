@@ -13,9 +13,10 @@ namespace SpiderDesk.Domain.Insects.States
         private readonly SpiderWebEntity? _web;
         private readonly double _huntDelaySeconds;
         private Point _anchor;
+        private double _anchorAngle;
         private double _trappedDuration;
         private double _struggleTimer;
-        private bool _escapeAttempted;
+        private double _escapeTimer = 2.5;
 
         public BugLifecycleStatus Status => BugLifecycleStatus.TrappedInWeb;
         public bool IsReadyToBeHunted => _trappedDuration >= _huntDelaySeconds;
@@ -30,7 +31,9 @@ namespace SpiderDesk.Domain.Insects.States
         {
             bug.TrappedWeb = _web;
             _anchor = bug.Position;
+            _anchorAngle = bug.Angle;
             _trappedDuration = 0;
+            _escapeTimer = 2.5 + world.Random.NextDouble() * 1.0;
 
             if (_web != null)
             {
@@ -44,6 +47,13 @@ namespace SpiderDesk.Domain.Insects.States
 
         public void Update(BugEntity bug, WorldContext world, double dt)
         {
+            // 1. Ağ artık dünyada mevcut değilse (Ağları Temizle dendi veya ağ silindi) hemen serbest kalıp uçar!
+            if (_web != null && !world.Webs.Contains(_web))
+            {
+                FreeBug(bug, world);
+                return;
+            }
+
             _trappedDuration += dt;
             bug.AdvanceWaves(dt * 95.0, dt * 6.0);
 
@@ -54,18 +64,16 @@ namespace SpiderDesk.Domain.Insects.States
                 _web?.TriggerVibration(bug.Position, 5.5);
             }
 
-            // Örümcek gelmeden önce (~2.5 sn sonunda) güçlü böcekler ağdan kurtulmayı dener!
-            if (!_escapeAttempted && _trappedDuration >= 2.5)
+            // 2. Güçlü böcekler periyodik olarak ağdan kurtulmayı dener!
+            _escapeTimer -= dt;
+            if (_escapeTimer <= 0)
             {
-                _escapeAttempted = true;
+                _escapeTimer = 3.5 + world.Random.NextDouble() * 1.5;
                 if (world.Random.NextDouble() < bug.Species.EscapeChance)
                 {
                     // Ağı yırtıp kurtuldu!
                     _web?.DamageNear(_anchor, damageRadius: 32.0, maxBrokenSegments: 2);
-                    double escapeAngle = world.Random.NextDouble() * Math.PI * 2;
-                    Vector escapeVel = new Vector(Math.Cos(escapeAngle), Math.Sin(escapeAngle)) * bug.Species.MaxSpeed;
-                    bug.SetMotion(_anchor, escapeVel, escapeAngle);
-                    bug.TransitionTo(new FlyingBugState(webImmunitySeconds: 3.5), world);
+                    FreeBug(bug, world);
                     return;
                 }
             }
@@ -73,9 +81,19 @@ namespace SpiderDesk.Domain.Insects.States
             double shakeX = Math.Sin(bug.WingPhase * 0.9) * 1.5;
             double shakeY = Math.Cos(bug.WingPhase * 1.1) * 1.5;
             Point shakenPos = new Point(_anchor.X + shakeX, _anchor.Y + shakeY);
-            double shakenAngle = bug.Angle + Math.Sin(bug.WingPhase) * 2.5 * dt;
+            double shakenAngle = _anchorAngle + Math.Sin(bug.WingPhase) * 0.35;
 
             bug.SetMotion(shakenPos, new Vector(0, 0), shakenAngle);
+        }
+
+        private void FreeBug(BugEntity bug, WorldContext world)
+        {
+            bug.TrappedWeb = null;
+            bug.WrapProgress = 0.0;
+            double escapeAngle = world.Random.NextDouble() * Math.PI * 2;
+            Vector escapeVel = new Vector(Math.Cos(escapeAngle), Math.Sin(escapeAngle)) * bug.Species.MinSpeed;
+            bug.SetMotion(bug.Position, escapeVel, escapeAngle);
+            bug.TransitionTo(new FlyingBugState(webImmunitySeconds: 4.0), world);
         }
     }
 }

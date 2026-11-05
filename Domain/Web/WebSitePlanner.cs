@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
+using SpiderDesk.Domain.Insects.States;
 
 namespace SpiderDesk.Domain.Web
 {
@@ -57,6 +58,19 @@ namespace SpiderDesk.Domain.Web
 
             if (world.Webs.Count > 6)
             {
+                var oldWeb = world.Webs[0];
+                for (int i = 0; i < world.Bugs.Count; i++)
+                {
+                    var bug = world.Bugs[i];
+                    if (bug.TrappedWeb == oldWeb)
+                    {
+                        bug.TrappedWeb = null;
+                        double angle = world.Random.NextDouble() * Math.PI * 2;
+                        Vector vel = new Vector(Math.Cos(angle), Math.Sin(angle)) * bug.Species.MinSpeed;
+                        bug.SetMotion(bug.Position, vel, angle);
+                        bug.TransitionTo(new FlyingBugState(webImmunitySeconds: 4.0), world);
+                    }
+                }
                 world.Webs.RemoveAt(0);
             }
 
