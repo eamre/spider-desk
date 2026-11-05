@@ -52,10 +52,11 @@ namespace SpiderDesk.Rendering
         public void Render(DrawingContext dc, SpiderWebEntity web)
         {
             bool vibrating = web.VibrationAmplitude > 0.05;
+            bool breezing = Math.Abs(web.BreezeOffset) > 0.05;
 
-            if (!vibrating)
+            if (!vibrating && !breezing)
             {
-                // Ağ titreşmiyorken dondurulmuş (Frozen) StreamGeometry önbelleğinden tek seferde çiz (Sıfır CPU tessellation)
+                // Ağ titreşmiyorken veya rüzgar esmiyorken dondurulmuş (Frozen) StreamGeometry önbelleğinden tek seferde çiz (Sıfır CPU tessellation)
                 CachedWebGeometry cache = GetOrBuildCache(web);
                 dc.DrawGeometry(null, _anchorPen, cache.AnchorGeometry);
                 dc.DrawGeometry(null, _spiralPen, cache.SpiralGeometry);
@@ -63,7 +64,7 @@ namespace SpiderDesk.Rendering
             }
             else
             {
-                RenderVibratingSegments(dc, web);
+                RenderDynamicSegments(dc, web, vibrating, breezing);
             }
 
             // 2. Tellerin üzerindeki ağır su/yağmur damlalarını çiz
@@ -72,6 +73,12 @@ namespace SpiderDesk.Rendering
             {
                 var drop = attachedDroplets[i];
                 Point pos = web.Droplets.CalculateDropletWorldPosition(drop, web.CompletedSegments, web.Center);
+                if (breezing)
+                {
+                    double d = (pos - web.Center).Length;
+                    double f = Math.Max(0.0, 1.0 - (d / (web.Radius * 1.05)));
+                    pos += web.BreezeDirection * (web.BreezeOffset * f * f);
+                }
                 double r = drop.Radius;
                 dc.DrawEllipse(_waterDropBrush, null, pos, r * 0.92, r * 1.12);
                 dc.DrawEllipse(_waterHighlightBrush, null, new Point(pos.X - r * 0.28, pos.Y - r * 0.3), r * 0.32, r * 0.32);
@@ -94,11 +101,20 @@ namespace SpiderDesk.Rendering
             foreach (var broken in web.DamagedSegments)
             {
                 Vector dir = broken.End - broken.Start;
+                Point start = broken.Start;
                 Point danglingTip = new Point(
-                    broken.Start.X + dir.X * 0.25,
-                    broken.Start.Y + dir.Y * 0.25 + 6.0
+                    start.X + dir.X * 0.25,
+                    start.Y + dir.Y * 0.25 + 6.0
                 );
-                dc.DrawLine(_brokenStubPen, broken.Start, danglingTip);
+                if (breezing)
+                {
+                    double d = (start - web.Center).Length;
+                    double f = Math.Max(0.0, 1.0 - (d / (web.Radius * 1.05)));
+                    f *= f;
+                    start += web.BreezeDirection * (web.BreezeOffset * f);
+                    danglingTip += web.BreezeDirection * (web.BreezeOffset * f);
+                }
+                dc.DrawLine(_brokenStubPen, start, danglingTip);
             }
 
             // 5. Kilerde (Erzak Deposunda) asılı duran ipek kozalar
@@ -106,14 +122,25 @@ namespace SpiderDesk.Rendering
             for (int i = 0; i < storedCocoons.Count; i++)
             {
                 var cocoon = storedCocoons[i];
+                Point pos = cocoon.Position;
+                double angleOffset = 0;
+                if (breezing)
+                {
+                    double d = (pos - web.Center).Length;
+                    double f = Math.Max(0.0, 1.0 - (d / (web.Radius * 1.05)));
+                    f *= f;
+                    pos += web.BreezeDirection * (web.BreezeOffset * f);
+                    angleOffset = web.BreezeOffset * 0.02 * f;
+                }
+
                 double scale = Math.Max(0.2, 1.0 - cocoon.ConsumeProgress * 0.85);
                 double r = cocoon.Size * 1.15 * scale;
 
                 // Her koza için bağımsız, dondurulmuş (Frozen) matris dönüşümü:
                 // Paylaşımlı TranslateTransform nesnesi kullanılmadığı için tüm kozalar doğru konumlarında kalır.
                 var matrix = Matrix.Identity;
-                matrix.Rotate(cocoon.Angle * 180.0 / Math.PI);
-                matrix.Translate(cocoon.Position.X, cocoon.Position.Y);
+                matrix.Rotate((cocoon.Angle + angleOffset) * 180.0 / Math.PI);
+                matrix.Translate(pos.X, pos.Y);
                 var transform = new MatrixTransform(matrix);
                 transform.Freeze();
 
@@ -208,30 +235,52 @@ namespace SpiderDesk.Rendering
             ctx.ArcTo(top, arcSize, 0, false, SweepDirection.Clockwise, isStroked: false, isSmoothJoin: false);
         }
 
-        private void RenderVibratingSegments(DrawingContext dc, SpiderWebEntity web)
+        private void RenderDynamicSegments(DrawingContext dc, SpiderWebEntity web, bool vibrating, bool breezing)
         {
+            Vector breezeDir = web.BreezeDirection;
+            double breezeOffset = web.BreezeOffset;
+            double boundaryRadius = web.Radius * 1.05;
+
             for (int i = 0; i < web.CompletedSegments.Count; i++)
             {
                 var seg = web.CompletedSegments[i];
                 Point p1 = seg.Start;
                 Point p2 = seg.End;
 
-                Point mid = new Point((p1.X + p2.X) * 0.5, (p1.Y + p2.Y) * 0.5);
-                double dist = (mid - web.VibrationOrigin).Length;
-                double falloff = Math.Max(0, 1.0 - dist / (web.Radius * 1.5));
-                double wave = Math.Sin(web.VibrationPhase - dist * 0.08) * web.VibrationAmplitude * falloff;
+                if (breezing)
+                {
+                    double d1 = (p1 - web.Center).Length;
+                    double f1 = Math.Max(0.0, 1.0 - (d1 / boundaryRadius));
+                    f1 *= f1;
+                    p1 += breezeDir * (breezeOffset * f1);
 
-                p1.X += wave * 0.5;
-                p1.Y += wave * 0.5;
-                p2.X -= wave * 0.5;
-                p2.Y -= wave * 0.5;
+                    double d2 = (p2 - web.Center).Length;
+                    double f2 = Math.Max(0.0, 1.0 - (d2 / boundaryRadius));
+                    f2 *= f2;
+                    p2 += breezeDir * (breezeOffset * f2);
+                }
+
+                Point mid = new Point((p1.X + p2.X) * 0.5, (p1.Y + p2.Y) * 0.5);
+
+                if (vibrating)
+                {
+                    double dist = (mid - web.VibrationOrigin).Length;
+                    double falloff = Math.Max(0, 1.0 - dist / (web.Radius * 1.5));
+                    double wave = Math.Sin(web.VibrationPhase - dist * 0.08) * web.VibrationAmplitude * falloff;
+
+                    p1.X += wave * 0.5;
+                    p1.Y += wave * 0.5;
+                    p2.X -= wave * 0.5;
+                    p2.Y -= wave * 0.5;
+                }
 
                 Pen pen = seg.IsAnchor ? _anchorPen : _spiralPen;
                 double sag = web.Droplets.GetSegmentSag(i);
 
                 if (!seg.IsAnchor)
                 {
-                    Point control = WebSegmentGeometry.ComputeControlPoint(p1, p2, false, web.Center, sag);
+                    Point centerOffset = breezing ? web.Center + breezeDir * (breezeOffset * 0.75) : web.Center;
+                    Point control = WebSegmentGeometry.ComputeControlPoint(p1, p2, false, centerOffset, sag);
                     Point q1 = WebSegmentGeometry.EvaluateQuadraticBezier(p1, control, p2, 0.25);
                     Point q2 = WebSegmentGeometry.EvaluateQuadraticBezier(p1, control, p2, 0.50);
                     Point q3 = WebSegmentGeometry.EvaluateQuadraticBezier(p1, control, p2, 0.75);

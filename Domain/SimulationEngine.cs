@@ -39,7 +39,7 @@ namespace SpiderDesk.Domain
                 for (int i = 0; i < World.Webs.Count; i++)
                 {
                     var web = World.Webs[i];
-                    if (web.VibrationAmplitude > 0.05 || web.Droplets.FallingDroplets.Count > 0)
+                    if (web.VibrationAmplitude > 0.05 || Math.Abs(web.BreezeOffset) > 0.05 || web.Droplets.FallingDroplets.Count > 0)
                     {
                         return true;
                     }

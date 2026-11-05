@@ -34,7 +34,9 @@ namespace SpiderDesk.Rendering
 
         public void RefreshIfNeeded(bool force = false)
         {
-            bool hasActorMotion = _spider.HasVisualMotion || _world.Bugs.Count > 0;
+            bool hasActorMotion = _spider.HasVisualMotion
+                || _world.Bugs.Count > 0
+                || (_spider.ActiveWeb != null && Math.Abs(_spider.ActiveWeb.BreezeOffset) > 0.05);
             if (force || hasActorMotion || !_wasIdle)
             {
                 _wasIdle = !hasActorMotion;

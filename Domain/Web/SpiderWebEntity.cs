@@ -31,8 +31,12 @@ namespace SpiderDesk.Domain.Web
         public double VibrationPhase { get; private set; }
         public Point VibrationOrigin { get; private set; }
 
-        public double WindPhase { get; private set; }
-        public double WindStrength { get; private set; }
+        public double BreezeOffset { get; private set; }
+        public Vector BreezeDirection { get; private set; }
+        private double _breezeCooldown = 18.0;
+        private double _breezeDuration = 2.4;
+        private double _breezeElapsedTime = 999.0;
+        private double _breezeMaxStrength = 4.5;
 
         public Point? RecentCursorPluckPoint { get; set; }
 
@@ -67,8 +71,44 @@ namespace SpiderDesk.Domain.Web
                 _pluckCooldown -= dt;
             }
 
-            WindPhase += dt * 1.65;
-            WindStrength = (Math.Sin(WindPhase * 0.45) + 1.0) * 0.85;
+            // Periyodik doğal rüzgar esintisi (Breeze):
+            if (!IsCompleted)
+            {
+                BreezeOffset = 0;
+            }
+            else if (_breezeElapsedTime < _breezeDuration)
+            {
+                _breezeElapsedTime += dt;
+                double progress = _breezeElapsedTime / _breezeDuration;
+                if (progress >= 1.0)
+                {
+                    BreezeOffset = 0;
+                    _breezeCooldown = 22.0 + rng.NextDouble() * 28.0; // 22..50 saniye sonra yeni esinti
+                }
+                else
+                {
+                    // Yumuşak zarf eğrisi (Envelope): 0 -> 1 -> 0
+                    double envelope = Math.Sin(progress * Math.PI);
+                    // 1.5 salınım döngüsü (sağa tatlıca esner, yay gibi hafifçe geri gelir ve durulur)
+                    double wave = Math.Sin(progress * Math.PI * 3.0);
+                    BreezeOffset = envelope * wave * _breezeMaxStrength;
+                }
+            }
+            else
+            {
+                _breezeCooldown -= dt;
+                if (_breezeCooldown <= 0)
+                {
+                    _breezeElapsedTime = 0;
+                    _breezeDuration = 2.2 + rng.NextDouble() * 0.8;
+                    _breezeMaxStrength = 3.5 + rng.NextDouble() * 2.0; // 3.5 - 5.5 piksel hafif ve zarif esneme
+                    double dirX = rng.NextDouble() > 0.5 ? 1.0 : -1.0;
+                    double dirY = (rng.NextDouble() - 0.4) * 0.5;
+                    Vector dir = new Vector(dirX, dirY);
+                    if (dir.Length > 0.001) dir.Normalize();
+                    BreezeDirection = dir;
+                }
+            }
 
             Droplets.Update(dt, IsCompleted, CompletedSegments, rng);
 
