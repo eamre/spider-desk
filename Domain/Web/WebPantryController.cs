@@ -46,8 +46,8 @@ namespace SpiderDesk.Domain.Web
                 double angle;
                 if (span >= Math.PI * 1.9)
                 {
-                    // Tam daire ağlarda üst yarıyı geniş açıyla kullan (-15° .. -165°)
-                    angle = -Math.PI * (0.08 + rng.NextDouble() * 0.84);
+                    // Tam daire (orb) ağlarda tüm çevreyi (360°) dengeli biçimde kullan
+                    angle = rng.NextDouble() * Math.PI * 2.0;
                 }
                 else
                 {
