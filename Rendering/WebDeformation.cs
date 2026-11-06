@@ -50,6 +50,15 @@ namespace SpiderDesk.Rendering
         /// <summary>Hiçbir noktayı kaydırmayan, durgun ağ bozulması (önbellekli çizim için).</summary>
         public static WebDeformation Still(SpiderWebEntity web) => new(web, includeMotion: false);
 
+        /// <summary>Hiçbir ağa bağlı olmayan varlıklar için: hiçbir noktayı kaydırmaz.</summary>
+        public static WebDeformation None => default;
+
+        /// <summary>
+        /// Varlık bir ağın üzerindeyse o ağın anlık bozulmasını, değilse <see cref="None"/> döner.
+        /// Rüzgar ağın kenarında sıfıra indiği için ağın dışında kalan noktalar zaten kaymaz.
+        /// </summary>
+        public static WebDeformation CurrentOrNone(SpiderWebEntity? web) => web is null ? None : Current(web);
+
         public bool IsStill => !_isBreezing && !_isVibrating;
 
         /// <summary>

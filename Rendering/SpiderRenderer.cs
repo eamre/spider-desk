@@ -9,6 +9,7 @@ namespace SpiderDesk.Rendering
 {
     /// <summary>
     /// Sadece örümceği, 2-Segmentli IK bacaklarını ve aktif ipek ipini seçili temaya (ISpiderTheme) göre çizer (SRP & OCP).
+    /// Örümcek bir ağın üzerindeyse, ağın rüzgar salınımı gövdeye, eklemlere ve iplere de uygulanır (yalnızca görsel).
     /// </summary>
     public class SpiderRenderer : IRenderer<SpiderEntity>
     {
@@ -37,14 +38,17 @@ namespace SpiderDesk.Rendering
                 UpdateThemeBrushes(spider.Theme);
             }
 
+            // Simülasyon konumları değişmez; her nokta yalnızca çizilirken, ağdaki konumuna düşen rüzgar kadar kaydırılır.
+            var sway = WebDeformation.CurrentOrNone(spider.ActiveWeb);
+
             // 1. Örülmekte olan aktif ip veya güvenlik ipi
             if (spider.ActiveSilkLine is { } silk)
             {
-                dc.DrawLine(_activeSilkPen, silk.Start, silk.End);
+                dc.DrawLine(_activeSilkPen, sway.Displace(silk.Start), sway.Displace(silk.End));
             }
             else if (spider.DraglineAnchor is { } anchor)
             {
-                dc.DrawLine(_draglinePen, anchor, spider.GetSpinneretPosition());
+                dc.DrawLine(_draglinePen, sway.Displace(anchor), sway.Displace(spider.GetSpinneretPosition()));
             }
 
             // 2. Sabit uzunluklu 2-Kemikli Ters Kinematik (IK) Bacaklar
@@ -53,9 +57,13 @@ namespace SpiderDesk.Rendering
                 Point hip = spider.LocalToWorld(leg.LocalAttach);
                 LegJointPositions joints = leg.SolveJoints(hip);
 
-                dc.DrawLine(_legUpperPen, joints.Hip, joints.Knee);
-                dc.DrawLine(_legLowerPen, joints.Knee, joints.Foot);
-                dc.DrawEllipse(_jointBrush, null, joints.Knee, 1.5, 1.5);
+                Point swayedHip = sway.Displace(joints.Hip);
+                Point swayedKnee = sway.Displace(joints.Knee);
+                Point swayedFoot = sway.Displace(joints.Foot);
+
+                dc.DrawLine(_legUpperPen, swayedHip, swayedKnee);
+                dc.DrawLine(_legLowerPen, swayedKnee, swayedFoot);
+                dc.DrawEllipse(_jointBrush, null, swayedKnee, 1.5, 1.5);
             }
 
             // 3. Gövde (Seviyeye göre çok hafif olgunlaşma ölçeği)
@@ -64,7 +72,8 @@ namespace SpiderDesk.Rendering
             var bodyMatrix = Matrix.Identity;
             bodyMatrix.Scale(bodyScale, bodyScale);
             bodyMatrix.Rotate(spider.Angle * 180.0 / Math.PI);
-            bodyMatrix.Translate(spider.Position.X, spider.Position.Y);
+            Point bodyPosition = sway.Displace(spider.Position);
+            bodyMatrix.Translate(bodyPosition.X, bodyPosition.Y);
             var bodyTransform = new MatrixTransform(bodyMatrix);
             bodyTransform.Freeze();
 

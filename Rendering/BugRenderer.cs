@@ -10,6 +10,7 @@ namespace SpiderDesk.Rendering
     /// <summary>
     /// Sadece böcekleri, ateş böceği parıltısını (bioluminescence) ve ipek kozayı çizmekten sorumludur (SRP).
     /// Fırçalar önbelleğe alınarak her karede bellek tahsisi (GC baskısı) önlenir.
+    /// Ağa yakalanmış böcekler, ağın rüzgar salınımıyla birlikte kaydırılarak çizilir (yalnızca görsel).
     /// </summary>
     public class BugRenderer : IRenderer<BugEntity>
     {
@@ -19,9 +20,11 @@ namespace SpiderDesk.Rendering
 
         public void Render(DrawingContext dc, BugEntity bug)
         {
+            Point position = WebDeformation.CurrentOrNone(bug.TrappedWeb).Displace(bug.Position);
+
             var bugMatrix = Matrix.Identity;
             bugMatrix.Rotate(bug.Angle * 180.0 / Math.PI);
-            bugMatrix.Translate(bug.Position.X, bug.Position.Y);
+            bugMatrix.Translate(position.X, position.Y);
             var bugTransform = new MatrixTransform(bugMatrix);
             bugTransform.Freeze();
 
