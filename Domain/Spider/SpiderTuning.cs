@@ -103,5 +103,8 @@ namespace SpiderDesk.Domain.Spider
         public const double BreezeDurationVariance = 0.8;
         public const double BreezeStrengthBase = 3.5;
         public const double BreezeStrengthVariance = 2.0;
+
+        // Ağ Hareket Algılama (titreşim/rüzgar bu eşiğin altındaysa ağ durgun sayılır ve önbellekten çizilir)
+        public const double WebMotionThreshold = 0.05;
     }
 }

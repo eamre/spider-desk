@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Media;
 using SpiderDesk.Core;
@@ -7,74 +8,74 @@ using SpiderDesk.Domain.Web;
 namespace SpiderDesk.Rendering
 {
     /// <summary>
-    /// Yalnızca örümcek ağlarını, çiy damlalarını ve kilerdeki kozaları çizen katman.
-    /// Ağlarda bir değişiklik veya titreşim olmadıkça yeniden boyanmaz; WPF görsel ağacında önbellekli tutulur.
+    /// Örümcek ağlarını, çiy damlalarını ve kilerdeki kozaları barındıran katman.
+    /// Kendisi çizim yapmaz; her ağ için ayrı bir <see cref="WebVisual"/> tutar ve görsel listesini dünyadaki
+    /// ağlarla eşitler. Böylece yalnızca değişen veya hareket eden ağ yeniden çizilir.
     /// </summary>
     public class WebLayerCanvas : FrameworkElement
     {
         private readonly WorldContext _world;
         private readonly IRenderer<SpiderWebEntity> _webRenderer;
-        private int _lastWebStateHash = -1;
+        private readonly VisualCollection _webVisuals;
 
         public WebLayerCanvas(WorldContext world, IRenderer<SpiderWebEntity> webRenderer)
         {
-            IsHitTestVisible = false;
+            // Koleksiyon ilk sırada oluşturulmalı: IsHitTestVisible gibi özellik atamaları WPF'in
+            // VisualChildrenCount'u hemen sorgulamasına yol açar.
+            _webVisuals = new VisualCollection(this);
             _world = world;
             _webRenderer = webRenderer;
+            IsHitTestVisible = false;
         }
 
         public void RefreshIfNeeded(bool force = false)
         {
-            int currentHash = ComputeWebStateHash();
-            if (force || HasActiveWebAnimation() || currentHash != _lastWebStateHash)
+            if (!IsInSyncWithWorld())
             {
-                _lastWebStateHash = currentHash;
-                InvalidateVisual();
+                RebuildVisualList();
+            }
+
+            for (int i = 0; i < _webVisuals.Count; i++)
+            {
+                ((WebVisual)_webVisuals[i]).RefreshIfNeeded(force);
             }
         }
 
-        protected override void OnRender(DrawingContext dc)
-        {
-            base.OnRender(dc);
+        protected override int VisualChildrenCount => _webVisuals.Count;
 
-            for (int i = 0; i < _world.Webs.Count; i++)
+        protected override Visual GetVisualChild(int index) => _webVisuals[index];
+
+        private bool IsInSyncWithWorld()
+        {
+            if (_webVisuals.Count != _world.Webs.Count) return false;
+
+            for (int i = 0; i < _webVisuals.Count; i++)
             {
-                _webRenderer.Render(dc, _world.Webs[i]);
+                if (((WebVisual)_webVisuals[i]).Web != _world.Webs[i]) return false;
             }
+            return true;
         }
 
-        private bool HasActiveWebAnimation()
+        /// <summary>
+        /// Ağ eklendiğinde, silindiğinde veya sırası değiştiğinde çalışır (nadir).
+        /// Var olan ağların görselleri korunur; yalnızca yeni ağlar için görsel oluşturulur.
+        /// </summary>
+        private void RebuildVisualList()
         {
-            for (int i = 0; i < _world.Webs.Count; i++)
+            var existing = new Dictionary<SpiderWebEntity, WebVisual>(_webVisuals.Count);
+            for (int i = 0; i < _webVisuals.Count; i++)
             {
-                var web = _world.Webs[i];
-                if (web.VibrationAmplitude > 0.05 || Math.Abs(web.BreezeOffset) > 0.05 || web.Droplets.FallingDroplets.Count > 0)
-                {
-                    return true;
-                }
+                var visual = (WebVisual)_webVisuals[i];
+                existing[visual.Web] = visual;
             }
-            return false;
-        }
 
-        private int ComputeWebStateHash()
-        {
-            int hash = _world.Webs.Count * 397;
-            for (int i = 0; i < _world.Webs.Count; i++)
+            _webVisuals.Clear();
+            foreach (var web in _world.Webs)
             {
-                var web = _world.Webs[i];
-                hash = (hash * 31)
-                       ^ web.CompletedSegments.Count
-                       ^ (web.DamagedSegments.Count << 8)
-                       ^ (web.Droplets.Revision << 16)
-                       ^ (web.Pantry.StoredCocoons.Count << 24);
-
-                var cocoons = web.Pantry.StoredCocoons;
-                for (int c = 0; c < cocoons.Count; c++)
-                {
-                    hash = (hash * 17) ^ (int)(cocoons[c].ConsumeProgress * 100);
-                }
+                _webVisuals.Add(existing.TryGetValue(web, out var visual)
+                    ? visual
+                    : new WebVisual(web, _webRenderer));
             }
-            return hash;
         }
     }
 }

@@ -52,8 +52,8 @@ namespace SpiderDesk.Rendering
 
         public void Render(DrawingContext dc, SpiderWebEntity web)
         {
-            bool vibrating = web.VibrationAmplitude > 0.05;
-            bool breezing = Math.Abs(web.BreezeOffset) > 0.05;
+            bool vibrating = web.IsVibrating;
+            bool breezing = web.IsBreezing;
 
             if (!vibrating && !breezing)
             {

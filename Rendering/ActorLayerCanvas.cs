@@ -36,7 +36,7 @@ namespace SpiderDesk.Rendering
         {
             bool hasActorMotion = _spider.HasVisualMotion
                 || _world.Bugs.Count > 0
-                || (_spider.ActiveWeb != null && Math.Abs(_spider.ActiveWeb.BreezeOffset) > 0.05);
+                || _spider.ActiveWeb?.IsBreezing == true;
             if (force || hasActorMotion || !_wasIdle)
             {
                 _wasIdle = !hasActorMotion;

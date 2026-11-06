@@ -38,6 +38,14 @@ namespace SpiderDesk.Domain.Web
         private double _breezeElapsedTime = 999.0;
         private double _breezeMaxStrength = SpiderTuning.BreezeStrengthBase;
 
+        public bool IsVibrating => VibrationAmplitude > SpiderTuning.WebMotionThreshold;
+        public bool IsBreezing => Math.Abs(BreezeOffset) > SpiderTuning.WebMotionThreshold;
+
+        /// <summary>
+        /// Ağ her karede yeniden çizilmeyi gerektiren bir hareket içindeyse (titreşim, rüzgar veya düşen damla) true döner.
+        /// </summary>
+        public bool IsAnimating => IsVibrating || IsBreezing || Droplets.FallingDroplets.Count > 0;
+
         public Point? RecentCursorPluckPoint { get; set; }
 
         private double _pluckCooldown;
@@ -112,7 +120,7 @@ namespace SpiderDesk.Domain.Web
 
             Droplets.Update(dt, IsCompleted, CompletedSegments, rng);
 
-            if (VibrationAmplitude > 0.05)
+            if (IsVibrating)
             {
                 VibrationPhase += dt * 38.0;
                 VibrationAmplitude *= Math.Pow(0.18, dt);
@@ -178,6 +186,27 @@ namespace SpiderDesk.Domain.Web
                     break;
                 }
             }
+        }
+
+        /// <summary>
+        /// Ağın durgun görünümünü etkileyen durumun (teller, kopuk teller, damlalar, kozalar) özet değeri.
+        /// Değer değişmediyse ve ağ hareket etmiyorsa, önceki çizim aynen geçerlidir.
+        /// </summary>
+        public int ComputeVisualStateHash()
+        {
+            var hash = new HashCode();
+            hash.Add(CompletedSegments.Count);
+            hash.Add(DamagedSegments.Count);
+            hash.Add(Droplets.Revision);
+
+            var cocoons = Pantry.StoredCocoons;
+            hash.Add(cocoons.Count);
+            for (int i = 0; i < cocoons.Count; i++)
+            {
+                hash.Add((int)(cocoons[i].ConsumeProgress * 100));
+            }
+
+            return hash.ToHashCode();
         }
 
         public bool CanCatchPoint(Point point)
