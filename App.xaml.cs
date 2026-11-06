@@ -40,7 +40,7 @@ namespace SpiderDesk
             base.OnStartup(e);
 
             // Altyapı servislerinin oluşturulması
-            IWindowLayerService windowLayerService = new WindowLayerService();
+            IWindowLayerService windowLayerService = new WindowLayerService(new Win32WindowInspector());
             ICursorTrackingService cursorService = new CursorTrackingService();
             IStartupRegistrationService startupService = new StartupRegistrationService();
             IEnvironmentService environmentService = new SystemEnvironmentService();

@@ -1,9 +1,9 @@
 using System;
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Windows;
 using System.Windows.Interop;
 using SpiderDesk.Core;
+using SpiderDesk.Domain;
 
 namespace SpiderDesk.Infrastructure
 {
@@ -12,6 +12,7 @@ namespace SpiderDesk.Infrastructure
     /// HWND_TOPMOST yalnızca "Pencerelerin Üstünde Göster" açıkken kullanılır; normal modda pencere doğrudan
     /// masaüstü duvar kağıdı/ikon katmanının (Progman/WorkerW) hemen üstünde tutulur. Böylece masaüstüne
     /// tıklandığında ekran yenilenmesi/titremesi olmaz ve pencereler alta alındığında masaüstüne tıklamaya gerek kalmaz.
+    /// Pencere durumlarını <see cref="IWindowInspector"/> ile okur, örtülme kararını <see cref="DesktopOcclusionPolicy"/>'ye bırakır.
     /// </summary>
     public class WindowLayerService : IWindowLayerService
     {
@@ -73,16 +74,7 @@ namespace SpiderDesk.Infrastructure
         [DllImport("user32.dll")]
         private static extern IntPtr GetAncestor(IntPtr hwnd, uint gaFlags);
 
-        [DllImport("user32.dll")]
-        private static extern bool IsZoomed(IntPtr hWnd);
-
-        [DllImport("user32.dll")]
-        private static extern bool IsIconic(IntPtr hWnd);
-
-        [DllImport("user32.dll", CharSet = CharSet.Auto)]
-        private static extern int GetClassName(IntPtr hWnd, StringBuilder lpClassName, int nMaxCount);
-
-        private readonly StringBuilder _classNameBuffer = new(64);
+        private readonly IWindowInspector _windowInspector;
         private IntPtr _hwnd;
         private IntPtr _desktopHwnd;
         private bool? _lastAppliedTopmostState;
@@ -91,6 +83,11 @@ namespace SpiderDesk.Infrastructure
         private bool _isDesktopOccluded;
         private int _tickCounter;
 
+        public WindowLayerService(IWindowInspector windowInspector)
+        {
+            _windowInspector = windowInspector;
+        }
+
         /// <summary>
         /// Fare doğrudan görünür masaüstünün üzerindeyse veya "Pencerelerin Üstünde Göster" açıksa true döner.
         /// Pencereler simge durumuna küçültüldüğünde masaüstüne tekrar tıklamaya gerek kalmadan true olur.
@@ -98,7 +95,8 @@ namespace SpiderDesk.Infrastructure
         public bool IsOverlayInteractive => _alwaysOnTop || _isOverlayInteractive;
 
         /// <summary>
-        /// Öndeki pencere tam ekran/büyütülmüş (maximized) ise ve masaüstünü tamamen kapatıyorsa true döner.
+        /// Öndeki ya da imlecin altındaki pencere, katmanın bulunduğu monitörde büyütülmüş veya
+        /// monitörü tamamen kaplıyorsa (kenarlıksız tam ekran oyun/video) true döner.
         /// </summary>
         public bool IsDesktopOccluded => !_alwaysOnTop && _isDesktopOccluded;
 
@@ -173,7 +171,7 @@ namespace SpiderDesk.Infrastructure
 
         private void PlaceDirectlyAboveDesktop(uint flags)
         {
-            if (_desktopHwnd == IntPtr.Zero || !IsDesktopWindow(_desktopHwnd))
+            if (_desktopHwnd == IntPtr.Zero || !_windowInspector.IsDesktopWindow(_desktopHwnd))
             {
                 _desktopHwnd = FindDesktopHostWindow();
             }
@@ -220,8 +218,8 @@ namespace SpiderDesk.Infrastructure
                 {
                     rootHwnd = GetAncestor(hitHwnd, GA_ROOT);
                     cursorOverDesktop = (rootHwnd != IntPtr.Zero && rootHwnd == _desktopHwnd) ||
-                                        IsDesktopWindow(rootHwnd) ||
-                                        IsDesktopWindow(hitHwnd);
+                                        _windowInspector.IsDesktopWindow(rootHwnd) ||
+                                        _windowInspector.IsDesktopWindow(hitHwnd);
                 }
             }
 
@@ -233,21 +231,11 @@ namespace SpiderDesk.Infrastructure
                 return;
             }
 
-            IntPtr currentFg = GetForegroundWindow();
-            bool fgMaximized = currentFg != IntPtr.Zero &&
-                               currentFg != _desktopHwnd &&
-                               !IsDesktopWindow(currentFg) &&
-                               !IsIconic(currentFg) &&
-                               IsZoomed(currentFg);
-
-            bool cursorWinMaximized = rootHwnd != IntPtr.Zero &&
-                                      rootHwnd != _desktopHwnd &&
-                                      !IsDesktopWindow(rootHwnd) &&
-                                      !IsIconic(rootHwnd) &&
-                                      IsZoomed(rootHwnd);
-
-            _isDesktopOccluded = fgMaximized || cursorWinMaximized;
+            _isDesktopOccluded = OccludesOverlay(GetForegroundWindow()) || OccludesOverlay(rootHwnd);
         }
+
+        private bool OccludesOverlay(IntPtr hwnd) =>
+            hwnd != _hwnd && DesktopOcclusionPolicy.Occludes(_windowInspector.Capture(hwnd, _hwnd));
 
         private static IntPtr FindDesktopHostWindow()
         {
@@ -267,16 +255,6 @@ namespace SpiderDesk.Infrastructure
             }
 
             return progman;
-        }
-
-        private bool IsDesktopWindow(IntPtr hwnd)
-        {
-            if (hwnd == IntPtr.Zero) return false;
-
-            _classNameBuffer.Clear();
-            GetClassName(hwnd, _classNameBuffer, _classNameBuffer.Capacity);
-            string cls = _classNameBuffer.ToString();
-            return cls == "Progman" || cls == "WorkerW" || cls == "SHELLDLL_DefView" || cls == "SysListView32";
         }
     }
 }
