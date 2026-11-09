@@ -41,10 +41,13 @@ namespace SpiderDesk.Domain.Web
         public bool IsVibrating => VibrationAmplitude > SpiderTuning.WebMotionThreshold;
         public bool IsBreezing => Math.Abs(BreezeOffset) > SpiderTuning.WebMotionThreshold;
 
+        /// <summary>Ağın telleri (ve üzerindeki varlıklar) şu an rüzgar veya titreşimle kayıyorsa true döner.</summary>
+        public bool IsDeforming => IsVibrating || IsBreezing;
+
         /// <summary>
         /// Ağ her karede yeniden çizilmeyi gerektiren bir hareket içindeyse (titreşim, rüzgar veya düşen damla) true döner.
         /// </summary>
-        public bool IsAnimating => IsVibrating || IsBreezing || Droplets.FallingDroplets.Count > 0;
+        public bool IsAnimating => IsDeforming || Droplets.FallingDroplets.Count > 0;
 
         public Point? RecentCursorPluckPoint { get; set; }
 

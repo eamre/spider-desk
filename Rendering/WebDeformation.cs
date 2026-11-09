@@ -15,6 +15,7 @@ namespace SpiderDesk.Rendering
         private const double BreezeCurveCenterFactor = 0.75;
         private const double VibrationReachFactor = 1.5;
         private const double VibrationWavelengthFactor = 0.08;
+        private const double VibrationDisplacementFactor = 0.5;
 
         private readonly Point _center;
         private readonly bool _isBreezing;
@@ -79,28 +80,34 @@ namespace SpiderDesk.Rendering
             return _breezeOffset * falloff * falloff;
         }
 
-        /// <summary>Noktayı rüzgar yönünde kaydırır.</summary>
-        public Point Displace(Point p) => _isBreezing ? p + _breezeDirection * BreezeInfluence(p) : p;
-
         /// <summary>
-        /// Bir tel segmentinin uçlarını önce rüzgarla kaydırır, ardından titreşim dalgasını uygular.
+        /// Noktayı rüzgar ve titreşimle kaydırır. Sonuç yalnızca noktanın konumuna bağlıdır;
+        /// böylece aynı noktayı paylaşan teller hiçbir zaman birbirinden ayrılmaz.
         /// </summary>
-        public void DeformSegment(ref Point start, ref Point end)
+        public Point Displace(Point p)
         {
-            start = Displace(start);
-            end = Displace(end);
+            Point displaced = p;
 
-            if (!_isVibrating) return;
+            if (_isBreezing)
+            {
+                displaced += _breezeDirection * BreezeInfluence(p);
+            }
 
-            Point mid = new((start.X + end.X) * 0.5, (start.Y + end.Y) * 0.5);
-            double distance = (mid - _vibrationOrigin).Length;
+            if (_isVibrating)
+            {
+                double wave = VibrationWave(p);
+                displaced.X += wave;
+                displaced.Y += wave;
+            }
+
+            return displaced;
+        }
+
+        private double VibrationWave(Point p)
+        {
+            double distance = (p - _vibrationOrigin).Length;
             double falloff = Math.Max(0.0, 1.0 - distance / _vibrationReach);
-            double halfWave = Math.Sin(_vibrationPhase - distance * VibrationWavelengthFactor) * _vibrationAmplitude * falloff * 0.5;
-
-            start.X += halfWave;
-            start.Y += halfWave;
-            end.X -= halfWave;
-            end.Y -= halfWave;
+            return Math.Sin(_vibrationPhase - distance * VibrationWavelengthFactor) * _vibrationAmplitude * falloff * VibrationDisplacementFactor;
         }
     }
 }

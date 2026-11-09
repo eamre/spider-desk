@@ -47,9 +47,8 @@ namespace SpiderDesk.Rendering
                 for (int i = 0; i < segments.Count; i++)
                 {
                     var segment = segments[i];
-                    Point start = segment.Start;
-                    Point end = segment.End;
-                    deformation.DeformSegment(ref start, ref end);
+                    Point start = deformation.Displace(segment.Start);
+                    Point end = deformation.Displace(segment.End);
 
                     double sag = web.Droplets.GetSegmentSag(i);
 
