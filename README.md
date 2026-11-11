@@ -2,6 +2,10 @@
 
 A small, friendly desktop spider that hangs out on your Windows desktop.
 
+<p align="center">
+  <img src="docs/demo.gif" alt="The spider catches a bug, wraps it in silk and hangs the cocoon in its web" width="600">
+</p>
+
 It wanders around your screen, weaves webs in the corners, catches passing bugs, shakes off raindrops, and takes naps when there's nothing to do.
 
 It runs quietly in the background without getting in your way or eating up your battery.
@@ -16,6 +20,12 @@ It runs quietly in the background without getting in your way or eating up your 
 - **💧 Rain & Dew physics:** Water droplets collect on the silk threads (or can be washed via the tray menu). When the web sags under their weight, the spider walks over and shakes them off.
 - **🍃 Light breeze:** An occasional room breeze gently sways the webs.
 - **🖱️ Click-through:** Lives behind your work and games. You can click right through the webs without anything getting blocked.
+
+<p align="center">
+  <img src="docs/rain.gif" alt="The spider shakes rain droplets off its corner web" width="520">
+  <br>
+  <em>Heavy with rain, the web sags, so the spider shakes the droplets off.</em>
+</p>
 
 ---
 
