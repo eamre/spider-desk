@@ -10,8 +10,8 @@ It runs quietly in the background without getting in your way or eating up your 
 
 <table>
   <tr>
-    <td align="center"><img src="docs/demo.gif" alt="The spider catches a bug, wraps it in silk and hangs the cocoon in its web" width="400"></td>
-    <td align="center"><img src="docs/rain.gif" alt="The spider shakes rain droplets off its corner web" width="400"></td>
+    <td align="center"><img src="docs/demo.gif" alt="The spider catches a bug, wraps it in silk and hangs the cocoon in its web" width="370"></td>
+    <td align="center"><img src="docs/rain.gif" alt="The spider shakes rain droplets off its corner web" width="370"></td>
   </tr>
   <tr>
     <td align="center"><em>Catching a bug and storing the cocoon</em></td>
