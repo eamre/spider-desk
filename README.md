@@ -75,6 +75,34 @@ Right-click the **Spider icon in the System Tray** (by the clock) to:
 
 ---
 
+## 🗂️ Project Structure
+
+```
+SpiderDesk/
+├── Core/                  Shared interfaces and settings (IRenderer, ISpiderTheme, UserSettings)
+├── Domain/                The simulation itself: never draws, never calls Windows APIs
+│   ├── Spider/            SpiderEntity, IK legs, gait, metabolism, tuning constants
+│   │   ├── States/        12 behaviours: Wandering, SpinningWeb, Hunting, ShakingWeb...
+│   │   └── Themes/        Black Widow, Frost Crystal, Forest Tarantula, Cyber Neon
+│   ├── Insects/           BugEntity, BugSpawner
+│   │   ├── States/        Flying, Perching, Trapped, BeingWrapped
+│   │   └── Species/       Housefly, green fly, golden moth, firefly, wasp
+│   ├── Web/               Web entity, blueprint generator, droplets, pantry
+│   ├── SimulationEngine   Runs one simulation step per frame
+│   └── FrameRatePolicy    Pure rules: 60 FPS when moving, 20 Hz when still
+├── Rendering/             Turns the world into WPF drawings (each web in its own visual)
+├── Infrastructure/        Windows side: click-through window, tray menu, fullscreen detection
+├── App.xaml.cs            Composition root: creates and wires everything together
+└── MainWindow.xaml.cs     The transparent overlay window
+```
+
+### ⚡ Performance
+- **Rests behind fullscreen apps:** while a game or video covers the desktop, nothing is drawn.
+- **Slows down when idle:** smooth animation while something moves, a much lower frame rate when the scene is still.
+- **Redraws only what changes:** a still web is drawn once and reused; only moving webs are redrawn.
+
+---
+
 ## 🛠️ Built with
 - **C# / .NET 9**
 - **WPF** (Windows Presentation Foundation)
