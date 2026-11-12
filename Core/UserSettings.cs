@@ -1,20 +1,5 @@
 namespace SpiderDesk.Core
 {
-    public enum BugSpawnRatePreset
-    {
-        Low,    // Seyrek (45-75 sn)
-        Normal, // Normal (20-38 sn)
-        High    // Yoğun (8-17 sn)
-    }
-
-    public enum DewSpawnRatePreset
-    {
-        Off,    // Kapalı
-        Low,    // Seyrek (30-50 sn)
-        Normal, // Normal (14-26 sn)
-        High    // Yoğun (5-10 sn)
-    }
-
     public class UserSettings
     {
         public int TotalBugsCaught { get; set; }
@@ -25,12 +10,5 @@ namespace SpiderDesk.Core
         public EnvironmentTimeMode TimeMode { get; set; } = EnvironmentTimeMode.AutoBySystemClock;
         public bool AlwaysOnTop { get; set; }
         public bool RunOnStartup { get; set; } = true;
-    }
-
-    public interface ISettingsRepository
-    {
-        string? LastError { get; }
-        UserSettings Load();
-        bool Save(UserSettings settings);
     }
 }
