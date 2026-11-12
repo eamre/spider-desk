@@ -4,7 +4,7 @@ using System.Windows;
 namespace SpiderDesk.Domain.Spider.States
 {
     /// <summary>
-    /// Fare imleci örümceğe hızla yaklaştığında ürküp güvenli bir noktaya kaçtığı durum (OCP & SRP).
+    /// Fare imleci örümceğe hızla yaklaştığında ürküp güvenli bir noktaya kaçtığı durum.
     /// </summary>
     public class StartledByMouseState : ISpiderBehaviorState
     {

@@ -8,7 +8,7 @@ namespace SpiderDesk
 {
     /// <summary>
     /// Yalnızca şeffaf masaüstü katman penceresinin görsel yapılandırmasını ve işletim sistemi
-    /// pencere tanıtıcısı (HWND) yaşam döngüsünü yöneten ana pencere sınıfı (SRP).
+    /// pencere tanıtıcısı (HWND) yaşam döngüsünü yöneten ana pencere sınıfı.
     /// </summary>
     public class MainWindow : Window
     {

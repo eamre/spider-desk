@@ -6,7 +6,7 @@ using SpiderDesk.Core;
 namespace SpiderDesk.Infrastructure
 {
     /// <summary>
-    /// Tıklama geçirgenliğini (Click-Through) bozmadan fare imlecinin ekran konumunu ve hızını takip eder (SRP & DIP).
+    /// Tıklama geçirgenliğini (Click-Through) bozmadan fare imlecinin ekran konumunu ve hızını takip eder.
     /// </summary>
     public class CursorTrackingService : ICursorTrackingService
     {

@@ -6,7 +6,7 @@ namespace SpiderDesk.Domain.Insects.States
 {
     /// <summary>
     /// Böceğin ağa yapıştığı, çırpınarak ağı titrettiği ve güçlü bir türse
-    /// belirli bir ihtimalle ağı yırtıp kurtulabildiği durum (OCP & SRP).
+    /// belirli bir ihtimalle ağı yırtıp kurtulabildiği durum.
     /// </summary>
     public class TrappedBugState : IBugBehaviorState
     {

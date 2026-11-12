@@ -9,7 +9,7 @@ namespace SpiderDesk.Domain.Insects
     }
 
     /// <summary>
-    /// Böcek davranış durumları için State Pattern arayüzü (OCP & SRP).
+    /// Böcek davranış durumları için State Pattern arayüzü.
     /// </summary>
     public interface IBugBehaviorState
     {

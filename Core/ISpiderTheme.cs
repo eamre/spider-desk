@@ -3,7 +3,7 @@ using System.Windows.Media;
 namespace SpiderDesk.Core
 {
     /// <summary>
-    /// Örümcek ve ağlarının görsel renk paletini tanımlayan arayüz (OCP & ISP).
+    /// Örümcek ve ağlarının görsel renk paletini tanımlayan arayüz.
     /// </summary>
     public interface ISpiderTheme
     {

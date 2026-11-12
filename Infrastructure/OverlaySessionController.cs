@@ -9,7 +9,7 @@ namespace SpiderDesk.Infrastructure
 {
     /// <summary>
     /// Simülasyon döngüsü zamanlayıcısını (DispatcherTimer), adaptif kare hızı (FPS) yönetimini
-    /// ve sistem tepsisi (Tray) menü komutlarının simülasyona bağlanmasını koordine eder (SRP).
+    /// ve sistem tepsisi (Tray) menü komutlarının simülasyona bağlanmasını koordine eder.
     /// </summary>
     public sealed class OverlaySessionController : IDisposable
     {
@@ -112,7 +112,7 @@ namespace SpiderDesk.Infrastructure
             bool isOccluded = _windowLayerService.IsDesktopOccluded;
             bool hasActivity = _engine.HasVisualActivity;
 
-            // Kare hızı ve render kararlarını saf kural sınıfına (FrameRatePolicy) devret (SRP)
+            // Kare hızı ve render kararlarını saf kural sınıfına (FrameRatePolicy) devret
             var decision = FrameRatePolicy.Decide(_isPaused, isOccluded, hasActivity);
 
             if (_timer.Interval != decision.TargetInterval)

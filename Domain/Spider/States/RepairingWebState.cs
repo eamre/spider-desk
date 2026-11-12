@@ -3,7 +3,7 @@ using SpiderDesk.Domain.Web;
 namespace SpiderDesk.Domain.Spider.States
 {
     /// <summary>
-    /// Ağın kopan/hasar gören tellerini tek tek yeniden örerek onardığı durum (OCP & SRP).
+    /// Ağın kopan/hasar gören tellerini tek tek yeniden örerek onardığı durum.
     /// </summary>
     public class RepairingWebState : ISpiderBehaviorState
     {

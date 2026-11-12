@@ -3,7 +3,7 @@ using System.Windows.Media;
 namespace SpiderDesk.Core
 {
     /// <summary>
-    /// Böcek türlerinin (Karasinek, Ateş Böceği, Yaban Arısı vb.) özelliklerini tanımlayan arayüz (OCP & ISP).
+    /// Böcek türlerinin (Karasinek, Ateş Böceği, Yaban Arısı vb.) özelliklerini tanımlayan arayüz.
     /// Yeni bir böcek türü eklemek için bu arayüzü uygulamak yeterlidir.
     /// </summary>
     public interface IBugSpecies

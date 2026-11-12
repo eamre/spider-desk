@@ -3,7 +3,7 @@ using System.Windows;
 namespace SpiderDesk.Domain.Web
 {
     /// <summary>
-    /// Ağ teli üzerinde biriken veya silkelendiğinde aşağı düşen tek bir su/çiy damlasını temsil eder (SRP).
+    /// Ağ teli üzerinde biriken veya silkelendiğinde aşağı düşen tek bir su/çiy damlasını temsil eder.
     /// </summary>
     public class WaterDroplet
     {

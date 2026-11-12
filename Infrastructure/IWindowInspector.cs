@@ -4,7 +4,7 @@ using SpiderDesk.Domain;
 namespace SpiderDesk.Infrastructure
 {
     /// <summary>
-    /// İşletim sistemi pencerelerini sorgulayan altyapı soyutlaması (DIP).
+    /// İşletim sistemi pencerelerini sorgulayan altyapı soyutlaması.
     /// <see cref="WindowLayerService"/> Win32 ayrıntılarını bilmeden pencere durumlarını bu arayüz üzerinden okur.
     /// </summary>
     public interface IWindowInspector

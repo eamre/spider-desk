@@ -8,7 +8,7 @@ using SpiderDesk.Domain.Spider.Themes;
 namespace SpiderDesk.Rendering
 {
     /// <summary>
-    /// Sadece örümceği, 2-Segmentli IK bacaklarını ve aktif ipek ipini seçili temaya (ISpiderTheme) göre çizer (SRP & OCP).
+    /// Sadece örümceği, 2-Segmentli IK bacaklarını ve aktif ipek ipini seçili temaya (ISpiderTheme) göre çizer.
     /// Örümcek bir ağın üzerindeyse, ağın rüzgar salınımı gövdeye, eklemlere ve iplere de uygulanır (yalnızca görsel).
     /// </summary>
     public class SpiderRenderer : IRenderer<SpiderEntity>

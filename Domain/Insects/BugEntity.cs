@@ -7,7 +7,7 @@ using SpiderDesk.Domain.Web;
 namespace SpiderDesk.Domain.Insects
 {
     /// <summary>
-    /// Tek bir böceğin fiziksel konumunu, türünü (IBugSpecies) ve aktif davranış durumunu (IBugBehaviorState) yönetir (SRP & OCP).
+    /// Tek bir böceğin fiziksel konumunu, türünü (IBugSpecies) ve aktif davranış durumunu (IBugBehaviorState) yönetir.
     /// </summary>
     public class BugEntity
     {

@@ -7,7 +7,7 @@ namespace SpiderDesk.Infrastructure
 {
     /// <summary>
     /// Win32 API üzerinden pencere bilgilerini okuyup işletim sisteminden bağımsız <see cref="WindowSnapshot"/>'a çevirir.
-    /// Yalnızca veri toplar, karar vermez; kararlar <see cref="DesktopOcclusionPolicy"/> gibi saf kural sınıflarındadır (SRP).
+    /// Yalnızca veri toplar, karar vermez; kararlar <see cref="DesktopOcclusionPolicy"/> gibi saf kural sınıflarındadır.
     /// Paylaşımlı sınıf adı tamponu kullandığı için yalnızca UI iş parçacığından çağrılmalıdır.
     /// </summary>
     public sealed class Win32WindowInspector : IWindowInspector

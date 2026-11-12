@@ -6,7 +6,7 @@ namespace SpiderDesk.Domain.Spider.States
 {
     /// <summary>
     /// Örümcek tokken yakaladığı ve ipekle sardığı avı hemen yemeyip ağın kenarındaki
-    /// erzak deposuna (kiler) taşıyıp astığı durum (OCP & SRP).
+    /// erzak deposuna (kiler) taşıyıp astığı durum.
     /// </summary>
     public class StoringPreyState : ISpiderBehaviorState
     {

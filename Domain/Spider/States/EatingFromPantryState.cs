@@ -7,7 +7,7 @@ namespace SpiderDesk.Domain.Spider.States
 {
     /// <summary>
     /// Örümcek acıktığında (%50 ve altı tokluk) önce bulunduğu ağdaki, orada yoksa diğer ağdaki
-    /// saklanmış kozaların yanına gidip karnı doyana kadar (%75+) beslendiği durum (OCP & SRP).
+    /// saklanmış kozaların yanına gidip karnı doyana kadar (%75+) beslendiği durum.
     /// </summary>
     public class EatingFromPantryState : ISpiderBehaviorState
     {

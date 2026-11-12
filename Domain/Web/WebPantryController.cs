@@ -21,7 +21,7 @@ namespace SpiderDesk.Domain.Web
     }
 
     /// <summary>
-    /// Ağ üzerindeki "Kiler / Erzak Deposu" kozalarını ve depolama noktalarını yönetir (SRP).
+    /// Ağ üzerindeki "Kiler / Erzak Deposu" kozalarını ve depolama noktalarını yönetir.
     /// </summary>
     public class WebPantryController
     {

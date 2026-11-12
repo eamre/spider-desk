@@ -5,7 +5,7 @@ namespace SpiderDesk.Domain.Insects.States
 {
     /// <summary>
     /// Böceğin masaüstünde bir noktaya konup kanatlarını kapatarak dinlendiği durum.
-    /// Fare imleci yaklaşırsa ürküp tekrar havalanır (OCP & SRP).
+    /// Fare imleci yaklaşırsa ürküp tekrar havalanır.
     /// </summary>
     public class PerchingBugState : IBugBehaviorState
     {

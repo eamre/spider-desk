@@ -8,7 +8,7 @@ using SpiderDesk.Domain.Insects;
 namespace SpiderDesk.Rendering
 {
     /// <summary>
-    /// Sadece böcekleri, ateş böceği parıltısını (bioluminescence) ve ipek kozayı çizmekten sorumludur (SRP).
+    /// Sadece böcekleri, ateş böceği parıltısını (bioluminescence) ve ipek kozayı çizmekten sorumludur.
     /// Fırçalar önbelleğe alınarak her karede bellek tahsisi (GC baskısı) önlenir.
     /// Ağa yakalanmış böcekler, ağın rüzgar salınımıyla birlikte kaydırılarak çizilir (yalnızca görsel).
     /// </summary>

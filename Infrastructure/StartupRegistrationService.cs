@@ -6,7 +6,7 @@ using SpiderDesk.Core;
 namespace SpiderDesk.Infrastructure
 {
     /// <summary>
-    /// Uygulamanın Windows başlangıcında otomatik çalışması için Kayıt Defteri (Registry) işlemlerini yönetir (SRP & DIP).
+    /// Uygulamanın Windows başlangıcında otomatik çalışması için Kayıt Defteri (Registry) işlemlerini yönetir.
     /// </summary>
     public class StartupRegistrationService : IStartupRegistrationService
     {

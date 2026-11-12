@@ -4,7 +4,7 @@ using System.Windows;
 namespace SpiderDesk.Domain.Insects.States
 {
     /// <summary>
-    /// Böceğin masaüstünde uçtuğu, zaman zaman dinlenmek için konduğu veya ağa yakalandığı durum (OCP & SRP).
+    /// Böceğin masaüstünde uçtuğu, zaman zaman dinlenmek için konduğu veya ağa yakalandığı durum.
     /// </summary>
     public class FlyingBugState : IBugBehaviorState
     {

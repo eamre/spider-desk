@@ -6,7 +6,7 @@ using SpiderDesk.Domain.Insects.Species;
 namespace SpiderDesk.Domain.Insects
 {
     /// <summary>
-    /// Böceklerin ne zaman ve nereden doğacağını yönetir; sıklık ayarı dinamik değiştirilebilir (SRP & DIP).
+    /// Böceklerin ne zaman ve nereden doğacağını yönetir; sıklık ayarı dinamik değiştirilebilir.
     /// </summary>
     public class BugSpawner
     {

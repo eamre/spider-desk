@@ -3,7 +3,7 @@ using System;
 namespace SpiderDesk.Domain.Spider
 {
     /// <summary>
-    /// Örümceğin tokluk/enerji seviyesini (0 - 100) ve kalori harcamasını yönetir (SRP).
+    /// Örümceğin tokluk/enerji seviyesini (0 - 100) ve kalori harcamasını yönetir.
     /// </summary>
     public class SpiderMetabolism
     {

@@ -3,7 +3,7 @@ using System.Windows;
 namespace SpiderDesk.Domain.Insects.States
 {
     /// <summary>
-    /// Böceğin örümcek tarafından ipek kozayla sarıldığı ve yenildiği durum (OCP & SRP).
+    /// Böceğin örümcek tarafından ipek kozayla sarıldığı ve yenildiği durum.
     /// </summary>
     public class BeingWrappedBugState : IBugBehaviorState
     {
