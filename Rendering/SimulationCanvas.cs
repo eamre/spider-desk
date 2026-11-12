@@ -1,6 +1,7 @@
 using System.Windows.Controls;
 using SpiderDesk.Core;
 using SpiderDesk.Domain;
+using SpiderDesk.Domain.Greeting;
 using SpiderDesk.Domain.Insects;
 using SpiderDesk.Domain.Spider;
 using SpiderDesk.Domain.Web;
@@ -21,12 +22,13 @@ namespace SpiderDesk.Rendering
             SpiderEntity spider,
             IRenderer<SpiderWebEntity> webRenderer,
             IRenderer<BugEntity> bugRenderer,
-            IRenderer<SpiderEntity> spiderRenderer)
+            IRenderer<SpiderEntity> spiderRenderer,
+            IRenderer<SilkWriting> silkWritingRenderer)
         {
             IsHitTestVisible = false;
 
             _webLayer = new WebLayerCanvas(world, webRenderer);
-            _actorLayer = new ActorLayerCanvas(world, spider, bugRenderer, spiderRenderer);
+            _actorLayer = new ActorLayerCanvas(world, spider, bugRenderer, spiderRenderer, silkWritingRenderer);
 
             Children.Add(_webLayer);
             Children.Add(_actorLayer);

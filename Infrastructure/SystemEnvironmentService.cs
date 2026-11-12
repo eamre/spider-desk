@@ -4,7 +4,7 @@ using SpiderDesk.Core;
 namespace SpiderDesk.Infrastructure
 {
     /// <summary>
-    /// Sistem saatine veya kullanıcı tercihine göre Gece/Gündüz durumunu belirler (SRP & DIP).
+    /// Sistem saatine veya kullanıcı tercihine göre Gece/Gündüz durumunu belirler.
     /// </summary>
     public class SystemEnvironmentService : IEnvironmentService
     {
@@ -22,6 +22,8 @@ namespace SpiderDesk.Infrastructure
                 };
             }
         }
+
+        public TimeSpan LocalTimeOfDay => DateTime.Now.TimeOfDay;
 
         private static bool IsSystemClockNight()
         {

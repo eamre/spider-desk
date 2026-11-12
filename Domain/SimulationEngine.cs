@@ -1,6 +1,7 @@
 using System;
 using System.Windows;
 using SpiderDesk.Core;
+using SpiderDesk.Domain.Greeting;
 using SpiderDesk.Domain.Insects;
 using SpiderDesk.Domain.Insects.Species;
 using SpiderDesk.Domain.Insects.States;
@@ -11,7 +12,7 @@ using SpiderDesk.Domain.Spider.Themes;
 namespace SpiderDesk.Domain
 {
     /// <summary>
-    /// Simülasyon döngüsünü, ortam zamanını (IEnvironmentService) ve kalıcı kullanıcı ayarlarını koordine eder (SRP & DIP).
+    /// Simülasyon döngüsünü, ortam zamanını (IEnvironmentService) ve kalıcı kullanıcı ayarlarını koordine eder.
     /// </summary>
     public class SimulationEngine
     {
@@ -31,7 +32,7 @@ namespace SpiderDesk.Domain
         {
             get
             {
-                if (Spider.HasVisualMotion || World.Bugs.Count > 0)
+                if (Spider.HasVisualMotion || World.Bugs.Count > 0 || World.Greeting != null)
                 {
                     return true;
                 }
@@ -86,7 +87,9 @@ namespace SpiderDesk.Domain
                 _settingsRepository.Save(_settings);
             };
 
-            Spider.TransitionTo(SpinningWebState.CreateForBestSite(World), World);
+            // Açılışta, daha hiç ağ örmeden önce saate uygun selamı ipekle yazar; ardından ilk ağını örmeye gider.
+            string greeting = GreetingPolicy.ChooseGreeting(_environmentService.LocalTimeOfDay);
+            Spider.TransitionTo(new WritingGreetingState(greeting), World);
         }
 
         public void Update(double dt, double screenWidth, double screenHeight, Point cursorPos, Point prevCursorPos, double cursorSpeed)
@@ -116,6 +119,18 @@ namespace SpiderDesk.Domain
             }
 
             Spider.Update(World, dt);
+            UpdateGreeting(dt);
+        }
+
+        private void UpdateGreeting(double dt)
+        {
+            if (World.Greeting is not { } greeting) return;
+
+            greeting.Update(dt);
+            if (greeting.IsFinished)
+            {
+                World.Greeting = null;
+            }
         }
 
         public void SetTheme(ISpiderTheme theme)

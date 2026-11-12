@@ -7,7 +7,7 @@ namespace SpiderDesk.Domain.Spider
 
     /// <summary>
     /// Tek bir örümcek bacağının anatomik ölçülerini ve 2-Kemikli Ters Kinematik (2-Bone IK)
-    /// hesaplamasını barındırır (SRP). Bacak uzunluğu sabit olduğu için asla uzamaz.
+    /// hesaplamasını barındırır. Bacak uzunluğu sabit olduğu için asla uzamaz.
     /// </summary>
     public class SpiderLeg
     {
@@ -27,6 +27,12 @@ namespace SpiderDesk.Domain.Spider
         public Point StepTarget { get; set; }
         public double StepProgress { get; set; } = 1.0;
         public bool IsStepping => StepProgress < 1.0;
+
+        /// <summary>
+        /// Bir durum bacağı yürüyüşten bağımsız bir harekette (örn. el sallama) tutuyorsa ayağın gideceği nokta.
+        /// Doluyken yürüyüş kontrolcüsü bu bacakla adım atmaz; boşaltılınca bacak bir adımla dinlenme yerine döner.
+        /// </summary>
+        public Point? GestureFoot { get; set; }
 
         public SpiderLeg(
             int index,

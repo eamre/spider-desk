@@ -65,7 +65,8 @@ namespace SpiderDesk
                 engine.Spider,
                 webRenderer,
                 new BugRenderer(),
-                new SpiderRenderer()
+                new SpiderRenderer(),
+                new SilkWritingRenderer(() => engine.Spider.Theme)
             );
 
             var trayMenuService = new TrayMenuService(

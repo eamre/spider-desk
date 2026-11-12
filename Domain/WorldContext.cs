@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Windows;
 using SpiderDesk.Core;
+using SpiderDesk.Domain.Greeting;
 using SpiderDesk.Domain.Insects;
 using SpiderDesk.Domain.Web;
 
@@ -18,6 +19,9 @@ namespace SpiderDesk.Domain
         public DewSpawnRatePreset DewSpawnRate { get; set; } = DewSpawnRatePreset.Normal;
         public List<SpiderWebEntity> Webs { get; } = new();
         public List<BugEntity> Bugs { get; } = new();
+
+        /// <summary>Örümceğin açılışta ipekle yazdığı selam; yazı solup kaybolunca null olur.</summary>
+        public SilkWriting? Greeting { get; set; }
         public Random Random { get; } = new();
     }
 }

@@ -106,5 +106,32 @@ namespace SpiderDesk.Domain.Spider
 
         // Ağ Hareket Algılama (titreşim/rüzgar bu eşiğin altındaysa ağ durgun sayılır ve önbellekten çizilir)
         public const double WebMotionThreshold = 0.05;
+
+        // Açılış Selamı (WritingGreetingState & SilkWriting)
+        public const double GreetingTextCenterYRatio = 0.3;
+        public const double GreetingTextWidthRatio = 0.8;
+        public const double GreetingMaxLetterHeight = 110.0;
+        public const double GreetingStandOffsetLetters = 1.2;
+        public const double GreetingStandBottomMargin = 110.0;
+        public const double GreetingApproachSpeed = 240.0;
+        public const double GreetingAimTurnSpeed = 7.0;
+        public const double GreetingTrackTurnSpeed = 10.0;
+        public const double GreetingAimTolerance = 0.05;
+        public const double GreetingAimTimeoutSeconds = 0.9;
+        public const double GreetingLaunchBaseSeconds = 0.16;
+        public const double GreetingLaunchSecondsPerPixel = 1.0 / 1500.0;
+        public const double GreetingLaunchArcRatio = 0.22;
+        public const double GreetingTargetWriteSeconds = 5.0;
+        public const double GreetingMinStrokeSpeed = 330.0;
+        public const double GreetingHopSpeedFactor = 2.0;
+        public const double GreetingAdmireSeconds = 2.6;
+        public const double GreetingAdmireTurnSpeed = 4.0;
+        public const double GreetingWaveStartSeconds = 0.6;
+        public const double GreetingWaveEndSeconds = 2.2;
+        public const double GreetingWaveFrequency = 11.0;
+        public const double GreetingFadeSeconds = 1.8;
+        public const double GreetingBeadSpacing = 24.0;
+        public const double GreetingBeadMinRadius = 0.9;
+        public const double GreetingBeadRadiusVariance = 0.9;
     }
 }

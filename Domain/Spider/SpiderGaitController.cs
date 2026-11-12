@@ -4,7 +4,7 @@ namespace SpiderDesk.Domain.Spider
 {
     /// <summary>
     /// Örümceğin 8 bacağının adım atma koordinasyonunu (Tetrapod Gait) ve
-    /// anatomik sınırlarını yönetir (SRP).
+    /// anatomik sınırlarını yönetir.
     /// </summary>
     public class SpiderGaitController
     {
@@ -56,6 +56,13 @@ namespace SpiderDesk.Domain.Spider
             // 1. Devam eden adımları ilerlet
             foreach (var leg in legs)
             {
+                if (leg.GestureFoot is { } gestureFoot)
+                {
+                    leg.CurrentFoot = gestureFoot;
+                    leg.StepProgress = 1.0;
+                    continue;
+                }
+
                 if (leg.IsStepping)
                 {
                     leg.StepProgress += dt * stepRate;
@@ -89,6 +96,8 @@ namespace SpiderDesk.Domain.Spider
             // 2. İdeal noktasından uzaklaşan bacaklar için yeni adım başlat
             foreach (var leg in legs)
             {
+                if (leg.GestureFoot != null) continue;
+
                 Point hip = spider.LocalToWorld(leg.LocalAttach);
                 Point idealFoot = spider.LocalToWorld(leg.LocalRestFoot);
 

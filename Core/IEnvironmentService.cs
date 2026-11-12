@@ -1,3 +1,5 @@
+using System;
+
 namespace SpiderDesk.Core
 {
     public enum EnvironmentTimeMode
@@ -8,11 +10,14 @@ namespace SpiderDesk.Core
     }
 
     /// <summary>
-    /// Gece/Gündüz döngüsü bilgisini sağlayan servis arayüzü (ISP & DIP).
+    /// Gece/Gündüz döngüsü ve yerel saat bilgisini sağlayan servis arayüzü.
     /// </summary>
     public interface IEnvironmentService
     {
         EnvironmentTimeMode TimeMode { get; set; }
         bool IsNightTime { get; }
+
+        /// <summary>Sistem saatine göre günün yerel saati (gece/gündüz tercihinden bağımsızdır).</summary>
+        TimeSpan LocalTimeOfDay { get; }
     }
 }
