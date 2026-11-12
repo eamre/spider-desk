@@ -6,7 +6,7 @@ using SpiderDesk.Core;
 using SpiderDesk.Domain.Spider.Themes;
 using SpiderDesk.Domain.Web;
 
-namespace SpiderDesk.Rendering
+namespace SpiderDesk.Rendering.Web
 {
     /// <summary>
     /// Örümcek ağlarını (teller, çiy, su damlaları, kopuk teller ve kilerdeki kozalar) aktif temaya göre çizer.

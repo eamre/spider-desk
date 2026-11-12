@@ -5,7 +5,7 @@ using SpiderDesk.Core;
 using SpiderDesk.Domain;
 using SpiderDesk.Domain.Web;
 
-namespace SpiderDesk.Rendering
+namespace SpiderDesk.Rendering.Web
 {
     /// <summary>
     /// Örümcek ağlarını, çiy damlalarını ve kilerdeki kozaları barındıran katman.

@@ -1,6 +1,6 @@
 using System.Windows;
 
-namespace SpiderDesk.Core
+namespace SpiderDesk.Core.Services
 {
     public interface IWindowLayerService
     {

@@ -4,6 +4,7 @@ using System.Windows.Media;
 using SpiderDesk.Core;
 using SpiderDesk.Domain.Spider;
 using SpiderDesk.Domain.Spider.Themes;
+using SpiderDesk.Rendering.Web;
 
 namespace SpiderDesk.Rendering
 {

@@ -2,7 +2,7 @@ using System;
 using System.Windows;
 using SpiderDesk.Domain.Web;
 
-namespace SpiderDesk.Rendering
+namespace SpiderDesk.Rendering.Web
 {
     /// <summary>
     /// Bir ağın tek bir karedeki rüzgar ve titreşim kaynaklı şekil bozulmasının anlık görüntüsü.

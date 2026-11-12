@@ -1,6 +1,6 @@
 using System;
 
-namespace SpiderDesk.Core
+namespace SpiderDesk.Core.Services
 {
     public enum EnvironmentTimeMode
     {

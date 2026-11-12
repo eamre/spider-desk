@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Windows;
 using SpiderDesk.Core;
+using SpiderDesk.Core.Settings;
 using SpiderDesk.Domain.Spider;
 
 namespace SpiderDesk.Domain.Web

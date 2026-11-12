@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using Microsoft.Win32;
 using SpiderDesk.Core;
+using SpiderDesk.Core.Services;
 
 namespace SpiderDesk.Infrastructure
 {

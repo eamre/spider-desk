@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Media;
 using SpiderDesk.Core;
 using SpiderDesk.Domain.Insects;
+using SpiderDesk.Rendering.Web;
 
 namespace SpiderDesk.Rendering
 {

@@ -1,4 +1,6 @@
-namespace SpiderDesk.Core
+using SpiderDesk.Core.Services;
+
+namespace SpiderDesk.Core.Settings
 {
     public class UserSettings
     {

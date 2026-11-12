@@ -79,19 +79,24 @@ Right-click the **Spider icon in the System Tray** (by the clock) to:
 
 ```
 SpiderDesk/
-├── Core/                  Shared interfaces and settings (IRenderer, ISpiderTheme, UserSettings)
+├── Core/                  Shared interfaces (IRenderer, ISpiderTheme, IBugSpecies)
+│   ├── Settings/          UserSettings, how they are saved, spawn-rate presets
+│   └── Services/          Contracts for the cursor, clock, startup and window layer
 ├── Domain/                The simulation itself: never draws, never calls Windows APIs
 │   ├── Spider/            SpiderEntity, IK legs, gait, metabolism, tuning constants
-│   │   ├── States/        12 behaviours: Wandering, SpinningWeb, Hunting, ShakingWeb...
+│   │   ├── States/        13 behaviours: WritingGreeting, Wandering, SpinningWeb, Hunting...
 │   │   └── Themes/        Black Widow, Frost Crystal, Forest Tarantula, Cyber Neon
 │   ├── Insects/           BugEntity, BugSpawner
 │   │   ├── States/        Flying, Perching, Trapped, BeingWrapped
 │   │   └── Species/       Housefly, green fly, golden moth, firefly, wasp
 │   ├── Web/               Web entity, blueprint generator, droplets, pantry
+│   ├── Greeting/          The startup greeting written in silk
 │   ├── SimulationEngine   Runs one simulation step per frame
 │   └── FrameRatePolicy    Pure rules: 60 FPS when moving, 20 Hz when still
-├── Rendering/             Turns the world into WPF drawings (each web in its own visual)
-├── Infrastructure/        Windows side: click-through window, tray menu, fullscreen detection
+├── Rendering/             Turns the world into WPF drawings: spider, bugs, greeting
+│   └── Web/               Web drawing (each web in its own visual)
+├── Infrastructure/        Windows side: tray menu, settings file, run at startup
+│   └── Windowing/         Click-through window, cursor, fullscreen detection
 ├── App.xaml.cs            Composition root: creates and wires everything together
 └── MainWindow.xaml.cs     The transparent overlay window
 ```

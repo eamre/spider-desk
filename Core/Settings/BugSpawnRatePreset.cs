@@ -1,4 +1,4 @@
-namespace SpiderDesk.Core
+namespace SpiderDesk.Core.Settings
 {
     public enum BugSpawnRatePreset
     {

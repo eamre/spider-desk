@@ -3,9 +3,10 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
 using SpiderDesk.Core;
+using SpiderDesk.Core.Services;
 using SpiderDesk.Domain;
 
-namespace SpiderDesk.Infrastructure
+namespace SpiderDesk.Infrastructure.Windowing
 {
     /// <summary>
     /// Pencerenin tıklama geçirgenliğini (Click-Through) ve Masaüstü Z-Sırasını (Z-Order) yönetir.

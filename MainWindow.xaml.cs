@@ -2,6 +2,7 @@ using System;
 using System.Windows;
 using System.Windows.Media;
 using SpiderDesk.Core;
+using SpiderDesk.Core.Services;
 using SpiderDesk.Rendering;
 
 namespace SpiderDesk

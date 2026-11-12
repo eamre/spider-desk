@@ -2,8 +2,9 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Media;
 using SpiderDesk.Core;
+using SpiderDesk.Core.Services;
 
-namespace SpiderDesk.Infrastructure
+namespace SpiderDesk.Infrastructure.Windowing
 {
     /// <summary>
     /// Tıklama geçirgenliğini (Click-Through) bozmadan fare imlecinin ekran konumunu ve hızını takip eder.

@@ -4,7 +4,7 @@ using System.Windows.Media;
 using SpiderDesk.Domain.Spider;
 using SpiderDesk.Domain.Web;
 
-namespace SpiderDesk.Rendering
+namespace SpiderDesk.Rendering.Web
 {
     /// <summary>
     /// Bir ağın ipek tellerini kalem başına tek bir dondurulmuş geometri olarak tutar.

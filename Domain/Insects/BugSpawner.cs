@@ -1,6 +1,7 @@
 using System.Linq;
 using System.Windows;
 using SpiderDesk.Core;
+using SpiderDesk.Core.Settings;
 using SpiderDesk.Domain.Insects.Species;
 
 namespace SpiderDesk.Domain.Insects

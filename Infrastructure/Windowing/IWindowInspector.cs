@@ -1,7 +1,7 @@
 using System;
 using SpiderDesk.Domain;
 
-namespace SpiderDesk.Infrastructure
+namespace SpiderDesk.Infrastructure.Windowing
 {
     /// <summary>
     /// İşletim sistemi pencerelerini sorgulayan altyapı soyutlaması.

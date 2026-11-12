@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using SpiderDesk.Domain;
 
-namespace SpiderDesk.Infrastructure
+namespace SpiderDesk.Infrastructure.Windowing
 {
     /// <summary>
     /// Win32 API üzerinden pencere bilgilerini okuyup işletim sisteminden bağımsız <see cref="WindowSnapshot"/>'a çevirir.

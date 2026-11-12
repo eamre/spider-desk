@@ -2,7 +2,7 @@ using System.Windows.Media;
 using SpiderDesk.Core;
 using SpiderDesk.Domain.Web;
 
-namespace SpiderDesk.Rendering
+namespace SpiderDesk.Rendering.Web
 {
     /// <summary>
     /// Tek bir örümcek ağının görsel düğümü. Yalnızca kendi ağı değiştiğinde veya hareket ettiğinde yeniden çizilir;

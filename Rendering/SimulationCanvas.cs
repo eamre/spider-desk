@@ -5,6 +5,7 @@ using SpiderDesk.Domain.Greeting;
 using SpiderDesk.Domain.Insects;
 using SpiderDesk.Domain.Spider;
 using SpiderDesk.Domain.Web;
+using SpiderDesk.Rendering.Web;
 
 namespace SpiderDesk.Rendering
 {

@@ -1,5 +1,6 @@
 using System;
 using SpiderDesk.Core;
+using SpiderDesk.Core.Services;
 
 namespace SpiderDesk.Infrastructure
 {

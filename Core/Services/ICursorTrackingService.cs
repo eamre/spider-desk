@@ -1,7 +1,7 @@
 using System.Windows;
 using System.Windows.Media;
 
-namespace SpiderDesk.Core
+namespace SpiderDesk.Core.Services
 {
     public interface ICursorTrackingService
     {
