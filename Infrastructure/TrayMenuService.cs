@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
-using SpiderDesk.Core;
 using SpiderDesk.Core.Services;
 using SpiderDesk.Core.Settings;
 using SpiderDesk.Domain.Spider.Themes;

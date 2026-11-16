@@ -1,6 +1,5 @@
 using System;
 using System.Windows;
-using SpiderDesk.Core;
 using SpiderDesk.Core.Services;
 using SpiderDesk.Core.Settings;
 using SpiderDesk.Domain.Greeting;

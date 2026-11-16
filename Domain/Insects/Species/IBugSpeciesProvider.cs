@@ -1,5 +1,4 @@
 using System;
-using SpiderDesk.Core;
 
 namespace SpiderDesk.Domain.Insects.Species
 {

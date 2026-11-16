@@ -79,7 +79,7 @@ Right-click the **Spider icon in the System Tray** (by the clock) to:
 
 ```
 SpiderDesk/
-├── Core/                  Shared interfaces (IRenderer, ISpiderTheme, IBugSpecies)
+├── Core/                  Contracts shared by every layer (IRenderer, AppDiagnostics)
 │   ├── Settings/          UserSettings, how they are saved, spawn-rate presets
 │   └── Services/          Contracts for the cursor, clock, startup and window layer
 ├── Domain/                The simulation itself: never draws, never calls Windows APIs
@@ -91,8 +91,9 @@ SpiderDesk/
 │   │   └── Species/       Housefly, green fly, golden moth, firefly, wasp
 │   ├── Web/               Web entity, blueprint generator, droplets, pantry
 │   ├── Greeting/          The startup greeting written in silk
+│   ├── Performance/       Pure rules: 60 FPS when moving, 20 Hz when still, pause when covered
 │   ├── SimulationEngine   Runs one simulation step per frame
-│   └── FrameRatePolicy    Pure rules: 60 FPS when moving, 20 Hz when still
+│   └── WorldContext       Everything the spider can see: webs, bugs, cursor, screen size
 ├── Rendering/             Turns the world into WPF drawings: spider, bugs, greeting
 │   └── Web/               Web drawing (each web in its own visual)
 ├── Infrastructure/        Windows side: tray menu, settings file, run at startup

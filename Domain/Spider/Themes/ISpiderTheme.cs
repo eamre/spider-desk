@@ -1,6 +1,6 @@
 using System.Windows.Media;
 
-namespace SpiderDesk.Core
+namespace SpiderDesk.Domain.Spider.Themes
 {
     /// <summary>
     /// Örümcek ve ağlarının görsel renk paletini tanımlayan arayüz.

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using SpiderDesk.Core;
 
 namespace SpiderDesk.Domain.Insects.Species
 {

@@ -2,9 +2,8 @@ using System;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
-using SpiderDesk.Core;
 using SpiderDesk.Core.Services;
-using SpiderDesk.Domain;
+using SpiderDesk.Domain.Performance;
 
 namespace SpiderDesk.Infrastructure.Windowing
 {

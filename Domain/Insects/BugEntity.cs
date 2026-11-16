@@ -1,6 +1,6 @@
 using System;
 using System.Windows;
-using SpiderDesk.Core;
+using SpiderDesk.Domain.Insects.Species;
 using SpiderDesk.Domain.Insects.States;
 using SpiderDesk.Domain.Web;
 

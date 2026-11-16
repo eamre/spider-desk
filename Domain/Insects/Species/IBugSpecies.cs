@@ -1,6 +1,6 @@
 using System.Windows.Media;
 
-namespace SpiderDesk.Core
+namespace SpiderDesk.Domain.Insects.Species
 {
     /// <summary>
     /// Böcek türlerinin (Karasinek, Ateş Böceği, Yaban Arısı vb.) özelliklerini tanımlayan arayüz.

@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Media;
 using SpiderDesk.Core;
 using SpiderDesk.Domain.Greeting;
+using SpiderDesk.Domain.Spider.Themes;
 using SpiderDesk.Domain.Web;
 
 namespace SpiderDesk.Rendering

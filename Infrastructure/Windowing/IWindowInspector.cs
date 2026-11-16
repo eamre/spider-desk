@@ -1,5 +1,5 @@
 using System;
-using SpiderDesk.Domain;
+using SpiderDesk.Domain.Performance;
 
 namespace SpiderDesk.Infrastructure.Windowing
 {

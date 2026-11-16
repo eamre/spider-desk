@@ -1,6 +1,6 @@
 using System;
 
-namespace SpiderDesk.Domain
+namespace SpiderDesk.Domain.Performance
 {
     /// <summary>
     /// Kare hızı yöneticisi için karar çıktısı.

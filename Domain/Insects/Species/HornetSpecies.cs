@@ -1,5 +1,4 @@
 using System.Windows.Media;
-using SpiderDesk.Core;
 
 namespace SpiderDesk.Domain.Insects.Species
 {

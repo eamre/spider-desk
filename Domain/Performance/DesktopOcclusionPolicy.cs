@@ -1,4 +1,4 @@
-namespace SpiderDesk.Domain
+namespace SpiderDesk.Domain.Performance
 {
     /// <summary>
     /// Bir pencerenin, karar anındaki görsel durumunun işletim sisteminden bağımsız özeti.
