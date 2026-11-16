@@ -79,7 +79,7 @@ namespace SpiderDesk.Infrastructure
 
             _trayMenuService.SpawnRateSelected += rate => _engine.SetSpawnRate(rate);
             _trayMenuService.DewSpawnRateSelected += rate => _engine.SetDewSpawnRate(rate);
-            _trayMenuService.SpeedMultiplierSelected += mult => _engine.SetSpeedMultiplier(mult);
+            _trayMenuService.SpeedPresetSelected += preset => _engine.SetSpeedPreset(preset);
             _trayMenuService.TimeModeSelected += mode => _engine.SetTimeMode(mode);
 
             _trayMenuService.AlwaysOnTopChanged += alwaysOnTop =>

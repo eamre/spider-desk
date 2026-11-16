@@ -25,7 +25,7 @@ namespace SpiderDesk.Infrastructure.Tray
         public event Action<ISpiderTheme>? ThemeSelected;
         public event Action<BugSpawnRatePreset>? SpawnRateSelected;
         public event Action<DewSpawnRatePreset>? DewSpawnRateSelected;
-        public event Action<double>? SpeedMultiplierSelected;
+        public event Action<SpiderSpeedPreset>? SpeedPresetSelected;
         public event Action<EnvironmentTimeMode>? TimeModeSelected;
         public event Action<bool>? AlwaysOnTopChanged;
         public event Action<bool>? StartupChanged;
@@ -174,14 +174,14 @@ namespace SpiderDesk.Infrastructure.Tray
             settingsRoot.DropDownItems.Add(new ToolStripMenuItem("⚡ Örümcek Hızı") { Enabled = false });
             AddRadioOptions(
                 settingsRoot,
-                new (string, double)[]
+                new (string, SpiderSpeedPreset)[]
                 {
-                    ("Sakin (0.75x)", 0.75),
-                    ("Normal (1.0x)", 1.0),
-                    ("Çevik (1.35x)", 1.35)
+                    ("Sakin (0.75x)", SpiderSpeedPreset.Calm),
+                    ("Normal (1.0x)", SpiderSpeedPreset.Normal),
+                    ("Çevik (1.35x)", SpiderSpeedPreset.Agile)
                 },
-                mult => Math.Abs(settings.SpeedMultiplier - mult) < 0.05,
-                mult => SpeedMultiplierSelected?.Invoke(mult)
+                preset => settings.SpeedPreset == preset,
+                preset => SpeedPresetSelected?.Invoke(preset)
             );
 
             return settingsRoot;

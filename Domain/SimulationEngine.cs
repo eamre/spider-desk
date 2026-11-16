@@ -79,7 +79,7 @@ namespace SpiderDesk.Domain
             )
             {
                 Theme = SpiderThemeCatalog.GetById(_settings.ThemeId),
-                SpeedMultiplier = _settings.SpeedMultiplier > 0.1 ? _settings.SpeedMultiplier : 1.0
+                SpeedMultiplier = SpiderSpeedPolicy.MultiplierFor(_settings.SpeedPreset)
             };
 
             Spider.PreyCaught += totalCaught =>
@@ -159,10 +159,10 @@ namespace SpiderDesk.Domain
             _settingsRepository.Save(_settings);
         }
 
-        public void SetSpeedMultiplier(double multiplier)
+        public void SetSpeedPreset(SpiderSpeedPreset preset)
         {
-            Spider.SpeedMultiplier = multiplier;
-            _settings.SpeedMultiplier = multiplier;
+            Spider.SpeedMultiplier = SpiderSpeedPolicy.MultiplierFor(preset);
+            _settings.SpeedPreset = preset;
             _settingsRepository.Save(_settings);
         }
 
