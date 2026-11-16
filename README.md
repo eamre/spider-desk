@@ -112,3 +112,9 @@ SpiderDesk/
 ## 🛠️ Built with
 - **C# / .NET 9**
 - **WPF** (Windows Presentation Foundation)
+
+---
+
+## 📄 License
+Distributed under the [MIT License](LICENSE).
+
