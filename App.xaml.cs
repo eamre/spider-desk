@@ -12,6 +12,7 @@ using SpiderDesk.Core.Settings;
 using SpiderDesk.Domain;
 using SpiderDesk.Domain.Insects.Species;
 using SpiderDesk.Infrastructure;
+using SpiderDesk.Infrastructure.Tray;
 using SpiderDesk.Infrastructure.Windowing;
 using SpiderDesk.Rendering;
 using SpiderDesk.Rendering.Web;

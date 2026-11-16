@@ -1,22 +1,18 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using SpiderDesk.Core.Services;
 using SpiderDesk.Core.Settings;
 using SpiderDesk.Domain.Spider.Themes;
 
-namespace SpiderDesk.Infrastructure
+namespace SpiderDesk.Infrastructure.Tray
 {
     /// <summary>
     /// Sistem tepsisi (System Tray) ikonunu, tema seçicisini ve ayar menülerini yönetir.
     /// </summary>
     public sealed class TrayMenuService : IDisposable
     {
-        [DllImport("user32.dll", SetLastError = true)]
-        private static extern bool DestroyIcon(IntPtr hIcon);
-
         private readonly NotifyIcon _notifyIcon;
         private readonly ToolStripMenuItem _statusMenuItem;
         private string _lastStatusText = string.Empty;
@@ -94,7 +90,7 @@ namespace SpiderDesk.Infrastructure
 
             _notifyIcon = new NotifyIcon
             {
-                Icon = CreateSpiderTrayIcon(),
+                Icon = TrayIconFactory.CreateSpiderIcon(),
                 Text = "SpiderDesk - Masaüstü Örümceği",
                 ContextMenuStrip = menu,
                 Visible = true
@@ -240,41 +236,6 @@ namespace SpiderDesk.Infrastructure
             _notifyIcon.Visible = false;
             _notifyIcon.Dispose();
             icon?.Dispose();
-        }
-
-        private static Icon CreateSpiderTrayIcon()
-        {
-            using Bitmap bmp = new Bitmap(32, 32);
-            using Graphics g = Graphics.FromImage(bmp);
-            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-            g.Clear(Color.Transparent);
-
-            using var legPen = new Pen(Color.FromArgb(240, 30, 30, 35), 2.2f);
-            g.DrawLines(legPen, new[] { new Point(16, 15), new Point(6, 7), new Point(2, 3) });
-            g.DrawLines(legPen, new[] { new Point(16, 15), new Point(26, 7), new Point(30, 3) });
-            g.DrawLines(legPen, new[] { new Point(16, 16), new Point(4, 13), new Point(1, 12) });
-            g.DrawLines(legPen, new[] { new Point(16, 16), new Point(28, 13), new Point(31, 12) });
-            g.DrawLines(legPen, new[] { new Point(16, 17), new Point(5, 20), new Point(2, 23) });
-            g.DrawLines(legPen, new[] { new Point(16, 17), new Point(27, 20), new Point(30, 23) });
-            g.DrawLines(legPen, new[] { new Point(16, 18), new Point(7, 25), new Point(4, 30) });
-            g.DrawLines(legPen, new[] { new Point(16, 18), new Point(25, 25), new Point(28, 30) });
-
-            g.FillEllipse(Brushes.Black, 10, 16, 12, 13);
-            g.FillEllipse(Brushes.Black, 12, 10, 8, 8);
-            g.FillEllipse(Brushes.Crimson, 14, 20, 4, 5);
-            g.FillEllipse(Brushes.Red, 13, 11, 2, 2);
-            g.FillEllipse(Brushes.Red, 17, 11, 2, 2);
-
-            IntPtr hIcon = bmp.GetHicon();
-            try
-            {
-                using Icon wrapped = Icon.FromHandle(hIcon);
-                return (Icon)wrapped.Clone();
-            }
-            finally
-            {
-                DestroyIcon(hIcon);
-            }
         }
     }
 }

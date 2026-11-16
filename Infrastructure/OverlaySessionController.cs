@@ -4,6 +4,7 @@ using System.Windows.Threading;
 using SpiderDesk.Core.Services;
 using SpiderDesk.Domain;
 using SpiderDesk.Domain.Performance;
+using SpiderDesk.Infrastructure.Tray;
 using SpiderDesk.Rendering;
 using SpiderDesk.Rendering.Web;
 

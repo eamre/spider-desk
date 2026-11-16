@@ -96,7 +96,8 @@ SpiderDesk/
 │   └── WorldContext       Everything the spider can see: webs, bugs, cursor, screen size
 ├── Rendering/             Turns the world into WPF drawings: spider, bugs, greeting
 │   └── Web/               Web drawing (each web in its own visual)
-├── Infrastructure/        Windows side: tray menu, settings file, run at startup
+├── Infrastructure/        Windows side: settings file, run at startup, frame loop
+│   ├── Tray/              Tray menu and the spider tray icon
 │   └── Windowing/         Click-through window, cursor, fullscreen detection
 ├── App.xaml.cs            Composition root: creates and wires everything together
 └── MainWindow.xaml.cs     The transparent overlay window
