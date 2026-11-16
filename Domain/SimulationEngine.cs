@@ -13,18 +13,16 @@ using SpiderDesk.Domain.Spider.Themes;
 namespace SpiderDesk.Domain
 {
     /// <summary>
-    /// Simülasyon döngüsünü, ortam zamanını (IEnvironmentService) ve kalıcı kullanıcı ayarlarını koordine eder.
+    /// Simülasyon döngüsünü ve ortam zamanını (IEnvironmentService) koordine eder.
+    /// Ayarları yalnızca uygular; kaydetmek SettingsStore'un işidir.
     /// </summary>
     public class SimulationEngine
     {
         private readonly BugSpawner _bugSpawner;
         private readonly IEnvironmentService _environmentService;
-        private readonly ISettingsRepository _settingsRepository;
-        private readonly UserSettings _settings;
 
         public WorldContext World { get; }
         public SpiderEntity Spider { get; }
-        public UserSettings Settings => _settings;
 
         /// <summary>
         /// Ekranda hareket eden bir nesne (örümcek, böcek, titreşen ağ veya düşen damla) olup olmadığını bildirir.
@@ -53,39 +51,30 @@ namespace SpiderDesk.Domain
         public SimulationEngine(
             IBugSpeciesProvider speciesProvider,
             IEnvironmentService environmentService,
-            ISettingsRepository settingsRepository)
+            UserSettings initialSettings)
         {
             _environmentService = environmentService;
-            _settingsRepository = settingsRepository;
-            _settings = _settingsRepository.Load();
-
-            _environmentService.TimeMode = _settings.TimeMode;
+            _environmentService.TimeMode = initialSettings.TimeMode;
 
             World = new WorldContext
             {
                 ScreenWidth = SystemParameters.PrimaryScreenWidth,
                 ScreenHeight = SystemParameters.PrimaryScreenHeight,
                 IsNightTime = _environmentService.IsNightTime,
-                DewSpawnRate = _settings.DewSpawnRate
+                DewSpawnRate = initialSettings.DewSpawnRate
             };
 
-            _bugSpawner = new BugSpawner(speciesProvider, _settings.SpawnRate);
+            _bugSpawner = new BugSpawner(speciesProvider, initialSettings.SpawnRate);
             var gaitController = new SpiderGaitController();
 
             Spider = new SpiderEntity(
                 new Point(World.ScreenWidth * 0.72, World.ScreenHeight * 0.32),
                 gaitController,
-                initialBugsCaught: _settings.TotalBugsCaught
+                initialBugsCaught: initialSettings.TotalBugsCaught
             )
             {
-                Theme = SpiderThemeCatalog.GetById(_settings.ThemeId),
-                SpeedMultiplier = SpiderSpeedPolicy.MultiplierFor(_settings.SpeedPreset)
-            };
-
-            Spider.PreyCaught += totalCaught =>
-            {
-                _settings.TotalBugsCaught = totalCaught;
-                _settingsRepository.Save(_settings);
+                Theme = SpiderThemeCatalog.GetById(initialSettings.ThemeId),
+                SpeedMultiplier = SpiderSpeedPolicy.MultiplierFor(initialSettings.SpeedPreset)
             };
 
             // Açılışta, daha hiç ağ örmeden önce saate uygun selamı ipekle yazar; ardından ilk ağını örmeye gider.
@@ -137,15 +126,11 @@ namespace SpiderDesk.Domain
         public void SetTheme(ISpiderTheme theme)
         {
             Spider.Theme = theme;
-            _settings.ThemeId = theme.Id;
-            _settingsRepository.Save(_settings);
         }
 
         public void SetSpawnRate(BugSpawnRatePreset rate)
         {
             _bugSpawner.SpawnRate = rate;
-            _settings.SpawnRate = rate;
-            _settingsRepository.Save(_settings);
         }
 
         public void SetDewSpawnRate(DewSpawnRatePreset rate)
@@ -155,34 +140,16 @@ namespace SpiderDesk.Domain
             {
                 web.Droplets.SpawnRate = rate;
             }
-            _settings.DewSpawnRate = rate;
-            _settingsRepository.Save(_settings);
         }
 
         public void SetSpeedPreset(SpiderSpeedPreset preset)
         {
             Spider.SpeedMultiplier = SpiderSpeedPolicy.MultiplierFor(preset);
-            _settings.SpeedPreset = preset;
-            _settingsRepository.Save(_settings);
         }
 
         public void SetTimeMode(EnvironmentTimeMode mode)
         {
             _environmentService.TimeMode = mode;
-            _settings.TimeMode = mode;
-            _settingsRepository.Save(_settings);
-        }
-
-        public void SetAlwaysOnTopPreference(bool alwaysOnTop)
-        {
-            _settings.AlwaysOnTop = alwaysOnTop;
-            _settingsRepository.Save(_settings);
-        }
-
-        public void SetRunOnStartupPreference(bool runOnStartup)
-        {
-            _settings.RunOnStartup = runOnStartup;
-            _settingsRepository.Save(_settings);
         }
 
         public void CommandNewWeb() => Spider.RequestNewWeb(World);

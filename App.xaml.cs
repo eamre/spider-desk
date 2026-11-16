@@ -49,18 +49,18 @@ namespace SpiderDesk
             ICursorTrackingService cursorService = new CursorTrackingService();
             IStartupRegistrationService startupService = new StartupRegistrationService();
             IEnvironmentService environmentService = new SystemEnvironmentService();
-            ISettingsRepository settingsRepository = new JsonSettingsRepository();
+            var settings = new SettingsStore(new JsonSettingsRepository());
 
             // Domain ve Görselleştirme bileşenlerinin oluşturulması
             IBugSpeciesProvider speciesProvider = new BugSpeciesCatalog();
-            var engine = new SimulationEngine(speciesProvider, environmentService, settingsRepository);
+            var engine = new SimulationEngine(speciesProvider, environmentService, settings.Current);
 
-            if (startupService.IsEnabled() != engine.Settings.RunOnStartup)
+            if (startupService.IsEnabled() != settings.Current.RunOnStartup)
             {
-                startupService.SetEnabled(engine.Settings.RunOnStartup);
+                startupService.SetEnabled(settings.Current.RunOnStartup);
             }
 
-            windowLayerService.AlwaysOnTop = engine.Settings.AlwaysOnTop;
+            windowLayerService.AlwaysOnTop = settings.Current.AlwaysOnTop;
 
             var webRenderer = new WebRenderer();
             webRenderer.ApplyTheme(engine.Spider.Theme);
@@ -75,7 +75,7 @@ namespace SpiderDesk
             );
 
             var trayMenuService = new TrayMenuService(
-                currentSettings: engine.Settings,
+                currentSettings: settings.Current,
                 initialStartupEnabled: startupService.IsEnabled()
             );
 
@@ -83,6 +83,7 @@ namespace SpiderDesk
             _sessionController = new OverlaySessionController(
                 mainWindow,
                 engine,
+                settings,
                 canvas,
                 webRenderer,
                 windowLayerService,

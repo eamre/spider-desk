@@ -2,6 +2,7 @@ using System;
 using System.Windows;
 using System.Windows.Threading;
 using SpiderDesk.Core.Services;
+using SpiderDesk.Core.Settings;
 using SpiderDesk.Domain;
 using SpiderDesk.Domain.Performance;
 using SpiderDesk.Infrastructure.Tray;
@@ -13,11 +14,13 @@ namespace SpiderDesk.Infrastructure
     /// <summary>
     /// Simülasyon döngüsü zamanlayıcısını (DispatcherTimer), adaptif kare hızı (FPS) yönetimini
     /// ve sistem tepsisi (Tray) menü komutlarının simülasyona bağlanmasını koordine eder.
+    /// Menüden değişen her ayarı önce uygular, sonra SettingsStore ile kaydeder.
     /// </summary>
     public sealed class OverlaySessionController : IDisposable
     {
         private readonly Window _hostWindow;
         private readonly SimulationEngine _engine;
+        private readonly SettingsStore _settings;
         private readonly SimulationCanvas _canvas;
         private readonly WebRenderer _webRenderer;
         private readonly IWindowLayerService _windowLayerService;
@@ -34,6 +37,7 @@ namespace SpiderDesk.Infrastructure
         public OverlaySessionController(
             Window hostWindow,
             SimulationEngine engine,
+            SettingsStore settings,
             SimulationCanvas canvas,
             WebRenderer webRenderer,
             IWindowLayerService windowLayerService,
@@ -43,6 +47,7 @@ namespace SpiderDesk.Infrastructure
         {
             _hostWindow = hostWindow;
             _engine = engine;
+            _settings = settings;
             _canvas = canvas;
             _webRenderer = webRenderer;
             _windowLayerService = windowLayerService;
@@ -51,6 +56,7 @@ namespace SpiderDesk.Infrastructure
             _trayMenuService = trayMenuService;
 
             BindTrayEvents();
+            _engine.Spider.PreyCaught += totalCaught => _settings.Update(s => s.TotalBugsCaught = totalCaught);
 
             _lastTick = DateTime.Now;
             _timer = new DispatcherTimer(DispatcherPriority.Render)
@@ -75,24 +81,44 @@ namespace SpiderDesk.Infrastructure
                 _engine.SetTheme(theme);
                 _webRenderer.ApplyTheme(theme);
                 _canvas.RefreshLayers(forceAll: true);
+                _settings.Update(s => s.ThemeId = theme.Id);
             };
 
-            _trayMenuService.SpawnRateSelected += rate => _engine.SetSpawnRate(rate);
-            _trayMenuService.DewSpawnRateSelected += rate => _engine.SetDewSpawnRate(rate);
-            _trayMenuService.SpeedPresetSelected += preset => _engine.SetSpeedPreset(preset);
-            _trayMenuService.TimeModeSelected += mode => _engine.SetTimeMode(mode);
+            _trayMenuService.SpawnRateSelected += rate =>
+            {
+                _engine.SetSpawnRate(rate);
+                _settings.Update(s => s.SpawnRate = rate);
+            };
+
+            _trayMenuService.DewSpawnRateSelected += rate =>
+            {
+                _engine.SetDewSpawnRate(rate);
+                _settings.Update(s => s.DewSpawnRate = rate);
+            };
+
+            _trayMenuService.SpeedPresetSelected += preset =>
+            {
+                _engine.SetSpeedPreset(preset);
+                _settings.Update(s => s.SpeedPreset = preset);
+            };
+
+            _trayMenuService.TimeModeSelected += mode =>
+            {
+                _engine.SetTimeMode(mode);
+                _settings.Update(s => s.TimeMode = mode);
+            };
 
             _trayMenuService.AlwaysOnTopChanged += alwaysOnTop =>
             {
                 _windowLayerService.AlwaysOnTop = alwaysOnTop;
                 _windowLayerService.EnforceZOrder();
-                _engine.SetAlwaysOnTopPreference(alwaysOnTop);
+                _settings.Update(s => s.AlwaysOnTop = alwaysOnTop);
             };
 
             _trayMenuService.StartupChanged += enabled =>
             {
                 _startupService.SetEnabled(enabled);
-                _engine.SetRunOnStartupPreference(enabled);
+                _settings.Update(s => s.RunOnStartup = enabled);
             };
 
             _trayMenuService.PauseChanged += paused => _isPaused = paused;
