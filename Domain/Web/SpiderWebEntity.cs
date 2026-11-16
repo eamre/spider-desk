@@ -134,7 +134,7 @@ namespace SpiderDesk.Domain.Web
             }
         }
 
-        public void DamageNear(Point impactPoint, double damageRadius, int maxBrokenSegments)
+        public void DamageNear(Point impactPoint, double damageRadius, int maxBrokenSegments, Random rng)
         {
             if (!IsCompleted || maxBrokenSegments <= 0) return;
 
@@ -149,7 +149,7 @@ namespace SpiderDesk.Domain.Web
                 if (DistanceToSegmentSquared(impactPoint, seg.Start, seg.End) <= radiusSq)
                 {
                     // Tel kopmadan önce üzerindeki çiy damlası varsa onu serbest bırakıp düşür!
-                    Droplets.OnSegmentBroken(i, CompletedSegments, Center, new Random());
+                    Droplets.OnSegmentBroken(i, CompletedSegments, Center, rng);
 
                     CompletedSegments.RemoveAt(i);
                     DamagedSegments.Enqueue(seg);
@@ -163,7 +163,7 @@ namespace SpiderDesk.Domain.Web
             }
         }
 
-        public void CheckCursorPluck(Point cursorPos, double cursorSpeed)
+        public void CheckCursorPluck(Point cursorPos, double cursorSpeed, Random rng)
         {
             if (!IsCompleted || cursorSpeed < 25.0 || _pluckCooldown > 0) return;
 
@@ -176,7 +176,7 @@ namespace SpiderDesk.Domain.Web
                 {
                     if (cursorSpeed > SpiderTuning.WebCursorTearSpeed)
                     {
-                        DamageNear(cursorPos, SpiderTuning.WebCursorDamageRadius, maxBrokenSegments: 2);
+                        DamageNear(cursorPos, SpiderTuning.WebCursorDamageRadius, maxBrokenSegments: 2, rng);
                     }
                     else
                     {

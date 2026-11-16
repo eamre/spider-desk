@@ -40,7 +40,7 @@ namespace SpiderDesk.Domain.Insects.States
                 _web.TriggerVibration(_anchor, 8.0);
                 if (bug.Species.WebDamageOnImpact > 0)
                 {
-                    _web.DamageNear(_anchor, damageRadius: 38.0, maxBrokenSegments: bug.Species.WebDamageOnImpact);
+                    _web.DamageNear(_anchor, damageRadius: 38.0, maxBrokenSegments: bug.Species.WebDamageOnImpact, world.Random);
                 }
             }
         }
@@ -74,7 +74,7 @@ namespace SpiderDesk.Domain.Insects.States
                     // Ağı yırtıp kurtuldu (sadece eşek arısı telleri koparabilir)
                     if (bug.Species.WebDamageOnImpact > 0)
                     {
-                        _web?.DamageNear(_anchor, damageRadius: 32.0, maxBrokenSegments: 2);
+                        _web?.DamageNear(_anchor, damageRadius: 32.0, maxBrokenSegments: 2, world.Random);
                     }
                     FreeBug(bug, world);
                     return;

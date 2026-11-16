@@ -21,16 +21,14 @@ namespace SpiderDesk.Domain.Web
         public IReadOnlyList<WaterDroplet> FallingDroplets => _fallingDroplets;
         public int Revision { get; private set; }
 
-        public DewSpawnRatePreset SpawnRate
+        public DewSpawnRatePreset SpawnRate => _spawnRate;
+
+        public void SetSpawnRate(DewSpawnRatePreset rate, Random rng)
         {
-            get => _spawnRate;
-            set
+            _spawnRate = rate;
+            if (_spawnRate != DewSpawnRatePreset.Off)
             {
-                _spawnRate = value;
-                if (_spawnRate != DewSpawnRatePreset.Off)
-                {
-                    _condensationTimer = Math.Min(_condensationTimer, GetNextInterval(new Random()));
-                }
+                _condensationTimer = Math.Min(_condensationTimer, GetNextInterval(rng));
             }
         }
 

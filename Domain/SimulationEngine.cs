@@ -51,15 +51,17 @@ namespace SpiderDesk.Domain
         public SimulationEngine(
             IBugSpeciesProvider speciesProvider,
             IEnvironmentService environmentService,
-            UserSettings initialSettings)
+            UserSettings initialSettings,
+            double screenWidth,
+            double screenHeight)
         {
             _environmentService = environmentService;
             _environmentService.TimeMode = initialSettings.TimeMode;
 
             World = new WorldContext
             {
-                ScreenWidth = SystemParameters.PrimaryScreenWidth,
-                ScreenHeight = SystemParameters.PrimaryScreenHeight,
+                ScreenWidth = screenWidth,
+                ScreenHeight = screenHeight,
                 IsNightTime = _environmentService.IsNightTime,
                 DewSpawnRate = initialSettings.DewSpawnRate
             };
@@ -95,7 +97,7 @@ namespace SpiderDesk.Domain
 
             foreach (var web in World.Webs)
             {
-                web.CheckCursorPluck(cursorPos, cursorSpeed);
+                web.CheckCursorPluck(cursorPos, cursorSpeed, World.Random);
                 web.Update(dt, World.Random);
             }
 
@@ -138,7 +140,7 @@ namespace SpiderDesk.Domain
             World.DewSpawnRate = rate;
             foreach (var web in World.Webs)
             {
-                web.Droplets.SpawnRate = rate;
+                web.Droplets.SetSpawnRate(rate, World.Random);
             }
         }
 

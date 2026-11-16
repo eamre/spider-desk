@@ -53,7 +53,7 @@ namespace SpiderDesk.Domain.Web
                 web = new SpiderWebEntity(candidate.Vertex, candidate.Vertex, candidate.Radius, plan);
             }
 
-            web.Droplets.SpawnRate = world.DewSpawnRate;
+            web.Droplets.SetSpawnRate(world.DewSpawnRate, world.Random);
             world.Webs.Add(web);
 
             if (world.Webs.Count > 6)

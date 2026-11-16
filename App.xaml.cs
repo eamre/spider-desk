@@ -53,7 +53,12 @@ namespace SpiderDesk
 
             // Domain ve Görselleştirme bileşenlerinin oluşturulması
             IBugSpeciesProvider speciesProvider = new BugSpeciesCatalog();
-            var engine = new SimulationEngine(speciesProvider, environmentService, settings.Current);
+            var engine = new SimulationEngine(
+                speciesProvider,
+                environmentService,
+                settings.Current,
+                SystemParameters.PrimaryScreenWidth,
+                SystemParameters.PrimaryScreenHeight);
 
             if (startupService.IsEnabled() != settings.Current.RunOnStartup)
             {
