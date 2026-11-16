@@ -13,9 +13,13 @@ namespace SpiderDesk.Infrastructure.Tray
     /// </summary>
     public sealed class TrayMenuService : IDisposable
     {
+        // Bu etiketi taşıyan öğelere (ayar seçimleri) tıklanınca menü açık kalır; eylemler menüyü kapatır
+        private static readonly object KeepMenuOpenTag = new();
+
         private readonly NotifyIcon _notifyIcon;
         private readonly ToolStripMenuItem _statusMenuItem;
         private string _lastStatusText = string.Empty;
+        private bool _lastClickKeepsMenuOpen;
 
         public event Action? NewWebRequested;
         public event Action? RappelRequested;
@@ -51,16 +55,20 @@ namespace SpiderDesk.Infrastructure.Tray
 
             menu.Items.Add(new ToolStripSeparator());
 
-            menu.Items.Add(BuildThemeSubMenu(currentSettings.ThemeId));
-            menu.Items.Add(BuildTimeModeSubMenu(currentSettings.TimeMode));
-            menu.Items.Add(BuildSimulationSettingsSubMenu(currentSettings));
+            var themeMenu = BuildThemeSubMenu(currentSettings.ThemeId);
+            var timeModeMenu = BuildTimeModeSubMenu(currentSettings.TimeMode);
+            var simulationMenu = BuildSimulationSettingsSubMenu(currentSettings);
+            menu.Items.Add(themeMenu);
+            menu.Items.Add(timeModeMenu);
+            menu.Items.Add(simulationMenu);
 
             menu.Items.Add(new ToolStripSeparator());
 
             var alwaysOnTopItem = new ToolStripMenuItem("🖥️ Pencerelerin Üstünde Göster")
             {
                 Checked = currentSettings.AlwaysOnTop,
-                CheckOnClick = true
+                CheckOnClick = true,
+                Tag = KeepMenuOpenTag
             };
             alwaysOnTopItem.CheckedChanged += (_, _) => AlwaysOnTopChanged?.Invoke(alwaysOnTopItem.Checked);
             menu.Items.Add(alwaysOnTopItem);
@@ -68,7 +76,8 @@ namespace SpiderDesk.Infrastructure.Tray
             var startupItem = new ToolStripMenuItem("🚀 Bilgisayar Açıldığında Otomatik Başlat")
             {
                 Checked = initialStartupEnabled,
-                CheckOnClick = true
+                CheckOnClick = true,
+                Tag = KeepMenuOpenTag
             };
             startupItem.CheckedChanged += (_, _) => StartupChanged?.Invoke(startupItem.Checked);
             menu.Items.Add(startupItem);
@@ -87,6 +96,11 @@ namespace SpiderDesk.Infrastructure.Tray
 
             menu.Items.Add(new ToolStripSeparator());
             AddActionItem(menu, "❌ Çıkış", () => ExitRequested?.Invoke());
+
+            KeepOpenOnSettingClicks(menu);
+            KeepOpenOnSettingClicks(themeMenu.DropDown);
+            KeepOpenOnSettingClicks(timeModeMenu.DropDown);
+            KeepOpenOnSettingClicks(simulationMenu.DropDown);
 
             _notifyIcon = new NotifyIcon
             {
@@ -187,6 +201,23 @@ namespace SpiderDesk.Infrastructure.Tray
             return settingsRoot;
         }
 
+        /// <summary>
+        /// Windows menüleri her tıklamada kapanır. Tıklanan öğe bir ayar seçimiyse bu kapanmayı iptal eder,
+        /// böylece kullanıcı birkaç ayarı menüyü yeniden açmadan art arda değiştirebilir.
+        /// Bir alt menüdeki tıklama üst menüleri de kapatmaya çalıştığı için her menü seviyesine ayrı ayrı bağlanır.
+        /// </summary>
+        private void KeepOpenOnSettingClicks(ToolStripDropDown dropDown)
+        {
+            dropDown.ItemClicked += (_, e) => _lastClickKeepsMenuOpen = ReferenceEquals(e.ClickedItem?.Tag, KeepMenuOpenTag);
+            dropDown.Closing += (_, e) =>
+            {
+                if (e.CloseReason == ToolStripDropDownCloseReason.ItemClicked && _lastClickKeepsMenuOpen)
+                {
+                    e.Cancel = true;
+                }
+            };
+        }
+
         private static void AddActionItem(ToolStrip menu, string text, Action onClick)
         {
             var item = new ToolStripMenuItem(text);
@@ -205,7 +236,8 @@ namespace SpiderDesk.Infrastructure.Tray
             {
                 var item = new ToolStripMenuItem(label)
                 {
-                    Checked = isSelected(value)
+                    Checked = isSelected(value),
+                    Tag = KeepMenuOpenTag
                 };
 
                 item.Click += (_, _) =>
