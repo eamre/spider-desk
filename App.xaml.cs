@@ -85,8 +85,9 @@ namespace SpiderDesk
                 initialStartupEnabled: startupService.IsEnabled()
             );
 
-            var pomodoro = new PomodoroSessionController(engine, settings, trayMenuService);
-            var reminders = new ReminderSessionController(engine, new JsonReminderRepository(), trayMenuService);
+            // Her denetleyici yalnızca kendi menü parçasını ve bildirim arayüzünü tanır
+            var pomodoro = new PomodoroSessionController(engine, settings, trayMenuService.Pomodoro, trayMenuService);
+            var reminders = new ReminderSessionController(engine, new JsonReminderRepository(), trayMenuService.Reminders, trayMenuService);
 
             var mainWindow = new MainWindow(canvas, windowLayerService);
             _sessionController = new OverlaySessionController(

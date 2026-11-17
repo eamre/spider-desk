@@ -1,4 +1,5 @@
 using System;
+using SpiderDesk.Core.Services;
 using SpiderDesk.Core.Settings;
 using SpiderDesk.Domain;
 using SpiderDesk.Domain.Pomodoro;
@@ -15,17 +16,19 @@ namespace SpiderDesk.Infrastructure
         private readonly PomodoroTimer _timer;
         private readonly SimulationEngine _engine;
         private readonly SettingsStore _settings;
-        private readonly TrayMenuService _tray;
+        private readonly PomodoroMenu _menu;
+        private readonly INotificationService _notifications;
 
-        public PomodoroSessionController(SimulationEngine engine, SettingsStore settings, TrayMenuService tray)
+        public PomodoroSessionController(SimulationEngine engine, SettingsStore settings, PomodoroMenu menu, INotificationService notifications)
         {
             _engine = engine;
             _settings = settings;
-            _tray = tray;
+            _menu = menu;
+            _notifications = notifications;
             _timer = new PomodoroTimer(PomodoroPlan.For(settings.Current.PomodoroPreset));
 
-            _tray.PomodoroToggleRequested += Toggle;
-            _tray.PomodoroPresetSelected += SelectPreset;
+            _menu.ToggleRequested += Toggle;
+            _menu.PresetSelected += SelectPreset;
         }
 
         /// <summary>Kare döngüsünden çağrılır. Uygulama duraklatılmış olsa bile çağrılmalıdır ki süre işlesin.</summary>
@@ -74,11 +77,11 @@ namespace SpiderDesk.Infrastructure
         {
             PomodoroAnnouncement announcement = PomodoroText.AnnouncementFor(phase, length);
             _engine.RequestSilkMessage(announcement.SilkWord);
-            _tray.ShowNotification(announcement.Title, announcement.Message);
+            _notifications.ShowNotification(announcement.Title, announcement.Message);
         }
 
         private void ShowState(DateTime now) =>
-            _tray.ShowPomodoroState(_timer.IsRunning
+            _menu.ShowState(_timer.IsRunning
                 ? PomodoroText.Countdown(_timer.Phase, _timer.Remaining(now), _timer.IsWaitingToStart)
                 : null);
     }

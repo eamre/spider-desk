@@ -83,7 +83,7 @@ namespace SpiderDesk.Infrastructure
             _trayMenuService.SpawnBugsRequested += count => _engine.SpawnExtraBugs(count);
             _trayMenuService.ClearWebsRequested += () => _engine.ClearWebs();
 
-            _trayMenuService.ThemeSelected += theme =>
+            _trayMenuService.Settings.ThemeSelected += theme =>
             {
                 _engine.SetTheme(theme);
                 _webRenderer.ApplyTheme(theme);
@@ -91,38 +91,38 @@ namespace SpiderDesk.Infrastructure
                 _settings.Update(s => s.ThemeId = theme.Id);
             };
 
-            _trayMenuService.SpawnRateSelected += rate =>
+            _trayMenuService.Settings.SpawnRateSelected += rate =>
             {
                 _engine.SetSpawnRate(rate);
                 _settings.Update(s => s.SpawnRate = rate);
             };
 
-            _trayMenuService.DewSpawnRateSelected += rate =>
+            _trayMenuService.Settings.DewSpawnRateSelected += rate =>
             {
                 _engine.SetDewSpawnRate(rate);
                 _settings.Update(s => s.DewSpawnRate = rate);
             };
 
-            _trayMenuService.SpeedPresetSelected += preset =>
+            _trayMenuService.Settings.SpeedPresetSelected += preset =>
             {
                 _engine.SetSpeedPreset(preset);
                 _settings.Update(s => s.SpeedPreset = preset);
             };
 
-            _trayMenuService.TimeModeSelected += mode =>
+            _trayMenuService.Settings.TimeModeSelected += mode =>
             {
                 _engine.SetTimeMode(mode);
                 _settings.Update(s => s.TimeMode = mode);
             };
 
-            _trayMenuService.AlwaysOnTopChanged += alwaysOnTop =>
+            _trayMenuService.Settings.AlwaysOnTopChanged += alwaysOnTop =>
             {
                 _windowLayerService.AlwaysOnTop = alwaysOnTop;
                 _windowLayerService.EnforceZOrder();
                 _settings.Update(s => s.AlwaysOnTop = alwaysOnTop);
             };
 
-            _trayMenuService.StartupChanged += enabled =>
+            _trayMenuService.Settings.StartupChanged += enabled =>
             {
                 _startupService.SetEnabled(enabled);
                 _settings.Update(s => s.RunOnStartup = enabled);

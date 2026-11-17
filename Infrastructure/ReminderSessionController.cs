@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using SpiderDesk.Core.Services;
 using SpiderDesk.Domain;
 using SpiderDesk.Domain.Reminders;
 using SpiderDesk.Infrastructure.Dialogs;
@@ -18,21 +19,27 @@ namespace SpiderDesk.Infrastructure
         private readonly ReminderSchedule _schedule;
         private readonly IReminderRepository _repository;
         private readonly SimulationEngine _engine;
-        private readonly TrayMenuService _tray;
+        private readonly ReminderMenu _menu;
+        private readonly INotificationService _notifications;
         private ReminderWindow? _openWindow;
 
         // Listedeki "Bugün" / "Yarın" yazıları gün değişince eskir; o zaman liste yeniden kurulur
         private DateTime _listShownForDate;
 
-        public ReminderSessionController(SimulationEngine engine, IReminderRepository repository, TrayMenuService tray)
+        public ReminderSessionController(
+            SimulationEngine engine,
+            IReminderRepository repository,
+            ReminderMenu menu,
+            INotificationService notifications)
         {
             _engine = engine;
             _repository = repository;
-            _tray = tray;
+            _menu = menu;
+            _notifications = notifications;
             _schedule = new ReminderSchedule(repository.Load());
 
-            _tray.ReminderAddRequested += OpenAddWindow;
-            _tray.ReminderDeleteRequested += Delete;
+            _menu.AddRequested += OpenAddWindow;
+            _menu.DeleteRequested += Delete;
 
             ShowList(DateTime.Now);
         }
@@ -59,7 +66,7 @@ namespace SpiderDesk.Infrastructure
         private void Announce(IReadOnlyList<Reminder> due, DateTime now)
         {
             ReminderNotification notification = ReminderText.Notification(due, now);
-            _tray.ShowNotification(notification.Title, notification.Message);
+            _notifications.ShowNotification(notification.Title, notification.Message);
 
             foreach (Reminder reminder in due)
             {
@@ -104,7 +111,7 @@ namespace SpiderDesk.Infrastructure
         private void ShowList(DateTime now)
         {
             _listShownForDate = now.Date;
-            _tray.ShowReminders(
+            _menu.ShowReminders(
                 ReminderText.MenuTitleFor(_schedule.Upcoming.Count),
                 _schedule.Upcoming.Select(reminder => (reminder.Id, ReminderText.ListLabel(reminder, now))).ToList());
         }
