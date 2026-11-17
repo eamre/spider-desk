@@ -2,8 +2,8 @@ using System.Windows;
 using System.Windows.Media;
 using SpiderDesk.Core;
 using SpiderDesk.Domain;
-using SpiderDesk.Domain.Greeting;
 using SpiderDesk.Domain.Insects;
+using SpiderDesk.Domain.SilkText;
 using SpiderDesk.Domain.Spider;
 
 namespace SpiderDesk.Rendering

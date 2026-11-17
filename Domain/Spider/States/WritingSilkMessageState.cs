@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Windows;
-using SpiderDesk.Domain.Greeting;
+using SpiderDesk.Domain.SilkText;
 using SpiderDesk.Domain.Web;
 
 namespace SpiderDesk.Domain.Spider.States

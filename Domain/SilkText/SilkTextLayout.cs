@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Windows;
 
-namespace SpiderDesk.Domain.Greeting
+namespace SpiderDesk.Domain.SilkText
 {
     /// <summary>Ekrana yerleştirilmiş bir yazının ipek çizgileri, kapladığı alan ve toplam çizgi uzunluğu.</summary>
     public sealed record SilkTextPath(

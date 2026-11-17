@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Windows;
 
-namespace SpiderDesk.Domain.Greeting
+namespace SpiderDesk.Domain.SilkText
 {
     /// <summary>Bir ipek telinin üzerindeki çiy damlası: tel boyunca konumu (0..1) ve yarıçapı.</summary>
     public readonly record struct SilkBead(double Position, double Radius);

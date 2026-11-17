@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Windows;
 
-namespace SpiderDesk.Domain.Greeting
+namespace SpiderDesk.Domain.SilkText
 {
     /// <summary>
     /// Tek bir harfin genişliği ve ipekle çizilecek çizgileri. Her çizgi, ipin ucunun kesintisiz izlediği nokta listesidir.

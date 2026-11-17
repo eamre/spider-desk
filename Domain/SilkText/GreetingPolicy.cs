@@ -1,6 +1,6 @@
 using System;
 
-namespace SpiderDesk.Domain.Greeting
+namespace SpiderDesk.Domain.SilkText
 {
     /// <summary>
     /// Günün saatine göre örümceğin açılışta ipekle yazacağı selamı seçen saf kural sınıfı (Pure Policy).

@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Windows;
 using SpiderDesk.Core.Settings;
-using SpiderDesk.Domain.Greeting;
 using SpiderDesk.Domain.Insects;
+using SpiderDesk.Domain.SilkText;
 using SpiderDesk.Domain.Web;
 
 namespace SpiderDesk.Domain

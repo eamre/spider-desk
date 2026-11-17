@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Windows;
 using SpiderDesk.Domain.Spider;
 
-namespace SpiderDesk.Domain.Greeting
+namespace SpiderDesk.Domain.SilkText
 {
     /// <summary>İpin yapıştığı düğüm noktası. Fırlatılan ipin ilk değdiği yerlerde küçük bir yapışma halkası belirir.</summary>
     public readonly record struct SilkKnot(Point Position, double TiedAt, bool IsLaunchPoint);

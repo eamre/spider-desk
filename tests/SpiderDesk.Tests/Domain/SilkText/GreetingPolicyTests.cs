@@ -1,6 +1,6 @@
-using SpiderDesk.Domain.Greeting;
+using SpiderDesk.Domain.SilkText;
 
-namespace SpiderDesk.Tests.Domain.Greeting
+namespace SpiderDesk.Tests.Domain.SilkText
 {
     public class GreetingPolicyTests
     {
