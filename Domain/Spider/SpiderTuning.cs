@@ -58,12 +58,35 @@ namespace SpiderDesk.Domain.Spider
         public const double DynamicStepLeadTime = 0.045;
         public const double InitialStepLeadTime = 0.05;
 
-        // İple Sarkma (Rappelling)
+        // İple Sarkma: tavana çıkıp ipek iple sarkma. Normal sarkma (RappellingState) ve not getirme (DeliveringNoteState) aynı hareketi kullanır.
         public const double RappelClimbSpeed = 165.0;
         public const double RappelDescendSpeed = 115.0;
         public const double RappelAscendSpeed = 145.0;
         public const double RappelCursorPushDistance = 72.0;
         public const double RappelCursorPushSpeed = 80.0;
+        public const double RappelThreadAnchorY = 2.0;            // İpin bağlandığı nokta: ekranın en üst kenarı
+        public const double RappelCeilingY = 24.0;                // Örümceğin tavanda durup ipi bağladığı yükseklik
+        public const double RappelLineLengthAtTop = 28.0;         // İp bu kadar kısalınca toplanmış sayılır, örümcek evine döner
+
+        // Normal sarkma (RappellingState): nereye, ne kadar aşağı ve ne kadar süre
+        public const double RappelAnchorSpread = 160.0;           // Sarkma noktası, örümceğin olduğu yerden en fazla bunun yarısı kadar sağa/sola kayar
+        public const double RappelScreenEdgeMargin = 140.0;       // Sarkma noktası ekranın sağ/sol kenarına bundan fazla yaklaşmaz
+        public const double RappelMinDrop = 180.0;                // En az bu kadar aşağı iner...
+        public const double RappelExtraDropRatio = 0.38;          // ...üstüne ekran yüksekliğinin en fazla bu oranı kadar daha
+        public const double RappelMinHangSeconds = 5.0;           // Aşağıda 5 ile 9 saniye arası sallanır
+        public const double RappelExtraHangSeconds = 4.0;
+
+        // İpte sallanma ve ipin ucunu takip etme (HangingSilkLine)
+        public const double RappelSwayFrequency = 2.8;            // Sallanma hızı (radyan/saniye)
+        public const double RappelSwayFullLength = 220.0;         // İp bu boydayken sallanma tam genişliğine ulaşır; kısa ipte az sallanır
+        public const double RappelStartSwayAmplitude = 10.0;      // İnmeye başlarken sallanma genişliği (piksel)
+        public const double RappelMinSwayAmplitude = 6.0;         // Sallanma sönse de en az bu kadar kalır
+        public const double RappelSwayDampingPerSecond = 0.65;    // Sallanma her saniye bu oranla küçülür
+        public const double RappelPushedSwayWhileDescending = 28.0; // Fare inerken iterse ip bu kadar sallanır
+        public const double RappelPushedSwayWhileHanging = 32.0;  // Fare aşağıda asılıyken iterse ip bu kadar sallanır
+        public const double RappelFollowSpeed = 350.0;            // Örümceğin ipin ucunu takip etme hızı
+        public const double RappelFollowStopDistance = 0.5;       // Bu kadar yakınsa ipin ucunda sayılır
+        public const double RappelTurnSpeed = 10.0;               // Baş aşağı / baş yukarı dönme hızı
 
         // Not Getirme (DeliveringNoteState): örümcek baş aşağı sarkar, notu ön iki bacağıyla tutar
         public const double NoteHoldDistance = 30.0;      // Gövde merkezinden kartın üst kenarına (başın önünde)

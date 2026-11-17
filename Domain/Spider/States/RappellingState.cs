@@ -1,10 +1,10 @@
 using System;
-using System.Windows;
 
 namespace SpiderDesk.Domain.Spider.States
 {
     /// <summary>
     /// Örümceğin ekranın üst kenarına çıkıp ipek bir iple aşağı sarktığı, sallandığı ve geri tırmandığı durum.
+    /// Ne kadar aşağı ineceği ve ne kadar sallanacağı her seferinde rastgele seçilir (SpiderTuning'in "Normal sarkma" bölümü).
     /// </summary>
     public class RappellingState : ISpiderBehaviorState
     {
@@ -17,7 +17,7 @@ namespace SpiderDesk.Domain.Spider.States
         }
 
         private Phase _phase = Phase.ClimbingToCeiling;
-        private Point _ceilingAnchor;
+        private double _anchorX;
         private HangingSilkLine _line = null!;
         private double _targetDropY;
         private double _hangTimer;
@@ -29,10 +29,13 @@ namespace SpiderDesk.Domain.Spider.States
 
         public void Enter(SpiderEntity spider, WorldContext world)
         {
-            double anchorX = Math.Clamp(spider.Position.X + (world.Random.NextDouble() - 0.5) * 160, 140, world.ScreenWidth - 140);
-            _ceilingAnchor = new Point(anchorX, 2);
-            _targetDropY = 180 + world.Random.NextDouble() * (world.ScreenHeight * 0.38);
-            _hangTimer = 5.0 + world.Random.NextDouble() * 4.0;
+            double shift = (world.Random.NextDouble() - 0.5) * SpiderTuning.RappelAnchorSpread;
+            _anchorX = Math.Clamp(
+                spider.Position.X + shift,
+                SpiderTuning.RappelScreenEdgeMargin,
+                world.ScreenWidth - SpiderTuning.RappelScreenEdgeMargin);
+            _targetDropY = SpiderTuning.RappelMinDrop + world.Random.NextDouble() * (world.ScreenHeight * SpiderTuning.RappelExtraDropRatio);
+            _hangTimer = SpiderTuning.RappelMinHangSeconds + world.Random.NextDouble() * SpiderTuning.RappelExtraHangSeconds;
             spider.ActiveSilkLine = null;
             spider.DraglineAnchor = null;
         }
@@ -42,9 +45,9 @@ namespace SpiderDesk.Domain.Spider.States
             switch (_phase)
             {
                 case Phase.ClimbingToCeiling:
-                    if (spider.MoveTowards(new Point(_ceilingAnchor.X, 24), SpiderTuning.RappelClimbSpeed, dt))
+                    if (spider.MoveTowards(HangingSilkLine.ClimbTarget(_anchorX), SpiderTuning.RappelClimbSpeed, dt))
                     {
-                        _line = new HangingSilkLine(_ceilingAnchor, length: 24, swayAmplitude: 10.0);
+                        _line = new HangingSilkLine(_anchorX);
                         _phase = Phase.Descending;
                     }
                     break;
@@ -56,7 +59,7 @@ namespace SpiderDesk.Domain.Spider.States
                     // İnerken fare yaklaşırsa hemen yukarı tırmanmaya geç
                     if (HangingSilkLine.IsCursorPushing(spider, world))
                     {
-                        _line.SwayAmplitude = 28.0;
+                        _line.SwayAmplitude = SpiderTuning.RappelPushedSwayWhileDescending;
                         _phase = Phase.Ascending;
                         break;
                     }
@@ -69,13 +72,13 @@ namespace SpiderDesk.Domain.Spider.States
 
                 case Phase.HangingAndSwaying:
                     _hangTimer -= dt;
-                    _line.SwayAmplitude = Math.Max(6.0, _line.SwayAmplitude * Math.Pow(0.65, dt));
+                    _line.DampSway(dt);
                     _line.MoveSpider(spider, dt);
 
                     // Fare yaklaşırsa ipi sallandır ve yukarı kaç!
                     if (HangingSilkLine.IsCursorPushing(spider, world))
                     {
-                        _line.SwayAmplitude = 32.0;
+                        _line.SwayAmplitude = SpiderTuning.RappelPushedSwayWhileHanging;
                         _phase = Phase.Ascending;
                         break;
                     }
@@ -90,7 +93,7 @@ namespace SpiderDesk.Domain.Spider.States
                     _line.Length -= SpiderTuning.RappelAscendSpeed * dt;
                     _line.MoveSpider(spider, dt, facingUp: true);
 
-                    if (_line.Length <= 28)
+                    if (_line.IsReeledIn)
                     {
                         spider.ActiveSilkLine = null;
                         ReturnHome(spider, world);

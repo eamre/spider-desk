@@ -17,12 +17,9 @@ namespace SpiderDesk.Domain.Spider.States
             Ascending
         }
 
-        private const double CeilingY = 24;
-        private const double LineLengthAtTop = 28;
-
         private readonly CarriedNote _note;
         private Phase _phase = Phase.ClimbingToCeiling;
-        private Point _ceilingAnchor;
+        private double _anchorX;
         private HangingSilkLine _line = null!;
         private double _targetDropY;
         private double _holdTimer;
@@ -41,8 +38,7 @@ namespace SpiderDesk.Domain.Spider.States
 
         public void Enter(SpiderEntity spider, WorldContext world)
         {
-            double anchorX = Math.Clamp(spider.Position.X, SpiderTuning.NoteScreenEdgeMargin, world.ScreenWidth - SpiderTuning.NoteScreenEdgeMargin);
-            _ceilingAnchor = new Point(anchorX, 2);
+            _anchorX = Math.Clamp(spider.Position.X, SpiderTuning.NoteScreenEdgeMargin, world.ScreenWidth - SpiderTuning.NoteScreenEdgeMargin);
             _targetDropY = world.ScreenHeight * SpiderTuning.NoteHangHeightRatio;
             _holdTimer = SpiderTuning.NoteHangSeconds;
             spider.ActiveSilkLine = null;
@@ -54,9 +50,9 @@ namespace SpiderDesk.Domain.Spider.States
             switch (_phase)
             {
                 case Phase.ClimbingToCeiling:
-                    if (spider.MoveTowards(new Point(_ceilingAnchor.X, CeilingY), SpiderTuning.RappelClimbSpeed, dt))
+                    if (spider.MoveTowards(HangingSilkLine.ClimbTarget(_anchorX), SpiderTuning.RappelClimbSpeed, dt))
                     {
-                        _line = new HangingSilkLine(_ceilingAnchor, length: CeilingY, swayAmplitude: 10.0);
+                        _line = new HangingSilkLine(_anchorX);
                         spider.CarriedNote = _note;
                         _phase = Phase.Descending;
                     }
@@ -69,7 +65,7 @@ namespace SpiderDesk.Domain.Spider.States
 
                     if (HangingSilkLine.IsCursorPushing(spider, world))
                     {
-                        StartAscending(swayAmplitude: 28.0);
+                        StartAscending(swayAmplitude: SpiderTuning.RappelPushedSwayWhileDescending);
                     }
                     else if (_line.Length >= _targetDropY)
                     {
@@ -79,14 +75,14 @@ namespace SpiderDesk.Domain.Spider.States
 
                 case Phase.Holding:
                     _holdTimer -= dt;
-                    _line.SwayAmplitude = Math.Max(6.0, _line.SwayAmplitude * Math.Pow(0.65, dt));
+                    _line.DampSway(dt);
                     _line.MoveSpider(spider, dt, hangAlongThread: true);
                     FadeInNoteOnceUpright(spider, dt);
 
                     // Fare hızla yaklaşırsa "tamam, gördüm" sayılır: örümcek notu toplayıp yukarı kaçar
                     if (HangingSilkLine.IsCursorPushing(spider, world))
                     {
-                        StartAscending(swayAmplitude: 32.0);
+                        StartAscending(swayAmplitude: SpiderTuning.RappelPushedSwayWhileHanging);
                     }
                     else if (_holdTimer <= 0)
                     {
@@ -98,10 +94,10 @@ namespace SpiderDesk.Domain.Spider.States
                     _line.Length -= SpiderTuning.RappelAscendSpeed * dt;
                     // Baş aşağı kalarak ipi toplar; böylece not hep altında ve okunur kalır
                     _line.MoveSpider(spider, dt, hangAlongThread: true);
-                    double fadeByHeight = (_line.Length - LineLengthAtTop) / SpiderTuning.NoteFadeOutDistance;
+                    double fadeByHeight = (_line.Length - SpiderTuning.RappelLineLengthAtTop) / SpiderTuning.NoteFadeOutDistance;
                     _note.Opacity = Math.Clamp(Math.Min(_note.Opacity, fadeByHeight), 0.0, 1.0);
 
-                    if (_line.Length <= LineLengthAtTop)
+                    if (_line.IsReeledIn)
                     {
                         RappellingState.ReturnHome(spider, world);
                         return;
@@ -127,7 +123,7 @@ namespace SpiderDesk.Domain.Spider.States
         /// </summary>
         private void FadeInNoteOnceUpright(SpiderEntity spider, double dt)
         {
-            if (Math.Abs(spider.Angle - Math.PI / 2.0) > SpiderTuning.NoteUprightTolerance) return;
+            if (Math.Abs(spider.Angle - HangingSilkLine.HeadDownAngle) > SpiderTuning.NoteUprightTolerance) return;
             _note.Opacity = Math.Min(1.0, _note.Opacity + dt / SpiderTuning.NoteFadeInSeconds);
         }
 
@@ -142,7 +138,7 @@ namespace SpiderDesk.Domain.Spider.States
         {
             _note.TopCenter = spider.LocalToWorld(new Vector(SpiderTuning.NoteHoldDistance, 0));
             // Baş aşağı dururken (açı = 90°) kart diktir; örümcek eğildikçe kart da aynı açıyla eğilir
-            _note.Tilt = spider.Angle - Math.PI / 2.0;
+            _note.Tilt = spider.Angle - HangingSilkLine.HeadDownAngle;
             foreach (var leg in spider.Legs)
             {
                 if (!IsFrontLeg(leg)) continue;
