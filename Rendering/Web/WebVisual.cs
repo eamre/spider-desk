@@ -1,5 +1,4 @@
 using System.Windows.Media;
-using SpiderDesk.Core;
 using SpiderDesk.Domain.Web;
 
 namespace SpiderDesk.Rendering.Web

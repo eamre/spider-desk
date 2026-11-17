@@ -84,11 +84,11 @@ Right-click the **Spider icon in the System Tray** (by the clock) to:
 
 ```
 SpiderDesk/
-├── Core/                  Contracts shared by every layer (IRenderer, AppDiagnostics)
+├── Core/                  Only what the simulation and the Windows side both need (AppDiagnostics)
 │   ├── Settings/          UserSettings, how they are saved, presets
-│   └── Services/          Contracts for the cursor, clock, startup and window layer
+│   └── Services/          The clock contract: day/night and time of day
 ├── Domain/                The simulation itself: never draws, never calls Windows APIs
-│   ├── Spider/            SpiderEntity, IK legs, gait, metabolism, prey search, message queue, tuning constants
+│   ├── Spider/            SpiderEntity, IK legs, gait, metabolism, prey search, message queue, silk line, tuning constants
 │   │   ├── States/        14 behaviours: WritingSilkMessage, DeliveringNote, Wandering, SpinningWeb, Hunting...
 │   │   └── Themes/        Black Widow, Frost Crystal, Forest Tarantula, Cyber Neon
 │   ├── Insects/           BugEntity, BugSpawner
@@ -98,13 +98,15 @@ SpiderDesk/
 │   ├── SilkText/          Silk letters, text layout and the startup greeting
 │   ├── Pomodoro/          Pomodoro timer, session lengths, countdown and notification texts
 │   ├── Reminders/         Reminders: the list, time parsing ("15 min", "14:30") and text rules
-│   ├── Performance/       Pure rules: 60 FPS when moving, 20 Hz when still, pause when covered, raising notes over apps
+│   ├── Overlay/           Pure rules for the overlay: 60 FPS when moving, 20 Hz when still, pause when covered, raising notes over apps
 │   ├── SimulationEngine   Runs one simulation step per frame
 │   └── WorldContext       Everything the spider can see: webs, bugs, cursor, screen size
 ├── Rendering/             Turns the world into WPF drawings: spider, bugs, silk text, the paper note
 │   └── Web/               Web drawing (each web in its own visual)
-├── Infrastructure/        Windows side: run at startup, frame loop, wiring for settings, Pomodoro and reminders
+├── Infrastructure/        The Windows side
 │   ├── Dialogs/           The small window for adding a reminder
+│   ├── Platform/          Run at Windows startup (registry) and the system clock
+│   ├── Sessions/          The frame loop, and wiring the tray menus to the spider: settings, Pomodoro, reminders
 │   ├── Storage/           Saves settings.json and reminders.json
 │   ├── Tray/              Tray icon, notifications, and one class per menu (Pomodoro, reminders, settings)
 │   └── Windowing/         Click-through window, cursor, fullscreen detection (Win32 behind interfaces, tested with a fake desktop)
@@ -112,6 +114,10 @@ SpiderDesk/
 ├── App.xaml.cs            Composition root: creates and wires everything together
 └── MainWindow.xaml.cs     The transparent overlay window
 ```
+
+Dependencies point one way: `Domain` knows nothing about `Rendering` or `Infrastructure`, and `Core` depends on nothing.
+One conscious trade-off: `Domain` uses WPF's `Point`, `Vector` and `Color` types instead of its own. SpiderDesk only runs on Windows,
+so writing separate geometry and colour types would add code without adding value.
 
 ### ⚡ Performance
 - **Rests behind fullscreen apps:** while a game or video covers the desktop, nothing is drawn.

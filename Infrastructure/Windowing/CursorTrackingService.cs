@@ -1,6 +1,5 @@
 using System.Windows;
 using System.Windows.Media;
-using SpiderDesk.Core.Services;
 using static SpiderDesk.Infrastructure.Windowing.NativeMethods;
 
 namespace SpiderDesk.Infrastructure.Windowing

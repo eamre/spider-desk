@@ -1,4 +1,4 @@
-namespace SpiderDesk.Core.Services
+namespace SpiderDesk.Infrastructure.Tray
 {
     /// <summary>
     /// Kullanıcıya Windows bildirimi gösterir. Pomodoro ve hatırlatıcı yalnızca "bildirim göster" der;

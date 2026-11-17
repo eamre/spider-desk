@@ -1,6 +1,6 @@
-using SpiderDesk.Domain.Performance;
+using SpiderDesk.Domain.Overlay;
 
-namespace SpiderDesk.Tests.Domain.Performance
+namespace SpiderDesk.Tests.Domain.Overlay
 {
     /// <summary>
     /// Duyuru ya da not gösterilirken katmanın öne çıkma sırasını doğrular:

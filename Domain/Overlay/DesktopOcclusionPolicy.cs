@@ -1,4 +1,4 @@
-namespace SpiderDesk.Domain.Performance
+namespace SpiderDesk.Domain.Overlay
 {
     /// <summary>
     /// Bir pencerenin, karar anındaki görsel durumunun işletim sisteminden bağımsız özeti.

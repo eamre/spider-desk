@@ -1,7 +1,6 @@
 using System;
 using System.Drawing;
 using System.Windows.Forms;
-using SpiderDesk.Core.Services;
 using SpiderDesk.Core.Settings;
 
 namespace SpiderDesk.Infrastructure.Tray

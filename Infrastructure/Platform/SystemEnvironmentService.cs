@@ -1,7 +1,7 @@
 using System;
 using SpiderDesk.Core.Services;
 
-namespace SpiderDesk.Infrastructure
+namespace SpiderDesk.Infrastructure.Platform
 {
     /// <summary>
     /// Sistem saatine veya kullanıcı tercihine göre Gece/Gündüz durumunu belirler.

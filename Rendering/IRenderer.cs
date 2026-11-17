@@ -1,6 +1,6 @@
 using System.Windows.Media;
 
-namespace SpiderDesk.Core
+namespace SpiderDesk.Rendering
 {
     public interface IRenderer<in T>
     {

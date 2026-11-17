@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Media;
-using SpiderDesk.Core;
 using SpiderDesk.Domain;
 using SpiderDesk.Domain.Web;
 

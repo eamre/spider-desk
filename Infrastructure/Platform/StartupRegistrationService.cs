@@ -2,9 +2,8 @@ using System;
 using System.Diagnostics;
 using Microsoft.Win32;
 using SpiderDesk.Core;
-using SpiderDesk.Core.Services;
 
-namespace SpiderDesk.Infrastructure
+namespace SpiderDesk.Infrastructure.Platform
 {
     /// <summary>
     /// Uygulamanın Windows başlangıcında otomatik çalışması için Kayıt Defteri (Registry) işlemlerini yönetir.

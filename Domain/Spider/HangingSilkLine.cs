@@ -1,7 +1,7 @@
 using System;
 using System.Windows;
 
-namespace SpiderDesk.Domain.Spider.States
+namespace SpiderDesk.Domain.Spider
 {
     /// <summary>
     /// Örümceğin tavandaki bir noktadan ipek iple sarkarken izlediği hareket: ipin boyu, sallanma ve ipin kendisi.

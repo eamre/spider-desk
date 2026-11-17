@@ -1,4 +1,4 @@
-namespace SpiderDesk.Core.Services
+namespace SpiderDesk.Infrastructure.Platform
 {
     public interface IStartupRegistrationService
     {

@@ -1,13 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using SpiderDesk.Core.Services;
 using SpiderDesk.Domain;
 using SpiderDesk.Domain.Reminders;
 using SpiderDesk.Infrastructure.Dialogs;
 using SpiderDesk.Infrastructure.Tray;
 
-namespace SpiderDesk.Infrastructure
+namespace SpiderDesk.Infrastructure.Sessions
 {
     /// <summary>
     /// Hatırlatıcıyı tepsi menüsüne, ekleme penceresine, örümceğe ve Windows bildirimlerine bağlar.

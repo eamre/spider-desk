@@ -1,7 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Text;
-using SpiderDesk.Domain.Performance;
+using SpiderDesk.Domain.Overlay;
 using static SpiderDesk.Infrastructure.Windowing.NativeMethods;
 
 namespace SpiderDesk.Infrastructure.Windowing

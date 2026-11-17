@@ -1,4 +1,4 @@
-using SpiderDesk.Domain.Performance;
+using SpiderDesk.Domain.Overlay;
 using SpiderDesk.Infrastructure.Windowing;
 
 namespace SpiderDesk.Tests.Infrastructure.Windowing

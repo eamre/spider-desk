@@ -1,11 +1,10 @@
 using System;
-using SpiderDesk.Core.Services;
 using SpiderDesk.Core.Settings;
 using SpiderDesk.Domain;
 using SpiderDesk.Domain.Pomodoro;
 using SpiderDesk.Infrastructure.Tray;
 
-namespace SpiderDesk.Infrastructure
+namespace SpiderDesk.Infrastructure.Sessions
 {
     /// <summary>
     /// Pomodoro zamanlayıcısını tepsi menüsüne, örümceğe ve Windows bildirimlerine bağlar.

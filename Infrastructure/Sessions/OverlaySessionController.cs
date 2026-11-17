@@ -1,13 +1,13 @@
 using System;
 using System.Windows;
 using System.Windows.Threading;
-using SpiderDesk.Core.Services;
 using SpiderDesk.Domain;
-using SpiderDesk.Domain.Performance;
+using SpiderDesk.Domain.Overlay;
 using SpiderDesk.Infrastructure.Tray;
+using SpiderDesk.Infrastructure.Windowing;
 using SpiderDesk.Rendering;
 
-namespace SpiderDesk.Infrastructure
+namespace SpiderDesk.Infrastructure.Sessions
 {
     /// <summary>
     /// Simülasyon döngüsü zamanlayıcısını (DispatcherTimer), adaptif kare hızı (FPS) yönetimini

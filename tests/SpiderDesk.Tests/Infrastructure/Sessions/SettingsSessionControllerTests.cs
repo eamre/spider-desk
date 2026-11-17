@@ -7,12 +7,14 @@ using SpiderDesk.Domain;
 using SpiderDesk.Domain.Insects.Species;
 using SpiderDesk.Domain.Spider;
 using SpiderDesk.Domain.Spider.Themes;
-using SpiderDesk.Infrastructure;
+using SpiderDesk.Infrastructure.Platform;
+using SpiderDesk.Infrastructure.Sessions;
 using SpiderDesk.Infrastructure.Tray;
+using SpiderDesk.Infrastructure.Windowing;
 using SpiderDesk.Rendering;
 using SpiderDesk.Rendering.Web;
 
-namespace SpiderDesk.Tests.Infrastructure
+namespace SpiderDesk.Tests.Infrastructure.Sessions
 {
     /// <summary>
     /// Tepsideki ayar menüsünden yapılan her seçimin hem simülasyona uygulandığını hem de diske kaydedildiğini doğrular.

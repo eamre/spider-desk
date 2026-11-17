@@ -1,11 +1,12 @@
-using SpiderDesk.Core.Services;
 using SpiderDesk.Core.Settings;
 using SpiderDesk.Domain;
+using SpiderDesk.Infrastructure.Platform;
 using SpiderDesk.Infrastructure.Tray;
+using SpiderDesk.Infrastructure.Windowing;
 using SpiderDesk.Rendering;
 using SpiderDesk.Rendering.Web;
 
-namespace SpiderDesk.Infrastructure
+namespace SpiderDesk.Infrastructure.Sessions
 {
     /// <summary>
     /// Tepsideki ayar menüsünü simülasyona ve ayar dosyasına bağlar.

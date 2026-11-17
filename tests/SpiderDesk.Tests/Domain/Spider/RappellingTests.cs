@@ -75,11 +75,13 @@ namespace SpiderDesk.Tests.Domain.Spider
         [Fact]
         public void DropsBetween180PixelsAndAbout40PercentOfTheScreen()
         {
+            // İp her karede biraz uzar; hedefe vardığı son karede hedefi en fazla bir karelik iniş kadar geçebilir
+            const double oneFrameOfDescent = SpiderTuning.RappelDescendSpeed * FrameSeconds;
             for (int i = 0; i < Runs; i++)
             {
                 var trace = Rappel(new Point(900, 50));
                 double deepest = trace.Points.Max(p => p.Position.Y);
-                Assert.InRange(deepest, 180 - 1, 180 + 1080 * 0.38 + 1);
+                Assert.InRange(deepest, 180 - 1, 180 + 1080 * 0.38 + oneFrameOfDescent);
             }
         }
 
