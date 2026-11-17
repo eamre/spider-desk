@@ -157,17 +157,17 @@ namespace SpiderDesk.Domain
         public void CommandNewWeb() => Spider.RequestNewWeb(World);
 
         /// <summary>Örümcek boşalır boşalmaz bu mesajı ipekle yazar (örneğin Pomodoro'nun FOCUS / BREAK duyuruları).</summary>
-        public void RequestSilkMessage(string text) => Spider.RequestSilkMessage(text);
+        public void RequestSilkMessage(string text) => Spider.Messages.RequestSilkMessage(text);
 
         /// <summary>Örümceğin henüz yazmaya başlamadığı mesajı iptal eder (örneğin Pomodoro durdurulduğunda).</summary>
-        public void CancelPendingSilkMessage() => Spider.CancelPendingSilkMessage();
+        public void CancelPendingSilkMessage() => Spider.Messages.CancelPendingSilkMessage();
 
         /// <summary>
         /// Örümceğin sırada bekleyen ya da şu an yazdığı bir duyurusu varsa true döner.
         /// Pomodoro, yeni turun süresini örümcek duyuruyu yazıp bitirince başlatmak için buna bakar.
         /// </summary>
         public bool IsBusyWithAnnouncement =>
-            Spider.HasPendingSilkMessage || Spider.CurrentState is WritingSilkMessageState { IsAnnouncement: true };
+            Spider.Messages.HasPendingSilkMessage || Spider.CurrentState is WritingSilkMessageState { IsAnnouncement: true };
 
         /// <summary>
         /// Örümcek şu an bir duyuru yazıyorsa, yazdığı duyuru hâlâ soluyorsa ya da tavandan bir not gösteriyorsa true döner.
@@ -182,7 +182,7 @@ namespace SpiderDesk.Domain
         /// Örümcek elindeki işi bitirince tavandan sarkıp bu notu ön bacaklarıyla gösterir (örneğin bir hatırlatma).
         /// Birden fazla not gelirse sırayla gösterilir.
         /// </summary>
-        public void RequestNote(string text) => Spider.RequestNote(text);
+        public void RequestNote(string text) => Spider.Messages.RequestNote(text);
 
         public void CommandRainOnWebs()
         {

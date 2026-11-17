@@ -172,12 +172,12 @@ namespace SpiderDesk.Tests.Domain.Spider
             var world = new WorldContext();
             var spider = new SpiderEntity(new Point(900, 700), new SpiderGaitController());
 
-            spider.RequestNote("Annemi ara");
+            spider.Messages.RequestNote("Annemi ara");
             spider.Update(world, FrameSeconds);
 
             var delivering = Assert.IsType<DeliveringNoteState>(spider.CurrentState);
             Assert.Equal("Annemi ara", delivering.Text);
-            Assert.Equal(0, spider.PendingNoteCount);
+            Assert.Equal(0, spider.Messages.PendingNoteCount);
         }
 
         [Fact]
@@ -187,11 +187,11 @@ namespace SpiderDesk.Tests.Domain.Spider
             var spider = new SpiderEntity(new Point(900, 700), new SpiderGaitController());
             spider.TransitionTo(SpinningWebState.CreateForBestSite(world), world);
 
-            spider.RequestNote("Annemi ara");
+            spider.Messages.RequestNote("Annemi ara");
             spider.Update(world, FrameSeconds);
 
             Assert.IsType<SpinningWebState>(spider.CurrentState);
-            Assert.Equal(1, spider.PendingNoteCount);
+            Assert.Equal(1, spider.Messages.PendingNoteCount);
 
             // Ağ bitince örümcek notu göstermeye gider
             for (double t = 0; t < 120 && spider.CurrentState is SpinningWebState; t += FrameSeconds)
@@ -211,8 +211,8 @@ namespace SpiderDesk.Tests.Domain.Spider
             var world = new WorldContext();
             var spider = new SpiderEntity(new Point(900, 700), new SpiderGaitController());
 
-            spider.RequestNote("Annemi ara");
-            spider.RequestNote("Su iç");
+            spider.Messages.RequestNote("Annemi ara");
+            spider.Messages.RequestNote("Su iç");
             spider.Update(world, FrameSeconds);
             Assert.Equal("Annemi ara", Assert.IsType<DeliveringNoteState>(spider.CurrentState).Text);
 
@@ -220,7 +220,7 @@ namespace SpiderDesk.Tests.Domain.Spider
             spider.Update(world, FrameSeconds);
 
             Assert.Equal("Su iç", Assert.IsType<DeliveringNoteState>(spider.CurrentState).Text);
-            Assert.Equal(0, spider.PendingNoteCount);
+            Assert.Equal(0, spider.Messages.PendingNoteCount);
         }
     }
 }

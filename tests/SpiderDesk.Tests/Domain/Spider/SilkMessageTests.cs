@@ -43,12 +43,12 @@ namespace SpiderDesk.Tests.Domain.Spider
         {
             var (spider, world) = CreateWorld();
 
-            spider.RequestSilkMessage("FOCUS");
+            spider.Messages.RequestSilkMessage("FOCUS");
             spider.Update(world, FrameSeconds);
 
             var writing = Assert.IsType<WritingSilkMessageState>(spider.CurrentState);
             Assert.Equal("FOCUS", writing.Text);
-            Assert.False(spider.HasPendingSilkMessage);
+            Assert.False(spider.Messages.HasPendingSilkMessage);
             Assert.NotNull(world.SilkMessage);
         }
 
@@ -58,11 +58,11 @@ namespace SpiderDesk.Tests.Domain.Spider
             var (spider, world) = CreateWorld();
             spider.TransitionTo(SpinningWebState.CreateForBestSite(world), world);
 
-            spider.RequestSilkMessage("FOCUS");
+            spider.Messages.RequestSilkMessage("FOCUS");
             spider.Update(world, FrameSeconds);
 
             Assert.IsType<SpinningWebState>(spider.CurrentState);
-            Assert.True(spider.HasPendingSilkMessage);
+            Assert.True(spider.Messages.HasPendingSilkMessage);
         }
 
         [Fact]
@@ -71,8 +71,8 @@ namespace SpiderDesk.Tests.Domain.Spider
             var (spider, world) = CreateWorld();
             spider.TransitionTo(SpinningWebState.CreateForBestSite(world), world);
 
-            spider.RequestSilkMessage("FOCUS");
-            spider.RequestSilkMessage("BREAK");
+            spider.Messages.RequestSilkMessage("FOCUS");
+            spider.Messages.RequestSilkMessage("BREAK");
             spider.TransitionTo(new WanderingState(), world);
             spider.Update(world, FrameSeconds);
 
@@ -111,13 +111,13 @@ namespace SpiderDesk.Tests.Domain.Spider
         {
             var (spider, world) = CreateWorld();
             spider.TransitionTo(SpinningWebState.CreateForBestSite(world), world);
-            spider.RequestSilkMessage("FOCUS");
+            spider.Messages.RequestSilkMessage("FOCUS");
 
-            spider.CancelPendingSilkMessage();
+            spider.Messages.CancelPendingSilkMessage();
             spider.TransitionTo(new WanderingState(), world);
             spider.Update(world, FrameSeconds);
 
-            Assert.False(spider.HasPendingSilkMessage);
+            Assert.False(spider.Messages.HasPendingSilkMessage);
             Assert.IsNotType<WritingSilkMessageState>(spider.CurrentState);
         }
 

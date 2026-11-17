@@ -63,7 +63,7 @@ namespace SpiderDesk.Domain.Spider.States
                 // Ağda canlı böcek varken asla yemeye dalmaz; canlı avı kaçırmamak birinci önceliktir.
                 if (!hasLivePreyOnWeb && spider.Metabolism.IsHungry)
                 {
-                    var foodWeb = spider.FindWebWithStoredFood(world);
+                    var foodWeb = PreySearch.FindWebWithStoredFood(spider, world);
                     if (foodWeb == _web && foodWeb.Pantry.PeekNextMeal() is { } nextMeal)
                     {
                         spider.TransitionTo(new EatingFromPantryState(foodWeb, nextMeal), world);

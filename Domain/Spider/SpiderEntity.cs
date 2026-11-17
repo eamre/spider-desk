@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Windows;
 using SpiderDesk.Domain.Insects;
 using SpiderDesk.Domain.Spider.States;
@@ -10,14 +9,13 @@ namespace SpiderDesk.Domain.Spider
 {
     /// <summary>
     /// Örümceğin fiziksel konumunu, hareketini, seviyesini ve aktif davranış durumunu yönetir.
-    /// Durum geçiş izinleri ISpiderBehaviorState üzerinden okunur, otomatik ağ takvimi AutoWebScheduler tarafından yönetilir.
+    /// Durum geçiş izinleri ISpiderBehaviorState üzerinden okunur. Yardımcı işler ayrı sınıflardadır:
+    /// av ve kiler arama PreySearch'te, bekleyen mesajlar SpiderMessageQueue'da, otomatik ağ takvimi AutoWebScheduler'da.
     /// </summary>
     public class SpiderEntity
     {
         private readonly SpiderGaitController _gaitController;
         private readonly AutoWebScheduler _autoWebScheduler = new();
-        private string? _pendingSilkMessage;
-        private readonly Queue<string> _pendingNotes = new();
 
         public Point Position { get; private set; }
         public double Angle { get; private set; }
@@ -39,8 +37,9 @@ namespace SpiderDesk.Domain.Spider
         public int Level => 1 + (BugsCaught / SpiderTuning.BugsPerLevel);
         public double SpeedMultiplier { get; set; } = 1.0;
         public int PendingWebRequests { get; private set; }
-        public bool HasPendingSilkMessage => _pendingSilkMessage != null;
-        public int PendingNoteCount => _pendingNotes.Count;
+
+        /// <summary>Örümceğin işini bitirince göstereceği mesajlar (FOCUS/BREAK yazısı, hatırlatma notları).</summary>
+        public SpiderMessageQueue Messages { get; } = new();
 
         public bool HasVisualMotion
         {
@@ -99,21 +98,6 @@ namespace SpiderDesk.Domain.Spider
             return false;
         }
 
-        /// <summary>
-        /// Örümceğe ipekle yazması için bir mesaj verir. Yarıda bırakamayacağı bir işteyse (av taşımak, ağ örmek)
-        /// o işi bitirince yazar. Henüz yazılmamış eski bir mesaj varsa yenisi onun yerini alır.
-        /// </summary>
-        public void RequestSilkMessage(string text) => _pendingSilkMessage = text;
-
-        /// <summary>Henüz yazılmaya başlanmamış mesajı iptal eder. Yazılmakta olan mesaj yarıda kesilmez.</summary>
-        public void CancelPendingSilkMessage() => _pendingSilkMessage = null;
-
-        /// <summary>
-        /// Örümceğe tavandan sarkıp göstermesi için bir not verir (örneğin bir hatırlatma). Örümcek yarıda bırakamayacağı
-        /// bir işteyse (av taşımak, ağ örmek) önce onu bitirir. Birden fazla not gelirse hiçbiri kaybolmaz, sırayla gösterilir.
-        /// </summary>
-        public void RequestNote(string text) => _pendingNotes.Enqueue(text);
-
         public void ClearPendingWebRequests()
         {
             PendingWebRequests = 0;
@@ -137,14 +121,11 @@ namespace SpiderDesk.Domain.Spider
         {
             VelocityVector = new Vector(0, 0);
 
-            if (_pendingSilkMessage is { } message && CurrentState.CanStopForMessage)
+            // Örümcek işini bırakabiliyorsa (ağ örmüyor, av taşımıyorsa) sırada bekleyen mesajı göstermeye geçer.
+            // Bırakamıyorsa TakeNextMessageState hiç çağrılmaz; mesaj sırada kalır.
+            if (CurrentState.CanStopForMessage && Messages.TakeNextMessageState() is { } messageState)
             {
-                _pendingSilkMessage = null;
-                TransitionTo(WritingSilkMessageState.Announcement(message), world);
-            }
-            else if (_pendingNotes.Count > 0 && CurrentState.CanStopForMessage)
-            {
-                TransitionTo(new DeliveringNoteState(_pendingNotes.Dequeue()), world);
+                TransitionTo(messageState, world);
             }
             else if (ShouldFleeFromCursor(world))
             {
@@ -152,14 +133,14 @@ namespace SpiderDesk.Domain.Spider
             }
             else
             {
-                BugEntity? targetBug = CurrentState.CanHuntPrey ? FindPrey(world) : null;
+                BugEntity? targetBug = CurrentState.CanHuntPrey ? PreySearch.FindPrey(this, world) : null;
                 if (targetBug != null)
                 {
                     TransitionTo(new HuntingState(targetBug, CurrentState), world);
                 }
                 else if (Metabolism.IsHungry && CurrentState.CanEatFromPantry)
                 {
-                    SpiderWebEntity? webWithFood = FindWebWithStoredFood(world);
+                    SpiderWebEntity? webWithFood = PreySearch.FindWebWithStoredFood(this, world);
                     if (webWithFood?.Pantry.PeekNextMeal() is { } storedCocoon)
                     {
                         TransitionTo(new EatingFromPantryState(webWithFood, storedCocoon), world);
@@ -230,108 +211,6 @@ namespace SpiderDesk.Domain.Spider
         }
 
         public Point GetSpinneretPosition() => LocalToWorld(new Vector(-18, 0));
-
-        public SpiderWebEntity? FindWebWithStoredFood(WorldContext world)
-        {
-            if (ActiveWeb != null && ActiveWeb.Pantry.HasStoredFood)
-            {
-                return ActiveWeb;
-            }
-
-            SpiderWebEntity? nearest = null;
-            double bestDistSq = double.MaxValue;
-
-            for (int i = 0; i < world.Webs.Count; i++)
-            {
-                var web = world.Webs[i];
-                if (!web.Pantry.HasStoredFood) continue;
-
-                double distSq = (web.Center - Position).LengthSquared;
-                if (distSq < bestDistSq)
-                {
-                    bestDistSq = distSq;
-                    nearest = web;
-                }
-            }
-
-            return nearest;
-        }
-
-        private BugEntity? FindPrey(WorldContext world)
-        {
-            const double encounterRadiusSq = SpiderTuning.DesktopEncounterRadius * SpiderTuning.DesktopEncounterRadius;
-            BugEntity? nearestEncounter = null;
-            double bestEncounterDistSq = encounterRadiusSq;
-
-            // 1. Masaüstünde örümceğin hemen yanından geçen vahşi böceğe refleksle saldır
-            for (int i = 0; i < world.Bugs.Count; i++)
-            {
-                var bug = world.Bugs[i];
-                if (bug.CurrentState.Status == BugLifecycleStatus.ActiveInWorld)
-                {
-                    double distSq = (bug.Position - Position).LengthSquared;
-                    if (distSq <= bestEncounterDistSq)
-                    {
-                        bestEncounterDistSq = distSq;
-                        nearestEncounter = bug;
-                    }
-                }
-            }
-
-            if (nearestEncounter != null)
-            {
-                return nearestEncounter;
-            }
-
-            // 2. Örümcek şu an bir ağın üzerindeyse (ActiveWeb != null):
-            // ÖNCELİKLE bulunduğu ağdaki çırpınan tüm böcekleri temizle!
-            // Kendi ağındaki tüm avları bitirmeden asla ekranın diğer ucundaki başka bir ağa gitmez.
-            if (ActiveWeb != null)
-            {
-                BugEntity? nearestHomeTrapped = null;
-                double bestHomeDistSq = double.MaxValue;
-
-                for (int i = 0; i < world.Bugs.Count; i++)
-                {
-                    var bug = world.Bugs[i];
-                    if (bug.CurrentState.Status == BugLifecycleStatus.TrappedInWeb && bug.TrappedWeb == ActiveWeb)
-                    {
-                        double distSq = (bug.Position - Position).LengthSquared;
-                        if (distSq < bestHomeDistSq)
-                        {
-                            bestHomeDistSq = distSq;
-                            nearestHomeTrapped = bug;
-                        }
-                    }
-                }
-
-                if (nearestHomeTrapped != null)
-                {
-                    return nearestHomeTrapped;
-                }
-            }
-
-            // 3. Bulunduğu ağda hiç böcek kalmadıysa (veya örümcek masaüstünde geziyorsa):
-            // Diğer ağlara takılmış ve avlanmaya hazır böceklerden en yakındakine git!
-            BugEntity? nearestOtherTrapped = null;
-            double bestOtherDistSq = double.MaxValue;
-
-            for (int i = 0; i < world.Bugs.Count; i++)
-            {
-                var bug = world.Bugs[i];
-                if (bug.IsReadyToBeHunted)
-                {
-                    double distSq = (bug.Position - Position).LengthSquared;
-                    if (distSq < bestOtherDistSq)
-                    {
-                        bestOtherDistSq = distSq;
-                        nearestOtherTrapped = bug;
-                    }
-                }
-            }
-
-            return nearestOtherTrapped;
-        }
 
         private static double NormalizeAngle(double angle)
         {

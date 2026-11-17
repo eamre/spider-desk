@@ -88,7 +88,7 @@ SpiderDesk/
 │   ├── Settings/          UserSettings, how they are saved, presets
 │   └── Services/          Contracts for the cursor, clock, startup and window layer
 ├── Domain/                The simulation itself: never draws, never calls Windows APIs
-│   ├── Spider/            SpiderEntity, IK legs, gait, metabolism, tuning constants
+│   ├── Spider/            SpiderEntity, IK legs, gait, metabolism, prey search, message queue, tuning constants
 │   │   ├── States/        14 behaviours: WritingSilkMessage, DeliveringNote, Wandering, SpinningWeb, Hunting...
 │   │   └── Themes/        Black Widow, Frost Crystal, Forest Tarantula, Cyber Neon
 │   ├── Insects/           BugEntity, BugSpawner

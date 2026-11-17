@@ -15,6 +15,9 @@ namespace SpiderDesk.Domain.Spider.States
         private readonly ISpiderBehaviorState _previousState;
         private bool _isWrapping;
 
+        /// <summary>Örümceğin peşine düştüğü böcek.</summary>
+        public BugEntity Target => _targetBug;
+
         public string DisplayName => _isWrapping ? "Avı İpekle Sarıyor" : "Avlanıyor!";
         public bool CanBeStartledByCursor => false;
         public bool CanHuntPrey => false;
@@ -80,7 +83,7 @@ namespace SpiderDesk.Domain.Spider.States
                             .FirstOrDefault()
                         ?? spider.ActiveWeb;
 
-                    bool anyPantryHasFood = spider.FindWebWithStoredFood(world) != null;
+                    bool anyPantryHasFood = PreySearch.FindWebWithStoredFood(spider, world) != null;
 
                     // Ağa takılan böcekte: Örümcek açsa ve hiçbir ağın erzağında böcek yoksa olduğu yerde (ağda) yer.
                     // Yürürken masaüstünde denk geldiği böcekte ise: Kozayı gideceği ağa taşır ve açsa ağa varınca yer!
