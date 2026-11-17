@@ -25,10 +25,10 @@ namespace SpiderDesk.Infrastructure
         private readonly PomodoroSessionController _pomodoro;
         private readonly ReminderSessionController _reminders;
         private readonly DispatcherTimer _timer;
+        private readonly AnnouncementCurtain _curtain = new();
 
         private bool _isPaused;
         private bool _wasOccluded;
-        private bool _wasAnnouncingLastFrame;
         private bool _disposed;
         private DateTime _lastTick;
 
@@ -89,23 +89,15 @@ namespace SpiderDesk.Infrastructure
             _pomodoro.Tick(now);
             _reminders.Tick(now);
 
-            // Örümcek bir duyuru (FOCUS/BREAK) yazarken ya da bir not gösterirken katman tam ekran uygulamaların bile üstüne çıkar.
-            // Duraklatılmışsa çıkmaz; yoksa yarım kalan yazı uygulamaların üstünde asılı kalırdı.
-            bool isAnnouncing = !_isPaused && _engine.IsShowingAnnouncement;
-
-            // 1. Önce sahneyi hazırla: bir uygulamanın üstünde yazılacaksa ağları ve böcekleri gizle, örümceği güncel yerine çiz.
-            //    Katman bu sırada hâlâ uygulamanın arkasında olduğu için bunu kimse görmez.
-            //    Masaüstündeyken ağlar zaten görünür olduğu için gizlenmez.
-            _canvas.SetBackgroundHidden(isAnnouncing && _windowLayerService.IsDesktopCovered);
-            if (isAnnouncing && !_wasAnnouncingLastFrame)
+            // Örümcek bir duyuru yazarken ya da not gösterirken katman tam ekran uygulamaların bile üstüne çıkar.
+            // Önce sahne hazırlanır, katman bir kare sonra öne alınır; sıralamanın kuralları AnnouncementCurtain'dadır.
+            CurtainStep curtain = _curtain.Next(_engine.IsShowingAnnouncement, _isPaused, _windowLayerService.IsDesktopCovered);
+            _canvas.SetBackgroundHidden(curtain.HideBackground);
+            if (curtain.RedrawEverything)
             {
                 _canvas.RefreshLayers(forceAll: true);
             }
-
-            // 2. Sonra perdeyi aç: katman, hazırlanan görüntü çizildikten bir kare sonra öne alınır.
-            //    Aynı karede öne alınsaydı, arkada bekleyen eski görüntü (ağlar, böcekler) bir an görünürdü.
-            _windowLayerService.IsPresentingOnTop = isAnnouncing && _wasAnnouncingLastFrame;
-            _wasAnnouncingLastFrame = isAnnouncing;
+            _windowLayerService.IsPresentingOnTop = curtain.RaiseToTop;
             _windowLayerService.EnforceZOrder();
 
             bool isInteractive = _windowLayerService.IsOverlayInteractive;

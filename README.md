@@ -98,7 +98,7 @@ SpiderDesk/
 │   ├── SilkText/          Silk letters, text layout and the startup greeting
 │   ├── Pomodoro/          Pomodoro timer, session lengths, countdown and notification texts
 │   ├── Reminders/         Reminders: the list, time parsing ("15 min", "14:30") and text rules
-│   ├── Performance/       Pure rules: 60 FPS when moving, 20 Hz when still, pause when covered
+│   ├── Performance/       Pure rules: 60 FPS when moving, 20 Hz when still, pause when covered, raising notes over apps
 │   ├── SimulationEngine   Runs one simulation step per frame
 │   └── WorldContext       Everything the spider can see: webs, bugs, cursor, screen size
 ├── Rendering/             Turns the world into WPF drawings: spider, bugs, silk text, the paper note
