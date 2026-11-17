@@ -159,6 +159,12 @@ namespace SpiderDesk.Domain
         /// <summary>Örümcek boşalır boşalmaz bu mesajı ipekle yazar (örneğin Pomodoro'nun FOCUS / BREAK duyuruları).</summary>
         public void RequestSilkMessage(string text) => Spider.RequestSilkMessage(text);
 
+        /// <summary>
+        /// Örümcek şu an bir duyuru yazıyorsa ya da yazdığı duyuru hâlâ soluyorsa true döner.
+        /// Bu sürede örümcek ve yazısı, kullanıcı tam ekran bir uygulamadayken bile görünmelidir.
+        /// </summary>
+        public bool IsShowingAnnouncement => World.SilkMessage is { IsAnnouncement: true };
+
         public void CommandRappel() => Spider.RequestRappel(World);
 
         public void CommandRainOnWebs()

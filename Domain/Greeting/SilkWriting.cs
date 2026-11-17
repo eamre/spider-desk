@@ -12,7 +12,7 @@ namespace SpiderDesk.Domain.Greeting
     public readonly record struct SilkSnap(Point From, Point To, double SnappedAt);
 
     /// <summary>
-    /// Örümceğin açılışta ipekle yazdığı selamın durumu: serilmiş teller, düğümler, örümcekten yazının ucuna
+    /// Örümceğin ipekle yazdığı mesajın (selam, FOCUS, BREAK) durumu: serilmiş teller, düğümler, örümcekten yazının ucuna
     /// uzanan kesintisiz akış ipi ve yazının solması. Yazının nasıl yazılacağına örümceğin durumu karar verir;
     /// bu sınıf yalnızca ortaya çıkan ipeği tutar.
     /// </summary>
@@ -20,6 +20,17 @@ namespace SpiderDesk.Domain.Greeting
     {
         private readonly List<SilkThread> _threads = new();
         private readonly List<SilkKnot> _knots = new();
+
+        /// <summary>
+        /// Kullanıcının o an ne yaptığından bağımsız olarak görmesi gereken bir duyuru mu (Pomodoro'nun FOCUS/BREAK yazıları)?
+        /// Açılış selamı duyuru değildir.
+        /// </summary>
+        public bool IsAnnouncement { get; }
+
+        public SilkWriting(bool isAnnouncement = false)
+        {
+            IsAnnouncement = isAnnouncement;
+        }
 
         public IReadOnlyList<SilkThread> Threads => _threads;
         public IReadOnlyList<SilkKnot> Knots => _knots;

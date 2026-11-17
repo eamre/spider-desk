@@ -1,3 +1,4 @@
+using System.Windows;
 using System.Windows.Controls;
 using SpiderDesk.Core;
 using SpiderDesk.Domain;
@@ -39,6 +40,20 @@ namespace SpiderDesk.Rendering
         {
             _webLayer.RefreshIfNeeded(forceAll);
             _actorLayer.RefreshIfNeeded(forceAll);
+        }
+
+        /// <summary>
+        /// Ağları ve böcekleri gizler ya da geri getirir; örümcek ve ipek yazısı her zaman görünür.
+        /// Örümcek tam ekran bir uygulamanın üstünde duyuru yazarken yalnızca kendisi ve yazısı görünsün diye kullanılır.
+        /// </summary>
+        public void SetBackgroundHidden(bool hidden)
+        {
+            Visibility webVisibility = hidden ? Visibility.Hidden : Visibility.Visible;
+            if (_webLayer.Visibility != webVisibility)
+            {
+                _webLayer.Visibility = webVisibility;
+            }
+            _actorLayer.ShowBugs = !hidden;
         }
     }
 }

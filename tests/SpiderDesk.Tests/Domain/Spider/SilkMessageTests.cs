@@ -107,6 +107,18 @@ namespace SpiderDesk.Tests.Domain.Spider
         }
 
         [Fact]
+        public void Announcement_IsMarkedAsAnnouncement_ButGreetingIsNot()
+        {
+            var (spider, world) = CreateWorld();
+
+            spider.TransitionTo(WritingSilkMessageState.Announcement("FOCUS"), world);
+            Assert.True(world.SilkMessage?.IsAnnouncement);
+
+            spider.TransitionTo(WritingSilkMessageState.Greeting("HELLO"), world);
+            Assert.False(world.SilkMessage?.IsAnnouncement);
+        }
+
+        [Fact]
         public void Greeting_WhenFinished_StartsSpinningTheFirstWeb()
         {
             var (spider, world) = CreateWorld();

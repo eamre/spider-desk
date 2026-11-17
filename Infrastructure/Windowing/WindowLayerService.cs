@@ -9,7 +9,8 @@ namespace SpiderDesk.Infrastructure.Windowing
 {
     /// <summary>
     /// Pencerenin tıklama geçirgenliğini (Click-Through) ve Masaüstü Z-Sırasını (Z-Order) yönetir.
-    /// HWND_TOPMOST yalnızca "Pencerelerin Üstünde Göster" açıkken kullanılır; normal modda pencere doğrudan
+    /// HWND_TOPMOST yalnızca "Pencerelerin Üstünde Göster" açıkken ya da bir duyuru yazılırken (IsPresentingOnTop)
+    /// kullanılır; normal modda pencere doğrudan
     /// masaüstü duvar kağıdı/ikon katmanının (Progman/WorkerW) hemen üstünde tutulur. Böylece masaüstüne
     /// tıklandığında ekran yenilenmesi/titremesi olmaz ve pencereler alta alındığında masaüstüne tıklamaya gerek kalmaz.
     /// Pencere durumlarını <see cref="IWindowInspector"/> ile okur, örtülme kararını <see cref="DesktopOcclusionPolicy"/>'ye bırakır.
@@ -79,8 +80,9 @@ namespace SpiderDesk.Infrastructure.Windowing
         private IntPtr _desktopHwnd;
         private bool? _lastAppliedTopmostState;
         private bool _alwaysOnTop;
+        private bool _isPresentingOnTop;
         private bool _isOverlayInteractive;
-        private bool _isDesktopOccluded;
+        private bool _isDesktopCovered;
         private int _tickCounter;
 
         public WindowLayerService(IWindowInspector windowInspector)
@@ -98,7 +100,9 @@ namespace SpiderDesk.Infrastructure.Windowing
         /// Öndeki ya da imlecin altındaki pencere, katmanın bulunduğu monitörde büyütülmüş veya
         /// monitörü tamamen kaplıyorsa (kenarlıksız tam ekran oyun/video) true döner.
         /// </summary>
-        public bool IsDesktopOccluded => !_alwaysOnTop && _isDesktopOccluded;
+        public bool IsDesktopOccluded => !IsTopmost && _isDesktopCovered;
+
+        public bool IsDesktopCovered => !_alwaysOnTop && _isDesktopCovered;
 
         public bool AlwaysOnTop
         {
@@ -113,6 +117,22 @@ namespace SpiderDesk.Infrastructure.Windowing
                 }
             }
         }
+
+        public bool IsPresentingOnTop
+        {
+            get => _isPresentingOnTop;
+            set
+            {
+                if (_isPresentingOnTop != value)
+                {
+                    _isPresentingOnTop = value;
+                    _lastAppliedTopmostState = null;
+                    EnforceZOrder();
+                }
+            }
+        }
+
+        private bool IsTopmost => _alwaysOnTop || _isPresentingOnTop;
 
         public void Attach(Window window)
         {
@@ -133,15 +153,24 @@ namespace SpiderDesk.Infrastructure.Windowing
             // (SysListView32) silip baştan boyamasını (F5 yenilenme hissini) tamamen engeller.
             const uint flags = SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOSENDCHANGING | SWP_NOREDRAW | SWP_DEFERERASE;
 
-            if (_alwaysOnTop)
+            if (IsTopmost)
             {
                 if (_lastAppliedTopmostState != true)
                 {
                     SetWindowPos(_hwnd, HWND_TOPMOST, 0, 0, 0, 0, flags);
                     _lastAppliedTopmostState = true;
                 }
-                _isOverlayInteractive = true;
-                _isDesktopOccluded = false;
+
+                if (_alwaysOnTop)
+                {
+                    _isOverlayInteractive = true;
+                    _isDesktopCovered = false;
+                    return;
+                }
+
+                // Duyuru için geçici olarak öndeyken masaüstünün örtülü olup olmadığını izlemeye devam et:
+                // örtülüyse yazı süresince ağlar ve böcekler gizlenir
+                UpdateVisibilityAndInteractionState();
                 return;
             }
 
@@ -227,11 +256,11 @@ namespace SpiderDesk.Infrastructure.Windowing
 
             if (cursorOverDesktop)
             {
-                _isDesktopOccluded = false;
+                _isDesktopCovered = false;
                 return;
             }
 
-            _isDesktopOccluded = OccludesOverlay(GetForegroundWindow()) || OccludesOverlay(rootHwnd);
+            _isDesktopCovered = OccludesOverlay(GetForegroundWindow()) || OccludesOverlay(rootHwnd);
         }
 
         private bool OccludesOverlay(IntPtr hwnd) =>

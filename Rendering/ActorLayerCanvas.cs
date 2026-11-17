@@ -9,7 +9,7 @@ using SpiderDesk.Domain.Spider;
 namespace SpiderDesk.Rendering
 {
     /// <summary>
-    /// Yalnızca hareketli varlıkları (örümcek, uçan/yakalanan böcekler ve açılışta ipekle yazılan selam) çizen katman.
+    /// Yalnızca hareketli varlıkları (örümcek, uçan/yakalanan böcekler ve ipekle yazılan mesaj) çizen katman.
     /// Ağ katmanından bağımsız güncellenerek her karede tüm ağların yeniden taranmasını önler.
     /// </summary>
     public class ActorLayerCanvas : FrameworkElement
@@ -20,6 +20,19 @@ namespace SpiderDesk.Rendering
         private readonly IRenderer<SpiderEntity> _spiderRenderer;
         private readonly IRenderer<SilkWriting> _silkWritingRenderer;
         private bool _wasIdle;
+        private bool _showBugs = true;
+
+        /// <summary>False iken böcekler çizilmez; örümcek ve ipek yazısı çizilmeye devam eder.</summary>
+        public bool ShowBugs
+        {
+            get => _showBugs;
+            set
+            {
+                if (_showBugs == value) return;
+                _showBugs = value;
+                InvalidateVisual();
+            }
+        }
 
         public ActorLayerCanvas(
             WorldContext world,
@@ -53,14 +66,17 @@ namespace SpiderDesk.Rendering
         {
             base.OnRender(dc);
 
-            if (_world.SilkMessage is { } greeting)
+            if (_world.SilkMessage is { } message)
             {
-                _silkWritingRenderer.Render(dc, greeting);
+                _silkWritingRenderer.Render(dc, message);
             }
 
-            for (int i = 0; i < _world.Bugs.Count; i++)
+            if (_showBugs)
             {
-                _bugRenderer.Render(dc, _world.Bugs[i]);
+                for (int i = 0; i < _world.Bugs.Count; i++)
+                {
+                    _bugRenderer.Render(dc, _world.Bugs[i]);
+                }
             }
 
             _spiderRenderer.Render(dc, _spider);

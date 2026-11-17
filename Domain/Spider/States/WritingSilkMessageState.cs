@@ -21,6 +21,7 @@ namespace SpiderDesk.Domain.Spider.States
 
         private readonly string _text;
         private readonly Func<SpiderEntity, WorldContext, ISpiderBehaviorState> _createNextState;
+        private readonly bool _isAnnouncement;
         private readonly List<PathPoint> _path = new();
         private SilkWriting _writing = null!;
         private Point _standPoint;
@@ -45,10 +46,15 @@ namespace SpiderDesk.Domain.Spider.States
 
         /// <param name="text">Yazılacak mesaj.</param>
         /// <param name="createNextState">Yazı ve el sallama bitince örümceğin geçeceği durumu üretir.</param>
-        public WritingSilkMessageState(string text, Func<SpiderEntity, WorldContext, ISpiderBehaviorState> createNextState)
+        /// <param name="isAnnouncement">Kullanıcının mutlaka görmesi gereken bir duyuru mu? (bkz. <see cref="SilkWriting.IsAnnouncement"/>)</param>
+        public WritingSilkMessageState(
+            string text,
+            Func<SpiderEntity, WorldContext, ISpiderBehaviorState> createNextState,
+            bool isAnnouncement = false)
         {
             _text = text;
             _createNextState = createNextState;
+            _isAnnouncement = isAnnouncement;
         }
 
         /// <summary>Açılış selamı: yazdıktan sonra örümcek ilk ağını örmeye gider.</summary>
@@ -57,7 +63,7 @@ namespace SpiderDesk.Domain.Spider.States
 
         /// <summary>Pomodoro gibi duyurular: yazdıktan sonra örümcek ağına döner, ağı yoksa gezinir.</summary>
         public static WritingSilkMessageState Announcement(string text) =>
-            new(text, ReturnHome);
+            new(text, ReturnHome, isAnnouncement: true);
 
         private static ISpiderBehaviorState ReturnHome(SpiderEntity spider, WorldContext world) =>
             spider.ActiveWeb is { IsCompleted: true } web && world.Webs.Contains(web)
@@ -89,7 +95,7 @@ namespace SpiderDesk.Domain.Spider.States
             // Uzun selamlar da kısa sürede bitsin diye yazma hızı toplam çizgi uzunluğuna göre ayarlanır
             _strokeSpeed = Math.Max(SpiderTuning.SilkWritingMinStrokeSpeed, layout.TotalStrokeLength / SpiderTuning.SilkWritingTargetWriteSeconds);
 
-            _writing = new SilkWriting();
+            _writing = new SilkWriting(_isAnnouncement);
             world.SilkMessage = _writing;
 
             spider.ActiveSilkLine = null;

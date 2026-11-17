@@ -62,7 +62,8 @@ namespace SpiderDesk.Infrastructure.Tray
 
             menu.Items.Add(new ToolStripSeparator());
 
-            _pomodoroToggleItem = new ToolStripMenuItem("▶️ Başlat");
+            // Başlat/Durdur da menüyü açık tutar: kullanıcı yazının "Durdur"a dönüştüğünü ve geri sayımı hemen görür
+            _pomodoroToggleItem = new ToolStripMenuItem("▶️ Başlat") { Tag = KeepMenuOpenTag };
             _pomodoroToggleItem.Click += (_, _) => PomodoroToggleRequested?.Invoke();
             _pomodoroMenu = BuildPomodoroSubMenu(_pomodoroToggleItem, currentSettings.PomodoroPreset);
             menu.Items.Add(_pomodoroMenu);

@@ -32,6 +32,7 @@ namespace SpiderDesk.Infrastructure
 
         private bool _isPaused;
         private bool _wasOccluded;
+        private bool _wasAnnouncingLastFrame;
         private bool _disposed;
         private DateTime _lastTick;
 
@@ -141,6 +142,23 @@ namespace SpiderDesk.Infrastructure
             // Pomodoro gerçek saate bakar; simülasyon duraklatılmış ya da ekran kapalı olsa bile süre işlemeye devam eder
             _pomodoro.Tick(now);
 
+            // Örümcek bir duyuru (FOCUS/BREAK) yazarken katman tam ekran uygulamaların bile üstüne çıkar.
+            // Duraklatılmışsa çıkmaz; yoksa yarım kalan yazı uygulamaların üstünde asılı kalırdı.
+            bool isAnnouncing = !_isPaused && _engine.IsShowingAnnouncement;
+
+            // 1. Önce sahneyi hazırla: bir uygulamanın üstünde yazılacaksa ağları ve böcekleri gizle, örümceği güncel yerine çiz.
+            //    Katman bu sırada hâlâ uygulamanın arkasında olduğu için bunu kimse görmez.
+            //    Masaüstündeyken ağlar zaten görünür olduğu için gizlenmez.
+            _canvas.SetBackgroundHidden(isAnnouncing && _windowLayerService.IsDesktopCovered);
+            if (isAnnouncing && !_wasAnnouncingLastFrame)
+            {
+                _canvas.RefreshLayers(forceAll: true);
+            }
+
+            // 2. Sonra perdeyi aç: katman, hazırlanan görüntü çizildikten bir kare sonra öne alınır.
+            //    Aynı karede öne alınsaydı, arkada bekleyen eski görüntü (ağlar, böcekler) bir an görünürdü.
+            _windowLayerService.IsPresentingOnTop = isAnnouncing && _wasAnnouncingLastFrame;
+            _wasAnnouncingLastFrame = isAnnouncing;
             _windowLayerService.EnforceZOrder();
 
             bool isInteractive = _windowLayerService.IsOverlayInteractive;
