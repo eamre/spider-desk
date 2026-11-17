@@ -4,7 +4,6 @@ using SpiderDesk.Core.Services;
 using SpiderDesk.Core.Settings;
 using SpiderDesk.Domain.Insects;
 using SpiderDesk.Domain.Insects.Species;
-using SpiderDesk.Domain.Insects.States;
 using SpiderDesk.Domain.SilkText;
 using SpiderDesk.Domain.Spider;
 using SpiderDesk.Domain.Spider.States;
@@ -199,22 +198,8 @@ namespace SpiderDesk.Domain
 
         public void ClearWebs()
         {
-            // Ağda asılı kalmış veya sarılmakta olan böcekleri serbest bırak (boşlukta asılı kalmalarını önler)
-            for (int i = 0; i < World.Bugs.Count; i++)
-            {
-                var bug = World.Bugs[i];
-                if (bug.CurrentState.Status == BugLifecycleStatus.TrappedInWeb || bug.CurrentState.Status == BugLifecycleStatus.BeingWrapped)
-                {
-                    bug.TrappedWeb = null;
-                    bug.WrapProgress = 0.0;
-                    double angle = World.Random.NextDouble() * Math.PI * 2;
-                    Vector vel = new Vector(Math.Cos(angle), Math.Sin(angle)) * bug.Species.MinSpeed;
-                    bug.SetMotion(bug.Position, vel, angle);
-                    bug.TransitionTo(new FlyingBugState(webImmunitySeconds: 4.0), World);
-                }
-            }
-
-            World.Webs.Clear();
+            // Ağlardaki böcekler de serbest kalır; boşlukta asılı kalmazlar
+            World.ClearWebs();
             Spider.ClearPendingWebRequests();
             Spider.ActiveWeb = null;
             Spider.TransitionTo(SpinningWebState.CreateForBestSite(World), World);

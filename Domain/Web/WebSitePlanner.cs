@@ -2,13 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
-using SpiderDesk.Domain.Insects.States;
 
 namespace SpiderDesk.Domain.Web
 {
     /// <summary>
     /// Yeni örülecek ağın tipini (%50 Köşe Yelpaze / %50 Dairesel Orta) ve mevcut ağlarla
-    /// kesişmeyen en uygun ekran konumunu belirler.
+    /// kesişmeyen en uygun ekran konumunu belirler. Yalnızca ağı planlar; dünyaya eklemek
+    /// (ve gerekirse en eski ağı silmek) <see cref="WorldContext.AddWeb"/>'in işidir.
     /// </summary>
     public static class WebSitePlanner
     {
@@ -27,7 +27,7 @@ namespace SpiderDesk.Domain.Web
             if (candidate.IsCornerFan)
             {
                 double midAngle = (candidate.StartAngle + candidate.EndAngle) * 0.5;
-                Point restingHub = WebBlueprintGenerator.PolarToCartesian(candidate.Vertex, midAngle, 58.0);
+                Point restingHub = WebBlueprintGenerator.PolarToCartesian(candidate.Vertex, midAngle, WebTuning.CornerFanHubDistance);
 
                 Queue<WebBuildStep> plan = WebBlueprintGenerator.CreateCornerFanPlan(
                     candidate.Vertex,
@@ -54,26 +54,6 @@ namespace SpiderDesk.Domain.Web
             }
 
             web.Droplets.SetSpawnRate(world.DewSpawnRate, world.Random);
-            world.Webs.Add(web);
-
-            if (world.Webs.Count > 6)
-            {
-                var oldWeb = world.Webs[0];
-                for (int i = 0; i < world.Bugs.Count; i++)
-                {
-                    var bug = world.Bugs[i];
-                    if (bug.TrappedWeb == oldWeb)
-                    {
-                        bug.TrappedWeb = null;
-                        double angle = world.Random.NextDouble() * Math.PI * 2;
-                        Vector vel = new Vector(Math.Cos(angle), Math.Sin(angle)) * bug.Species.MinSpeed;
-                        bug.SetMotion(bug.Position, vel, angle);
-                        bug.TransitionTo(new FlyingBugState(webImmunitySeconds: 4.0), world);
-                    }
-                }
-                world.Webs.RemoveAt(0);
-            }
-
             return web;
         }
 

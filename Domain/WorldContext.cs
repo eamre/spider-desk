@@ -23,5 +23,33 @@ namespace SpiderDesk.Domain
         /// <summary>Örümceğin açılışta ipekle yazdığı selam; yazı solup kaybolunca null olur.</summary>
         public SilkWriting? SilkMessage { get; set; }
         public Random Random { get; } = new();
+
+        /// <summary>
+        /// Yeni ağı ekler. Ekranda <see cref="WebTuning.MaxWebsOnScreen"/>'dan fazla ağ olursa en eski ağ silinir
+        /// ve ona takılı böcekler serbest kalır.
+        /// </summary>
+        public void AddWeb(SpiderWebEntity web)
+        {
+            Webs.Add(web);
+            if (Webs.Count > WebTuning.MaxWebsOnScreen)
+            {
+                SpiderWebEntity oldest = Webs[0];
+                foreach (BugEntity bug in Bugs)
+                {
+                    if (bug.TrappedWeb == oldest) bug.ReleaseFromWeb(this);
+                }
+                Webs.RemoveAt(0);
+            }
+        }
+
+        /// <summary>Bütün ağları siler; ağlara takılı ya da sarılmakta olan böcekler serbest kalıp uçar.</summary>
+        public void ClearWebs()
+        {
+            foreach (BugEntity bug in Bugs)
+            {
+                if (bug.IsCaughtInWeb) bug.ReleaseFromWeb(this);
+            }
+            Webs.Clear();
+        }
     }
 }

@@ -6,6 +6,10 @@ namespace SpiderDesk.Domain.Web
     /// </summary>
     public static class WebTuning
     {
+        // Ağ Sayısı ve Yerleşimi (WorldContext & WebSitePlanner)
+        public const int MaxWebsOnScreen = 6;                // Yeni ağ bu sayıyı aşarsa en eski ağ silinir
+        public const double CornerFanHubDistance = 58.0;      // Köşe ağında örümceğin beklediği nokta, köşeden bu kadar içeride
+
         // Hareket Algılama (titreşim/rüzgar bu eşiğin altındaysa ağ durgun sayılır ve önbellekten çizilir)
         public const double MotionThreshold = 0.05;
 

@@ -28,6 +28,7 @@ namespace SpiderDesk.Domain.Spider.States
         public static SpinningWebState CreateForBestSite(WorldContext world)
         {
             SpiderWebEntity web = WebSitePlanner.CreateNextWeb(world);
+            world.AddWeb(web);
             return new SpinningWebState(web);
         }
 

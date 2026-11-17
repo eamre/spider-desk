@@ -11,6 +11,9 @@ namespace SpiderDesk.Domain.Insects
     /// </summary>
     public class BugEntity
     {
+        /// <summary>Ağdan kurtulan böcek bu kadar saniye hiçbir ağa yakalanmaz; hemen aynı ağa geri yapışmasın.</summary>
+        public const double WebImmunityAfterReleaseSeconds = 4.0;
+
         public IBugSpecies Species { get; }
         public IBugBehaviorState CurrentState { get; private set; }
 
@@ -25,6 +28,9 @@ namespace SpiderDesk.Domain.Insects
         public SpiderWebEntity? TrappedWeb { get; set; }
 
         public bool IsEaten => CurrentState.Status == BugLifecycleStatus.Eaten;
+
+        /// <summary>Böcek bir ağa yapışmış ya da örümcek onu kozaya sarıyorsa true döner.</summary>
+        public bool IsCaughtInWeb => CurrentState.Status is BugLifecycleStatus.TrappedInWeb or BugLifecycleStatus.BeingWrapped;
         public bool IsReadyToBeHunted => CurrentState.IsReadyToBeHunted;
 
         public BugEntity(Point startPos, Vector initialVelocity, double size, IBugSpecies species)
@@ -46,6 +52,21 @@ namespace SpiderDesk.Domain.Insects
         public void Update(WorldContext world, double dt)
         {
             CurrentState.Update(this, world, dt);
+        }
+
+        /// <summary>
+        /// Böceği ağdan kurtarır: yarım kalan koza ipi düşer, böcek olduğu yerden rastgele bir yöne uçar
+        /// ve kısa bir süre (<see cref="WebImmunityAfterReleaseSeconds"/>) hiçbir ağa yakalanmaz.
+        /// Böcek kendi kurtulduğunda da, ağı silindiğinde de bu metot kullanılır.
+        /// </summary>
+        public void ReleaseFromWeb(WorldContext world)
+        {
+            TrappedWeb = null;
+            WrapProgress = 0.0;
+            double angle = world.Random.NextDouble() * Math.PI * 2;
+            Vector velocity = new Vector(Math.Cos(angle), Math.Sin(angle)) * Species.MinSpeed;
+            SetMotion(Position, velocity, angle);
+            TransitionTo(new FlyingBugState(WebImmunityAfterReleaseSeconds), world);
         }
 
         public void SetMotion(Point position, Vector velocity, double angle)

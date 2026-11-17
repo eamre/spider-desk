@@ -50,7 +50,7 @@ namespace SpiderDesk.Domain.Insects.States
             // 1. Ağ artık dünyada mevcut değilse (Ağları Temizle dendi veya ağ silindi) hemen serbest kalıp uçar!
             if (_web != null && !world.Webs.Contains(_web))
             {
-                FreeBug(bug, world);
+                bug.ReleaseFromWeb(world);
                 return;
             }
 
@@ -76,7 +76,7 @@ namespace SpiderDesk.Domain.Insects.States
                     {
                         _web?.DamageNear(_anchor, damageRadius: 32.0, maxBrokenSegments: 2, world.Random);
                     }
-                    FreeBug(bug, world);
+                    bug.ReleaseFromWeb(world);
                     return;
                 }
             }
@@ -87,16 +87,6 @@ namespace SpiderDesk.Domain.Insects.States
             double shakenAngle = _anchorAngle + Math.Sin(bug.WingPhase) * 0.35;
 
             bug.SetMotion(shakenPos, new Vector(0, 0), shakenAngle);
-        }
-
-        private void FreeBug(BugEntity bug, WorldContext world)
-        {
-            bug.TrappedWeb = null;
-            bug.WrapProgress = 0.0;
-            double escapeAngle = world.Random.NextDouble() * Math.PI * 2;
-            Vector escapeVel = new Vector(Math.Cos(escapeAngle), Math.Sin(escapeAngle)) * bug.Species.MinSpeed;
-            bug.SetMotion(bug.Position, escapeVel, escapeAngle);
-            bug.TransitionTo(new FlyingBugState(webImmunitySeconds: 4.0), world);
         }
     }
 }
