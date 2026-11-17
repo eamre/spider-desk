@@ -40,6 +40,7 @@ namespace SpiderDesk.Domain.Spider.States
 
         public string DisplayName => "İpekle Yazıyor";
         public string Text => _text;
+        public bool IsAnnouncement => _isAnnouncement;
         public bool CanBeStartledByCursor => false;
         public bool CanHuntPrey => false;
         public bool CanEatFromPantry => false;

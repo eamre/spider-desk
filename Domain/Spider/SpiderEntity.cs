@@ -101,6 +101,9 @@ namespace SpiderDesk.Domain.Spider
         /// </summary>
         public void RequestSilkMessage(string text) => _pendingSilkMessage = text;
 
+        /// <summary>Henüz yazılmaya başlanmamış mesajı iptal eder. Yazılmakta olan mesaj yarıda kesilmez.</summary>
+        public void CancelPendingSilkMessage() => _pendingSilkMessage = null;
+
         public void ClearPendingWebRequests()
         {
             PendingWebRequests = 0;

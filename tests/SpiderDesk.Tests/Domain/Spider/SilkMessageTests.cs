@@ -107,6 +107,21 @@ namespace SpiderDesk.Tests.Domain.Spider
         }
 
         [Fact]
+        public void CancelledMessage_IsNotWritten()
+        {
+            var (spider, world) = CreateWorld();
+            spider.TransitionTo(SpinningWebState.CreateForBestSite(world), world);
+            spider.RequestSilkMessage("FOCUS");
+
+            spider.CancelPendingSilkMessage();
+            spider.TransitionTo(new WanderingState(), world);
+            spider.Update(world, FrameSeconds);
+
+            Assert.False(spider.HasPendingSilkMessage);
+            Assert.IsNotType<WritingSilkMessageState>(spider.CurrentState);
+        }
+
+        [Fact]
         public void Announcement_IsMarkedAsAnnouncement_ButGreetingIsNot()
         {
             var (spider, world) = CreateWorld();

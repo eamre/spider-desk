@@ -159,6 +159,16 @@ namespace SpiderDesk.Domain
         /// <summary>Örümcek boşalır boşalmaz bu mesajı ipekle yazar (örneğin Pomodoro'nun FOCUS / BREAK duyuruları).</summary>
         public void RequestSilkMessage(string text) => Spider.RequestSilkMessage(text);
 
+        /// <summary>Örümceğin henüz yazmaya başlamadığı mesajı iptal eder (örneğin Pomodoro durdurulduğunda).</summary>
+        public void CancelPendingSilkMessage() => Spider.CancelPendingSilkMessage();
+
+        /// <summary>
+        /// Örümceğin sırada bekleyen ya da şu an yazdığı bir duyurusu varsa true döner.
+        /// Pomodoro, yeni turun süresini örümcek duyuruyu yazıp bitirince başlatmak için buna bakar.
+        /// </summary>
+        public bool IsBusyWithAnnouncement =>
+            Spider.HasPendingSilkMessage || Spider.CurrentState is WritingSilkMessageState { IsAnnouncement: true };
+
         /// <summary>
         /// Örümcek şu an bir duyuru yazıyorsa ya da yazdığı duyuru hâlâ soluyorsa true döner.
         /// Bu sürede örümcek ve yazısı, kullanıcı tam ekran bir uygulamadayken bile görünmelidir.

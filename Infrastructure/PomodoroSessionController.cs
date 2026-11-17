@@ -36,6 +36,12 @@ namespace SpiderDesk.Infrastructure
                 Announce(newPhase, _timer.Remaining(now));
             }
 
+            // Yeni turun süresi, örümcek turun yazısını (FOCUS/BREAK) yazıp el sallamayı bitirince başlar
+            if (_timer.IsWaitingToStart && !_engine.IsBusyWithAnnouncement)
+            {
+                _timer.BeginCountdown(now);
+            }
+
             ShowState(now);
         }
 
@@ -45,6 +51,8 @@ namespace SpiderDesk.Infrastructure
             if (_timer.IsRunning)
             {
                 _timer.Stop();
+                // Örümcek FOCUS/BREAK yazmaya henüz başlamadıysa artık yazmasın
+                _engine.CancelPendingSilkMessage();
             }
             else
             {
@@ -70,6 +78,8 @@ namespace SpiderDesk.Infrastructure
         }
 
         private void ShowState(DateTime now) =>
-            _tray.ShowPomodoroState(_timer.IsRunning ? PomodoroText.Countdown(_timer.Phase, _timer.Remaining(now)) : null);
+            _tray.ShowPomodoroState(_timer.IsRunning
+                ? PomodoroText.Countdown(_timer.Phase, _timer.Remaining(now), _timer.IsWaitingToStart)
+                : null);
     }
 }

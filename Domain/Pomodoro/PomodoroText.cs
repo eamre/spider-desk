@@ -15,11 +15,15 @@ namespace SpiderDesk.Domain.Pomodoro
         public const string FocusWord = "FOCUS";
         public const string BreakWord = "BREAK";
 
-        /// <summary>Örneğin "Odak 18:32". Saniyeler yukarı yuvarlanır: tur başında tam süre, son saniyede 00:01 görünür.</summary>
-        public static string Countdown(PomodoroPhase phase, TimeSpan remaining)
+        /// <summary>
+        /// Örneğin "Odak 18:32". Saniyeler yukarı yuvarlanır: tur başında tam süre, son saniyede 00:01 görünür.
+        /// Tur, örümceğin yazısını beklerken sonuna ⏳ eklenir: "Odak 25:00 ⏳".
+        /// </summary>
+        public static string Countdown(PomodoroPhase phase, TimeSpan remaining, bool isWaitingToStart = false)
         {
             int totalSeconds = (int)Math.Ceiling(Math.Max(0, remaining.TotalSeconds));
-            return $"{LabelOf(phase)} {totalSeconds / 60:00}:{totalSeconds % 60:00}";
+            string text = $"{LabelOf(phase)} {totalSeconds / 60:00}:{totalSeconds % 60:00}";
+            return isWaitingToStart ? text + " ⏳" : text;
         }
 
         /// <summary>Yeni başlayan tur için duyuru üretir. <paramref name="length"/> o turun toplam süresidir.</summary>

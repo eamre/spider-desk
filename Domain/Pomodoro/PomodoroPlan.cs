@@ -13,6 +13,12 @@ namespace SpiderDesk.Domain.Pomodoro
         /// <summary>Bu kadar odak turu tamamlanınca kısa mola yerine uzun mola verilir.</summary>
         public const int FocusSessionsBeforeLongBreak = 4;
 
+        /// <summary>
+        /// Yeni bir tur, örümcek FOCUS/BREAK yazısını bitirince saymaya başlar. Örümcek bu süre içinde yazamazsa
+        /// (örneğin duraklatılmışsa) tur yine de başlar; böylece Pomodoro hiçbir zaman takılı kalmaz.
+        /// </summary>
+        public static readonly TimeSpan MaxWaitForAnnouncement = TimeSpan.FromSeconds(60);
+
         public static PomodoroDurations For(PomodoroPreset preset) => preset switch
         {
             PomodoroPreset.Extended => new(TimeSpan.FromMinutes(50), TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(20)),
