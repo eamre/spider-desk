@@ -15,6 +15,7 @@ namespace SpiderDesk.Domain.Spider
     {
         private readonly SpiderGaitController _gaitController;
         private readonly AutoWebScheduler _autoWebScheduler = new();
+        private string? _pendingSilkMessage;
 
         public Point Position { get; private set; }
         public double Angle { get; private set; }
@@ -35,6 +36,7 @@ namespace SpiderDesk.Domain.Spider
         public int Level => 1 + (BugsCaught / SpiderTuning.BugsPerLevel);
         public double SpeedMultiplier { get; set; } = 1.0;
         public int PendingWebRequests { get; private set; }
+        public bool HasPendingSilkMessage => _pendingSilkMessage != null;
 
         public bool HasVisualMotion
         {
@@ -93,6 +95,12 @@ namespace SpiderDesk.Domain.Spider
             return false;
         }
 
+        /// <summary>
+        /// Örümceğe ipekle yazması için bir mesaj verir. Yarıda bırakamayacağı bir işteyse (av taşımak, ağ örmek)
+        /// o işi bitirince yazar. Henüz yazılmamış eski bir mesaj varsa yenisi onun yerini alır.
+        /// </summary>
+        public void RequestSilkMessage(string text) => _pendingSilkMessage = text;
+
         public void ClearPendingWebRequests()
         {
             PendingWebRequests = 0;
@@ -116,7 +124,12 @@ namespace SpiderDesk.Domain.Spider
         {
             VelocityVector = new Vector(0, 0);
 
-            if (ShouldFleeFromCursor(world))
+            if (_pendingSilkMessage is { } message && CurrentState.CanWriteSilkMessage)
+            {
+                _pendingSilkMessage = null;
+                TransitionTo(WritingSilkMessageState.Announcement(message), world);
+            }
+            else if (ShouldFleeFromCursor(world))
             {
                 TransitionTo(new StartledByMouseState(CurrentState), world);
             }

@@ -43,7 +43,7 @@ namespace SpiderDesk.Domain.Greeting
             Age += dt;
             if (IsFading)
             {
-                Opacity = Math.Max(0, Opacity - dt / SpiderTuning.GreetingFadeSeconds);
+                Opacity = Math.Max(0, Opacity - dt / SpiderTuning.SilkWritingFadeSeconds);
             }
         }
 
@@ -74,12 +74,12 @@ namespace SpiderDesk.Domain.Greeting
             double length = (end - start).Length;
             if (length < 0.01) return;
 
-            int beadCount = (int)(length / SpiderTuning.GreetingBeadSpacing);
+            int beadCount = (int)(length / SpiderTuning.SilkWritingBeadSpacing);
             var beads = new SilkBead[beadCount];
             for (int i = 0; i < beadCount; i++)
             {
                 double jitter = (rng.NextDouble() - 0.5) * 0.6;
-                double radius = SpiderTuning.GreetingBeadMinRadius + rng.NextDouble() * SpiderTuning.GreetingBeadRadiusVariance;
+                double radius = SpiderTuning.SilkWritingBeadMinRadius + rng.NextDouble() * SpiderTuning.SilkWritingBeadRadiusVariance;
                 beads[i] = new SilkBead((i + 0.5 + jitter) / beadCount, radius);
             }
 

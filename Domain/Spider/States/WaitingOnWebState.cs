@@ -17,6 +17,7 @@ namespace SpiderDesk.Domain.Spider.States
 
         public string DisplayName => _reachedHub ? "Ağda Nöbette" : "Ağa Gidiyor";
         public bool CanStartScheduledWeb => true;
+        public bool CanWriteSilkMessage => true;
         public bool IsAlwaysAnimating => false;
 
         public WaitingOnWebState(SpiderWebEntity web)

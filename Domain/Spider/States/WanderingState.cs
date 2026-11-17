@@ -13,6 +13,7 @@ namespace SpiderDesk.Domain.Spider.States
 
         public string DisplayName => "Geziniyor";
         public bool CanStartScheduledWeb => true;
+        public bool CanWriteSilkMessage => true;
         public bool IsAlwaysAnimating => false;
 
         public void Enter(SpiderEntity spider, WorldContext world)

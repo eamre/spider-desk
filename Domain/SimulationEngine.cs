@@ -31,7 +31,7 @@ namespace SpiderDesk.Domain
         {
             get
             {
-                if (Spider.HasVisualMotion || World.Bugs.Count > 0 || World.Greeting != null)
+                if (Spider.HasVisualMotion || World.Bugs.Count > 0 || World.SilkMessage != null)
                 {
                     return true;
                 }
@@ -81,7 +81,7 @@ namespace SpiderDesk.Domain
 
             // Açılışta, daha hiç ağ örmeden önce saate uygun selamı ipekle yazar; ardından ilk ağını örmeye gider.
             string greeting = GreetingPolicy.ChooseGreeting(_environmentService.LocalTimeOfDay);
-            Spider.TransitionTo(new WritingGreetingState(greeting), World);
+            Spider.TransitionTo(WritingSilkMessageState.Greeting(greeting), World);
         }
 
         public void Update(double dt, double screenWidth, double screenHeight, Point cursorPos, Point prevCursorPos, double cursorSpeed)
@@ -111,17 +111,17 @@ namespace SpiderDesk.Domain
             }
 
             Spider.Update(World, dt);
-            UpdateGreeting(dt);
+            UpdateSilkMessage(dt);
         }
 
-        private void UpdateGreeting(double dt)
+        private void UpdateSilkMessage(double dt)
         {
-            if (World.Greeting is not { } greeting) return;
+            if (World.SilkMessage is not { } greeting) return;
 
             greeting.Update(dt);
             if (greeting.IsFinished)
             {
-                World.Greeting = null;
+                World.SilkMessage = null;
             }
         }
 

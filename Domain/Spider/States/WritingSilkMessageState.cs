@@ -7,11 +7,11 @@ using SpiderDesk.Domain.Web;
 namespace SpiderDesk.Domain.Spider.States
 {
     /// <summary>
-    /// Örümceğin açılışta, daha hiç ağ örmeden boş masaüstüne ipekle selam yazdığı durum.
+    /// Örümceğin ekrana ipekle bir mesaj (açılış selamı, FOCUS, BREAK) yazdığı durum.
     /// Yazının altına gelir, arkasını (ipek memesini) ilk harfe çevirip ipi fırlatır, sonra ipi hiç koparmadan
-    /// ipin ucuyla bütün yazıyı yazar. Bitince eserine dönüp el sallar ve ilk ağını örmeye gider.
+    /// ipin ucuyla bütün yazıyı yazar. Bitince eserine dönüp el sallar ve mesaja göre sıradaki işine geçer.
     /// </summary>
-    public class WritingGreetingState : ISpiderBehaviorState
+    public class WritingSilkMessageState : ISpiderBehaviorState
     {
         private enum Phase { Approach, Aim, Launch, Write, Admire }
 
@@ -20,6 +20,7 @@ namespace SpiderDesk.Domain.Spider.States
         private const int WavingLegIndex = 1; // Sağ ön bacak
 
         private readonly string _text;
+        private readonly Func<SpiderEntity, WorldContext, ISpiderBehaviorState> _createNextState;
         private readonly List<PathPoint> _path = new();
         private SilkWriting _writing = null!;
         private Point _standPoint;
@@ -36,24 +37,41 @@ namespace SpiderDesk.Domain.Spider.States
         private Point _tip;
         private int _nextPathIndex;
 
-        public string DisplayName => "Selam Yazıyor";
+        public string DisplayName => "İpekle Yazıyor";
+        public string Text => _text;
         public bool CanBeStartledByCursor => false;
         public bool CanHuntPrey => false;
         public bool CanEatFromPantry => false;
 
-        public WritingGreetingState(string text)
+        /// <param name="text">Yazılacak mesaj.</param>
+        /// <param name="createNextState">Yazı ve el sallama bitince örümceğin geçeceği durumu üretir.</param>
+        public WritingSilkMessageState(string text, Func<SpiderEntity, WorldContext, ISpiderBehaviorState> createNextState)
         {
             _text = text;
+            _createNextState = createNextState;
         }
+
+        /// <summary>Açılış selamı: yazdıktan sonra örümcek ilk ağını örmeye gider.</summary>
+        public static WritingSilkMessageState Greeting(string text) =>
+            new(text, (_, world) => SpinningWebState.CreateForBestSite(world));
+
+        /// <summary>Pomodoro gibi duyurular: yazdıktan sonra örümcek ağına döner, ağı yoksa gezinir.</summary>
+        public static WritingSilkMessageState Announcement(string text) =>
+            new(text, ReturnHome);
+
+        private static ISpiderBehaviorState ReturnHome(SpiderEntity spider, WorldContext world) =>
+            spider.ActiveWeb is { IsCompleted: true } web && world.Webs.Contains(web)
+                ? new WaitingOnWebState(web)
+                : new WanderingState();
 
         public void Enter(SpiderEntity spider, WorldContext world)
         {
-            _textCenter = new Point(world.ScreenWidth / 2.0, world.ScreenHeight * SpiderTuning.GreetingTextCenterYRatio);
+            _textCenter = new Point(world.ScreenWidth / 2.0, world.ScreenHeight * SpiderTuning.SilkWritingTextCenterYRatio);
             SilkTextPath layout = SilkTextLayout.Layout(
                 _text,
                 _textCenter,
-                world.ScreenWidth * SpiderTuning.GreetingTextWidthRatio,
-                SpiderTuning.GreetingMaxLetterHeight);
+                world.ScreenWidth * SpiderTuning.SilkWritingTextWidthRatio,
+                SpiderTuning.SilkWritingMaxLetterHeight);
 
             _path.Clear();
             foreach (var stroke in layout.Strokes)
@@ -65,14 +83,14 @@ namespace SpiderDesk.Domain.Spider.States
                 }
             }
 
-            double standY = layout.Bounds.Bottom + layout.LetterHeight * SpiderTuning.GreetingStandOffsetLetters;
-            _standPoint = new Point(_textCenter.X, Math.Min(standY, world.ScreenHeight - SpiderTuning.GreetingStandBottomMargin));
+            double standY = layout.Bounds.Bottom + layout.LetterHeight * SpiderTuning.SilkWritingStandOffsetLetters;
+            _standPoint = new Point(_textCenter.X, Math.Min(standY, world.ScreenHeight - SpiderTuning.SilkWritingStandBottomMargin));
 
             // Uzun selamlar da kısa sürede bitsin diye yazma hızı toplam çizgi uzunluğuna göre ayarlanır
-            _strokeSpeed = Math.Max(SpiderTuning.GreetingMinStrokeSpeed, layout.TotalStrokeLength / SpiderTuning.GreetingTargetWriteSeconds);
+            _strokeSpeed = Math.Max(SpiderTuning.SilkWritingMinStrokeSpeed, layout.TotalStrokeLength / SpiderTuning.SilkWritingTargetWriteSeconds);
 
             _writing = new SilkWriting();
-            world.Greeting = _writing;
+            world.SilkMessage = _writing;
 
             spider.ActiveSilkLine = null;
             spider.DraglineAnchor = null;
@@ -92,15 +110,15 @@ namespace SpiderDesk.Domain.Spider.States
             switch (_phase)
             {
                 case Phase.Approach:
-                    if (spider.MoveTowards(_standPoint, SpiderTuning.GreetingApproachSpeed, dt))
+                    if (spider.MoveTowards(_standPoint, SpiderTuning.SilkWritingApproachSpeed, dt))
                     {
                         SetPhase(Phase.Aim);
                     }
                     break;
 
                 case Phase.Aim:
-                    double aimError = AimSpinneretAt(spider, _path[0].Position, SpiderTuning.GreetingAimTurnSpeed, dt);
-                    if (aimError < SpiderTuning.GreetingAimTolerance || _phaseTime > SpiderTuning.GreetingAimTimeoutSeconds)
+                    double aimError = AimSpinneretAt(spider, _path[0].Position, SpiderTuning.SilkWritingAimTurnSpeed, dt);
+                    if (aimError < SpiderTuning.SilkWritingAimTolerance || _phaseTime > SpiderTuning.SilkWritingAimTimeoutSeconds)
                     {
                         StartLaunch(spider);
                     }
@@ -141,8 +159,8 @@ namespace SpiderDesk.Domain.Spider.States
 
             _launchControl = new Point(
                 (_launchFrom.X + target.X) / 2.0,
-                (_launchFrom.Y + target.Y) / 2.0 - distance * SpiderTuning.GreetingLaunchArcRatio);
-            _launchDuration = SpiderTuning.GreetingLaunchBaseSeconds + distance * SpiderTuning.GreetingLaunchSecondsPerPixel;
+                (_launchFrom.Y + target.Y) / 2.0 - distance * SpiderTuning.SilkWritingLaunchArcRatio);
+            _launchDuration = SpiderTuning.SilkWritingLaunchBaseSeconds + distance * SpiderTuning.SilkWritingLaunchSecondsPerPixel;
 
             SetPhase(Phase.Launch);
         }
@@ -171,7 +189,7 @@ namespace SpiderDesk.Domain.Spider.States
         /// </summary>
         private void UpdateWrite(SpiderEntity spider, WorldContext world, double dt)
         {
-            double speed = _path[_nextPathIndex].LaysSilk ? _strokeSpeed : _strokeSpeed * SpiderTuning.GreetingHopSpeedFactor;
+            double speed = _path[_nextPathIndex].LaysSilk ? _strokeSpeed : _strokeSpeed * SpiderTuning.SilkWritingHopSpeedFactor;
             double remainingMove = speed * dt;
 
             while (remainingMove > 0 && _nextPathIndex < _path.Count)
@@ -198,7 +216,7 @@ namespace SpiderDesk.Domain.Spider.States
                 }
             }
 
-            AimSpinneretAt(spider, _tip, SpiderTuning.GreetingTrackTurnSpeed, dt);
+            AimSpinneretAt(spider, _tip, SpiderTuning.SilkWritingTrackTurnSpeed, dt);
 
             if (_nextPathIndex >= _path.Count)
             {
@@ -211,17 +229,17 @@ namespace SpiderDesk.Domain.Spider.States
             _writing.UpdateStream(spider.GetSpinneretPosition(), _tip, isFlowing: true, strokeStart);
         }
 
-        /// <summary>Örümcek yazıya dönüp sağ ön bacağıyla el sallar, ardından ilk ağını örmeye gider.</summary>
+        /// <summary>Örümcek yazıya dönüp sağ ön bacağıyla el sallar, ardından sıradaki işine geçer.</summary>
         private void UpdateAdmire(SpiderEntity spider, WorldContext world, double dt)
         {
             Vector toText = _textCenter - spider.Position;
-            spider.RotateTowards(Math.Atan2(toText.Y, toText.X), SpiderTuning.GreetingAdmireTurnSpeed, dt);
+            spider.RotateTowards(Math.Atan2(toText.Y, toText.X), SpiderTuning.SilkWritingAdmireTurnSpeed, dt);
 
             SpiderLeg wavingLeg = spider.Legs[WavingLegIndex];
-            bool isWaving = _phaseTime >= SpiderTuning.GreetingWaveStartSeconds && _phaseTime < SpiderTuning.GreetingWaveEndSeconds;
+            bool isWaving = _phaseTime >= SpiderTuning.SilkWritingWaveStartSeconds && _phaseTime < SpiderTuning.SilkWritingWaveEndSeconds;
             if (isWaving)
             {
-                double swing = Math.Sin((_phaseTime - SpiderTuning.GreetingWaveStartSeconds) * SpiderTuning.GreetingWaveFrequency);
+                double swing = Math.Sin((_phaseTime - SpiderTuning.SilkWritingWaveStartSeconds) * SpiderTuning.SilkWritingWaveFrequency);
                 wavingLeg.GestureFoot = spider.LocalToWorld(new Vector(30 + 3 * swing, wavingLeg.Side * (14 + 9 * swing)));
             }
             else
@@ -229,14 +247,14 @@ namespace SpiderDesk.Domain.Spider.States
                 wavingLeg.GestureFoot = null;
             }
 
-            if (_phaseTime >= SpiderTuning.GreetingAdmireSeconds)
+            if (_phaseTime >= SpiderTuning.SilkWritingAdmireSeconds)
             {
                 Finish(spider, world);
             }
         }
 
-        private static void Finish(SpiderEntity spider, WorldContext world) =>
-            spider.TransitionTo(SpinningWebState.CreateForBestSite(world), world);
+        private void Finish(SpiderEntity spider, WorldContext world) =>
+            spider.TransitionTo(_createNextState(spider, world), world);
 
         /// <summary>Örümceği, arkası (ipek memesi) hedefe bakacak şekilde döndürür ve kalan açı farkını döner.</summary>
         private static double AimSpinneretAt(SpiderEntity spider, Point target, double turnSpeed, double dt)

@@ -17,6 +17,7 @@ namespace SpiderDesk.Domain.Spider.States
 
         public string DisplayName => "Titreşimi İnceliyor";
         public bool CanStartScheduledWeb => true;
+        public bool CanWriteSilkMessage => true;
 
         public InvestigatingVibrationState(SpiderWebEntity web, Point pluckPoint)
         {

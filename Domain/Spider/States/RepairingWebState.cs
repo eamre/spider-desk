@@ -14,6 +14,7 @@ namespace SpiderDesk.Domain.Spider.States
 
         public string DisplayName => "Ağı Tamir Ediyor";
         public bool CanEatFromPantry => false;
+        public bool CanWriteSilkMessage => true; // Yarıda kalan tel Exit'te kuyruğa geri konur, sonra tamir edilir
 
         public RepairingWebState(SpiderWebEntity web)
         {

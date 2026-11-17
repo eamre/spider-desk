@@ -21,7 +21,7 @@ namespace SpiderDesk.Domain
         public List<BugEntity> Bugs { get; } = new();
 
         /// <summary>Örümceğin açılışta ipekle yazdığı selam; yazı solup kaybolunca null olur.</summary>
-        public SilkWriting? Greeting { get; set; }
+        public SilkWriting? SilkMessage { get; set; }
         public Random Random { get; } = new();
     }
 }

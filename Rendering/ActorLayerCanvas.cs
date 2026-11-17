@@ -40,7 +40,7 @@ namespace SpiderDesk.Rendering
         {
             bool hasActorMotion = _spider.HasVisualMotion
                 || _world.Bugs.Count > 0
-                || _world.Greeting != null
+                || _world.SilkMessage != null
                 || _spider.ActiveWeb?.IsDeforming == true;
             if (force || hasActorMotion || !_wasIdle)
             {
@@ -53,7 +53,7 @@ namespace SpiderDesk.Rendering
         {
             base.OnRender(dc);
 
-            if (_world.Greeting is { } greeting)
+            if (_world.SilkMessage is { } greeting)
             {
                 _silkWritingRenderer.Render(dc, greeting);
             }

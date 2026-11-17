@@ -82,31 +82,31 @@ namespace SpiderDesk.Domain.Spider
         public const double PantryOuterRadiusSpan = 0.46;
         public const double CocoonConsumedScaleReduction = 0.85;
 
-        // Açılış Selamı (WritingGreetingState & SilkWriting)
-        public const double GreetingTextCenterYRatio = 0.3;
-        public const double GreetingTextWidthRatio = 0.8;
-        public const double GreetingMaxLetterHeight = 110.0;
-        public const double GreetingStandOffsetLetters = 1.2;
-        public const double GreetingStandBottomMargin = 110.0;
-        public const double GreetingApproachSpeed = 240.0;
-        public const double GreetingAimTurnSpeed = 7.0;
-        public const double GreetingTrackTurnSpeed = 10.0;
-        public const double GreetingAimTolerance = 0.05;
-        public const double GreetingAimTimeoutSeconds = 0.9;
-        public const double GreetingLaunchBaseSeconds = 0.16;
-        public const double GreetingLaunchSecondsPerPixel = 1.0 / 1500.0;
-        public const double GreetingLaunchArcRatio = 0.22;
-        public const double GreetingTargetWriteSeconds = 5.0;
-        public const double GreetingMinStrokeSpeed = 330.0;
-        public const double GreetingHopSpeedFactor = 2.0;
-        public const double GreetingAdmireSeconds = 2.6;
-        public const double GreetingAdmireTurnSpeed = 4.0;
-        public const double GreetingWaveStartSeconds = 0.6;
-        public const double GreetingWaveEndSeconds = 2.2;
-        public const double GreetingWaveFrequency = 11.0;
-        public const double GreetingFadeSeconds = 1.8;
-        public const double GreetingBeadSpacing = 24.0;
-        public const double GreetingBeadMinRadius = 0.9;
-        public const double GreetingBeadRadiusVariance = 0.9;
+        // İpek Yazısı (WritingSilkMessageState & SilkWriting): açılış selamı ve Pomodoro duyuruları
+        public const double SilkWritingTextCenterYRatio = 0.3;
+        public const double SilkWritingTextWidthRatio = 0.8;
+        public const double SilkWritingMaxLetterHeight = 110.0;
+        public const double SilkWritingStandOffsetLetters = 1.2;
+        public const double SilkWritingStandBottomMargin = 110.0;
+        public const double SilkWritingApproachSpeed = 240.0;
+        public const double SilkWritingAimTurnSpeed = 7.0;
+        public const double SilkWritingTrackTurnSpeed = 10.0;
+        public const double SilkWritingAimTolerance = 0.05;
+        public const double SilkWritingAimTimeoutSeconds = 0.9;
+        public const double SilkWritingLaunchBaseSeconds = 0.16;
+        public const double SilkWritingLaunchSecondsPerPixel = 1.0 / 1500.0;
+        public const double SilkWritingLaunchArcRatio = 0.22;
+        public const double SilkWritingTargetWriteSeconds = 5.0;
+        public const double SilkWritingMinStrokeSpeed = 330.0;
+        public const double SilkWritingHopSpeedFactor = 2.0;
+        public const double SilkWritingAdmireSeconds = 2.6;
+        public const double SilkWritingAdmireTurnSpeed = 4.0;
+        public const double SilkWritingWaveStartSeconds = 0.6;
+        public const double SilkWritingWaveEndSeconds = 2.2;
+        public const double SilkWritingWaveFrequency = 11.0;
+        public const double SilkWritingFadeSeconds = 1.8;
+        public const double SilkWritingBeadSpacing = 24.0;
+        public const double SilkWritingBeadMinRadius = 0.9;
+        public const double SilkWritingBeadRadiusVariance = 0.9;
     }
 }
