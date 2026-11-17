@@ -99,6 +99,7 @@ SpiderDesk/
 ├── Infrastructure/        Windows side: settings file, run at startup, frame loop
 │   ├── Tray/              Tray menu and the spider tray icon
 │   └── Windowing/         Click-through window, cursor, fullscreen detection
+├── tests/SpiderDesk.Tests/  xUnit tests, same folder layout as the app (run: dotnet test)
 ├── App.xaml.cs            Composition root: creates and wires everything together
 └── MainWindow.xaml.cs     The transparent overlay window
 ```

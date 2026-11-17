@@ -15,6 +15,12 @@
     <Resource Include="spider.ico" />
   </ItemGroup>
 
+  <!-- Test projesi kendi klasöründe derlenir; uygulamaya (exe'ye) dahil edilmez -->
+  <ItemGroup>
+    <Compile Remove="tests/**" />
+    <None Remove="tests/**" />
+  </ItemGroup>
+
   <ItemGroup>
     <RuntimeHostConfigurationOption Include="System.GC.ConserveMemory" Value="9" />
   </ItemGroup>
