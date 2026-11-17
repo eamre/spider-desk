@@ -235,5 +235,166 @@ namespace SpiderDesk.Tests.Domain.Pomodoro
             Assert.Equal(TimeSpan.FromMinutes(5), timer.Remaining(At(180)));
             Assert.Equal(1, timer.CompletedFocusSessions);
         }
+
+        [Fact]
+        public void Pause_FreezesTheRemainingTime()
+        {
+            var timer = StartedTimer();
+
+            timer.Pause(At(6.5));
+
+            Assert.True(timer.IsPaused);
+            Assert.Equal(TimeSpan.FromMinutes(18.5), timer.Remaining(At(6.5)));
+            Assert.Equal(TimeSpan.FromMinutes(18.5), timer.Remaining(At(90)));
+        }
+
+        [Fact]
+        public void WhilePaused_ThePhaseNeverEnds_EvenAfterItsTimeHasPassed()
+        {
+            var timer = StartedTimer();
+            timer.Pause(At(10));
+
+            Assert.Null(Advance(timer, At(60)));
+            Assert.Equal(PomodoroPhase.Focus, timer.Phase);
+        }
+
+        [Fact]
+        public void Resume_ContinuesFromWhereItWasPaused_NoMatterHowLongThePauseWas()
+        {
+            var timer = StartedTimer();
+            timer.Pause(At(10));
+
+            timer.Resume(At(70));
+
+            Assert.False(timer.IsPaused);
+            Assert.Equal(TimeSpan.FromMinutes(15), timer.Remaining(At(70)));
+            Assert.Null(Advance(timer, At(84.9)));
+            Assert.Equal(PomodoroPhase.ShortBreak, Advance(timer, At(85)));
+        }
+
+        [Fact]
+        public void PauseWhileWaitingForTheSpider_StillWaitsAfterResume()
+        {
+            // Örümcek ağ örerken Pomodoro başlatıldı: FOCUS sırada bekliyor, süre henüz saymıyor
+            var timer = new PomodoroTimer(Classic);
+            timer.Start(T0);
+
+            timer.Pause(At(0.2));
+            timer.Resume(At(0.3));
+
+            Assert.True(timer.IsWaitingToStart);
+            Assert.Equal(TimeSpan.FromMinutes(25), timer.Remaining(At(5)));
+
+            // Süre ancak örümcek FOCUS yazısını bitirince başlar
+            timer.BeginCountdown(At(5));
+            Assert.Equal(TimeSpan.FromMinutes(20), timer.Remaining(At(10)));
+        }
+
+        [Fact]
+        public void PauseAndResumeManyTimesWhileWaiting_NeverStartsTheCountdown()
+        {
+            var timer = new PomodoroTimer(Classic);
+            timer.Start(T0);
+
+            for (int i = 1; i <= 10; i++)
+            {
+                timer.Pause(At(i * 0.02));
+                timer.Resume(At(i * 0.02 + 0.01));
+            }
+            timer.Update(At(0.5));
+
+            Assert.True(timer.IsWaitingToStart);
+            Assert.Equal(TimeSpan.FromMinutes(25), timer.Remaining(At(0.5)));
+        }
+
+        [Fact]
+        public void AfterResumingWhileWaiting_TheSafetyWaitCountsFromTheResume()
+        {
+            var timer = new PomodoroTimer(Classic);
+            timer.Start(T0);
+            timer.Pause(At(0.5));
+            timer.Resume(At(10));
+
+            // Başlatmadan beri 60 saniyeden çok geçti, ama devam edildiğinden beri geçmedi: hâlâ bekler
+            timer.Update(At(10.5));
+            Assert.True(timer.IsWaitingToStart);
+
+            // Devam edildikten 60 saniye sonra örümcek hâlâ yazamadıysa süre kendiliğinden başlar
+            timer.Update(At(11));
+            Assert.False(timer.IsWaitingToStart);
+            Assert.Equal(TimeSpan.FromMinutes(25), timer.Remaining(At(11)));
+        }
+
+        [Fact]
+        public void WhilePausedWaitingForTheSpider_ItDoesNotStartOnItsOwnAfterTheSafetyWait()
+        {
+            var timer = new PomodoroTimer(Classic);
+            timer.Start(T0);
+            timer.Pause(At(0.2));
+
+            timer.Update(At(10));
+
+            Assert.True(timer.IsPaused);
+            Assert.Equal(TimeSpan.FromMinutes(25), timer.Remaining(At(10)));
+        }
+
+        [Fact]
+        public void PauseTwice_KeepsTheFirstFrozenTime()
+        {
+            var timer = StartedTimer();
+            timer.Pause(At(5));
+
+            timer.Pause(At(15));
+
+            Assert.Equal(TimeSpan.FromMinutes(20), timer.Remaining(At(15)));
+        }
+
+        [Fact]
+        public void ResumeWithoutPause_ChangesNothing()
+        {
+            var timer = StartedTimer();
+
+            timer.Resume(At(5));
+
+            Assert.Equal(TimeSpan.FromMinutes(20), timer.Remaining(At(5)));
+        }
+
+        [Fact]
+        public void PauseWhenNotRunning_DoesNothing()
+        {
+            var timer = new PomodoroTimer(Classic);
+
+            timer.Pause(T0);
+
+            Assert.False(timer.IsPaused);
+            Assert.False(timer.IsRunning);
+        }
+
+        [Fact]
+        public void Stop_WhilePaused_EndsEverything()
+        {
+            var timer = StartedTimer();
+            Advance(timer, At(25));
+            timer.Pause(At(27));
+
+            timer.Stop();
+
+            Assert.False(timer.IsRunning);
+            Assert.False(timer.IsPaused);
+            Assert.Equal(0, timer.CompletedFocusSessions);
+        }
+
+        [Fact]
+        public void PausingKeepsTheCompletedFocusSessions()
+        {
+            var timer = StartedTimer();
+            Advance(timer, At(25));
+
+            timer.Pause(At(27));
+            timer.Resume(At(40));
+
+            Assert.Equal(1, timer.CompletedFocusSessions);
+            Assert.Equal(PomodoroPhase.ShortBreak, timer.Phase);
+        }
     }
 }

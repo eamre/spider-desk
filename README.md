@@ -67,7 +67,7 @@ The compiled executable will be located in `./publish/SpiderDesk.exe`.
 
 Right-click the **Spider icon in the System Tray** (by the clock) to:
 - ⏰ Add a reminder, or click one in the list to delete it
-- 🍅 Start or stop a Pomodoro and choose 25/5 or 50/10 minutes (the countdown is shown right in the menu)
+- 🍅 Start, pause, resume or finish a Pomodoro and choose 25/5 or 50/10 minutes (the countdown is shown right in the menu)
 - 🎨 Change themes (*Black Widow, Frost Crystal, Forest Tarantula, Cyber Neon*)
 - 🕸️ Tell it to weave a new web or rappel down on a thread
 - 🌧️ Trigger rain on webs (spawn water droplets)

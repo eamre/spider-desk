@@ -7,12 +7,15 @@ namespace SpiderDesk.Domain.Pomodoro
     /// Kare döngüsüne değil gerçek saate bakar: o anki saat her çağrıda dışarıdan verilir.
     /// Böylece uygulama duraklatılsa ya da ekran kapalı olsa bile süre doğru işler ve testte zaman ileri sarılabilir.
     /// Her yeni tur önce "başlamayı bekler"; örümcek turun yazısını bitirince <see cref="BeginCountdown"/> ile saymaya başlar.
+    /// Tur <see cref="Pause"/> ile duraklatılabilir; <see cref="Resume"/> ile kaldığı yerden devam eder.
     /// </summary>
     public sealed class PomodoroTimer
     {
         private PomodoroDurations _durations;
         private DateTime _phaseEndsAt;
         private DateTime _waitingSince;
+        private TimeSpan _remainingWhenPaused;
+        private bool _wasWaitingWhenPaused;
 
         public PomodoroPhase Phase { get; private set; } = PomodoroPhase.Idle;
 
@@ -23,6 +26,9 @@ namespace SpiderDesk.Domain.Pomodoro
 
         /// <summary>Tur başladı ama süre henüz saymıyor: örümceğin turun yazısını bitirmesi bekleniyor.</summary>
         public bool IsWaitingToStart { get; private set; }
+
+        /// <summary>Tur duraklatıldı: kalan süre donmuş durumda, <see cref="Resume"/> bekleniyor.</summary>
+        public bool IsPaused { get; private set; }
 
         public PomodoroTimer(PomodoroDurations durations)
         {
@@ -39,11 +45,48 @@ namespace SpiderDesk.Domain.Pomodoro
             EnterPhase(PomodoroPhase.Focus, now);
         }
 
+        /// <summary>Pomodoro'yu bitirir: tur ve tamamlanan tur sayısı sıfırlanır.</summary>
         public void Stop()
         {
             Phase = PomodoroPhase.Idle;
             IsWaitingToStart = false;
+            IsPaused = false;
             CompletedFocusSessions = 0;
+        }
+
+        /// <summary>
+        /// Süreyi olduğu yerde dondurur. Tur henüz saymaya başlamadıysa (örümcek turun yazısını bekliyorsa)
+        /// duraklatmadan sonra da beklemeye devam eder; süre yine örümcek yazıyı bitirince başlar.
+        /// </summary>
+        public void Pause(DateTime now)
+        {
+            if (!IsRunning || IsPaused) return;
+
+            _remainingWhenPaused = Remaining(now);
+            _wasWaitingWhenPaused = IsWaitingToStart;
+            IsWaitingToStart = false;
+            IsPaused = true;
+        }
+
+        /// <summary>
+        /// Duraklatılan turu kaldığı yerden sürdürür; ne kadar duraklatıldığı önemli değildir.
+        /// Tur duraklatılırken örümceğin yazısını bekliyorduysa yeniden beklemeye döner;
+        /// güvenlik beklemesi (<see cref="PomodoroPlan.MaxWaitForAnnouncement"/>) devam edildiği andan sayılır.
+        /// </summary>
+        public void Resume(DateTime now)
+        {
+            if (!IsPaused) return;
+
+            IsPaused = false;
+            if (_wasWaitingWhenPaused)
+            {
+                IsWaitingToStart = true;
+                _waitingSince = now;
+            }
+            else
+            {
+                _phaseEndsAt = now + _remainingWhenPaused;
+            }
         }
 
         /// <summary>Bekleyen turun süresini şimdi başlatır. Tur zaten sayıyorsa hiçbir şey yapmaz.</summary>
@@ -62,7 +105,7 @@ namespace SpiderDesk.Domain.Pomodoro
         /// </summary>
         public PomodoroPhase? Update(DateTime now)
         {
-            if (!IsRunning) return null;
+            if (!IsRunning || IsPaused) return null;
 
             if (IsWaitingToStart)
             {
@@ -92,10 +135,11 @@ namespace SpiderDesk.Domain.Pomodoro
             return next;
         }
 
-        /// <summary>Turun kalan süresi. Tur henüz saymaya başlamadıysa turun tam süresidir.</summary>
+        /// <summary>Turun kalan süresi. Tur henüz saymaya başlamadıysa turun tam süresi, duraklatıldıysa donduğu andaki süredir.</summary>
         public TimeSpan Remaining(DateTime now)
         {
             if (!IsRunning) return TimeSpan.Zero;
+            if (IsPaused) return _remainingWhenPaused;
             if (IsWaitingToStart) return DurationOf(Phase);
 
             TimeSpan left = _phaseEndsAt - now;
@@ -105,6 +149,7 @@ namespace SpiderDesk.Domain.Pomodoro
         private void EnterPhase(PomodoroPhase phase, DateTime now)
         {
             Phase = phase;
+            IsPaused = false;
             IsWaitingToStart = true;
             _waitingSince = now;
         }

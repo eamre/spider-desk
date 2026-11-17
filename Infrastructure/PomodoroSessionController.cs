@@ -27,7 +27,10 @@ namespace SpiderDesk.Infrastructure
             _notifications = notifications;
             _timer = new PomodoroTimer(PomodoroPlan.For(settings.Current.PomodoroPreset));
 
-            _menu.ToggleRequested += Toggle;
+            _menu.StartRequested += Start;
+            _menu.PauseRequested += () => Change(now => _timer.Pause(now));
+            _menu.ResumeRequested += () => Change(now => _timer.Resume(now));
+            _menu.FinishRequested += Finish;
             _menu.PresetSelected += SelectPreset;
         }
 
@@ -48,22 +51,25 @@ namespace SpiderDesk.Infrastructure
             ShowState(now);
         }
 
-        private void Toggle()
+        private void Start() => Change(now =>
+        {
+            // Kullanıcı başlattığını zaten biliyor: bildirim yerine yalnızca örümcek FOCUS yazar
+            _timer.Start(now);
+            _engine.RequestSilkMessage(PomodoroText.FocusWord);
+        });
+
+        private void Finish() => Change(_ =>
+        {
+            _timer.Stop();
+            // Örümcek FOCUS/BREAK yazmaya henüz başlamadıysa artık yazmasın
+            _engine.CancelPendingSilkMessage();
+        });
+
+        /// <summary>Zamanlayıcıyı o anki saatle değiştirir ve menüyü hemen günceller (bir sonraki kareyi beklemeden).</summary>
+        private void Change(Action<DateTime> change)
         {
             DateTime now = DateTime.Now;
-            if (_timer.IsRunning)
-            {
-                _timer.Stop();
-                // Örümcek FOCUS/BREAK yazmaya henüz başlamadıysa artık yazmasın
-                _engine.CancelPendingSilkMessage();
-            }
-            else
-            {
-                // Kullanıcı başlattığını zaten biliyor: bildirim yerine yalnızca örümcek FOCUS yazar
-                _timer.Start(now);
-                _engine.RequestSilkMessage(PomodoroText.FocusWord);
-            }
-
+            change(now);
             ShowState(now);
         }
 
@@ -81,8 +87,10 @@ namespace SpiderDesk.Infrastructure
         }
 
         private void ShowState(DateTime now) =>
-            _menu.ShowState(_timer.IsRunning
-                ? PomodoroText.Countdown(_timer.Phase, _timer.Remaining(now), _timer.IsWaitingToStart)
-                : null);
+            _menu.ShowState(
+                _timer.IsRunning
+                    ? PomodoroText.Countdown(_timer.Phase, _timer.Remaining(now), _timer.IsWaitingToStart, _timer.IsPaused)
+                    : null,
+                _timer.IsPaused);
     }
 }

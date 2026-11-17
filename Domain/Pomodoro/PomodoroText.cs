@@ -17,12 +17,13 @@ namespace SpiderDesk.Domain.Pomodoro
 
         /// <summary>
         /// Örneğin "Odak 18:32". Saniyeler yukarı yuvarlanır: tur başında tam süre, son saniyede 00:01 görünür.
-        /// Tur, örümceğin yazısını beklerken sonuna ⏳ eklenir: "Odak 25:00 ⏳".
+        /// Tur, örümceğin yazısını beklerken sonuna ⏳, duraklatılmışken ⏸ eklenir: "Odak 25:00 ⏳", "Odak 18:32 ⏸".
         /// </summary>
-        public static string Countdown(PomodoroPhase phase, TimeSpan remaining, bool isWaitingToStart = false)
+        public static string Countdown(PomodoroPhase phase, TimeSpan remaining, bool isWaitingToStart = false, bool isPaused = false)
         {
             int totalSeconds = (int)Math.Ceiling(Math.Max(0, remaining.TotalSeconds));
             string text = $"{LabelOf(phase)} {totalSeconds / 60:00}:{totalSeconds % 60:00}";
+            if (isPaused) return text + " ⏸";
             return isWaitingToStart ? text + " ⏳" : text;
         }
 

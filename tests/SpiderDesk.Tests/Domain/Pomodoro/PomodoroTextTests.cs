@@ -17,6 +17,12 @@ namespace SpiderDesk.Tests.Domain.Pomodoro
         }
 
         [Fact]
+        public void Countdown_WhilePaused_ShowsAPauseSign()
+        {
+            Assert.Equal("Odak 18:32 ⏸", PomodoroText.Countdown(PomodoroPhase.Focus, new TimeSpan(0, 18, 32), isPaused: true));
+        }
+
+        [Fact]
         public void Countdown_WhileWaitingForTheSpider_ShowsAnHourglass()
         {
             Assert.Equal("Odak 25:00 ⏳", PomodoroText.Countdown(PomodoroPhase.Focus, TimeSpan.FromMinutes(25), isWaitingToStart: true));
