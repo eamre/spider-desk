@@ -33,22 +33,18 @@ namespace SpiderDesk.Tests.Domain.Web
         // Ağ örme durumunun (SpinningWebState) yaptığını taklit eder: adımları sırayla bitirir
         private static void BuildAllSteps(SpiderWebEntity web)
         {
-            while (web.BuildQueue.Count > 0)
+            while (web.TryBeginNextStep(out _))
             {
-                WebBuildStep step = web.BuildQueue.Dequeue();
-                if (step.DrawSilk)
-                {
-                    web.CompletedSegments.Add(new WebSegment(step.From, step.To, step.IsAnchor));
-                }
+                web.CompleteCurrentStep();
             }
         }
 
         // Tamir durumunun (RepairingWebState) yaptığını taklit eder: kopuk telleri sırayla yerine takar
         private static void RepairAll(SpiderWebEntity web)
         {
-            while (web.DamagedSegments.Count > 0)
+            while (web.TryTakeDamagedSegment(out WebSegment segment))
             {
-                web.CompletedSegments.Add(web.DamagedSegments.Dequeue());
+                web.RestoreSegment(segment);
             }
         }
 
@@ -64,12 +60,42 @@ namespace SpiderDesk.Tests.Domain.Web
         }
 
         [Fact]
-        public void StepInProgress_KeepsWebIncomplete_EvenWhenNoStepsAreLeft()
+        public void StepInProgress_KeepsWebIncomplete_UntilItIsCompleted()
+        {
+            var web = CreateWeb(Vertical);
+
+            Assert.True(web.TryBeginNextStep(out WebBuildStep step));
+            Assert.Equal(Vertical, step);
+            Assert.True(web.IsStepInProgress);
+            Assert.False(web.IsCompleted);
+
+            web.CompleteCurrentStep();
+
+            Assert.True(web.IsCompleted);
+            Assert.Single(web.CompletedSegments);
+        }
+
+        [Fact]
+        public void InterruptedStep_StaysInLine_AndIsResumedLater()
+        {
+            var web = CreateWeb(Vertical, Diagonal);
+
+            web.TryBeginNextStep(out _);
+            web.InterruptCurrentStep();
+
+            Assert.False(web.IsStepInProgress);
+            Assert.Empty(web.CompletedSegments);
+            Assert.True(web.TryBeginNextStep(out WebBuildStep resumed));
+            Assert.Equal(Vertical, resumed);
+        }
+
+        [Fact]
+        public void NoStepsLeft_TryBeginNextStepReturnsFalse_AndWebIsCompleted()
         {
             var web = CreateWeb();
-            web.IsStepInProgress = true;
 
-            Assert.False(web.IsCompleted);
+            Assert.False(web.TryBeginNextStep(out _));
+            Assert.True(web.IsCompleted);
         }
 
         [Fact]
@@ -100,8 +126,9 @@ namespace SpiderDesk.Tests.Domain.Web
         [Fact]
         public void DamageNear_OnUnfinishedWeb_DoesNothing()
         {
-            var web = CreateWeb(Anchor, Vertical);
-            web.CompletedSegments.Add(new WebSegment(Vertical.From, Vertical.To, IsAnchor: false));
+            var web = CreateWeb(Vertical, Anchor);
+            web.TryBeginNextStep(out _);
+            web.CompleteCurrentStep();
 
             web.DamageNear(Center, damageRadius: 10, maxBrokenSegments: 5, new Random(1));
 
@@ -169,6 +196,24 @@ namespace SpiderDesk.Tests.Domain.Web
 
             Assert.False(web.HasDamage);
             Assert.Equal(original, web.CompletedSegments.ToHashSet());
+        }
+
+        [Fact]
+        public void InterruptedRepair_ReturnsSegmentToQueue()
+        {
+            var web = CreateFinishedWeb();
+            web.DamageNear(Center, damageRadius: 10, maxBrokenSegments: 1, new Random(1));
+
+            Assert.True(web.TryTakeDamagedSegment(out WebSegment taken));
+            Assert.False(web.HasDamage);
+
+            // Örümcek tamiri yarıda bırakıp ava giderse tel kaybolmamalı, sonra yeniden tamir edilebilmeli
+            web.ReturnDamagedSegment(taken);
+
+            Assert.True(web.HasDamage);
+            Assert.True(web.TryTakeDamagedSegment(out WebSegment again));
+            Assert.Equal(taken, again);
+            Assert.Equal(2, web.CompletedSegments.Count);
         }
 
         // ---------- Böcek yakalama ----------

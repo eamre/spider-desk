@@ -17,15 +17,22 @@ namespace SpiderDesk.Domain.Web
         public double EndAngle { get; }
         public bool IsCornerFan => (EndAngle - StartAngle) < Math.PI;
 
-        public List<WebSegment> CompletedSegments { get; } = new();
-        public Queue<WebBuildStep> BuildQueue { get; }
-        public Queue<WebSegment> DamagedSegments { get; } = new();
+        private readonly List<WebSegment> _completedSegments = new();
+        private readonly Queue<WebBuildStep> _buildQueue;
+        private readonly Queue<WebSegment> _damagedSegments = new();
+
+        /// <summary>Gerilmiş teller. Dışarıdan yalnızca okunur; değiştirmek için ağın metotları kullanılır.</summary>
+        public IReadOnlyList<WebSegment> CompletedSegments => _completedSegments;
+
+        /// <summary>Kopmuş ve tamir edilmeyi bekleyen teller (sırayla).</summary>
+        public IReadOnlyCollection<WebSegment> DamagedSegments => _damagedSegments;
+
         public WebDropletController Droplets { get; } = new();
         public WebPantryController Pantry { get; } = new();
 
-        public bool IsStepInProgress { get; set; }
-        public bool IsCompleted => BuildQueue.Count == 0 && !IsStepInProgress;
-        public bool HasDamage => DamagedSegments.Count > 0;
+        public bool IsStepInProgress { get; private set; }
+        public bool IsCompleted => _buildQueue.Count == 0 && !IsStepInProgress;
+        public bool HasDamage => _damagedSegments.Count > 0;
 
         public double VibrationAmplitude { get; private set; }
         public double VibrationPhase { get; private set; }
@@ -64,10 +71,46 @@ namespace SpiderDesk.Domain.Web
             Center = center;
             HubPosition = hubPosition;
             Radius = radius;
-            BuildQueue = buildPlan;
+            _buildQueue = buildPlan;
             StartAngle = startAngle;
             EndAngle = endAngle;
         }
+
+        // ---------- Örülme ----------
+
+        /// <summary>
+        /// Sıradaki örme adımını başlatır ve onu verir. Örülecek adım kalmadıysa false döner.
+        /// Adım bitene kadar ağ tamamlanmış sayılmaz.
+        /// </summary>
+        public bool TryBeginNextStep(out WebBuildStep step)
+        {
+            IsStepInProgress = _buildQueue.TryPeek(out step);
+            return IsStepInProgress;
+        }
+
+        /// <summary>Başlatılan adımı bitirir; adım ipek bırakıyorsa yeni tel ağa eklenir.</summary>
+        public void CompleteCurrentStep()
+        {
+            if (_buildQueue.TryDequeue(out WebBuildStep step) && step.DrawSilk)
+            {
+                _completedSegments.Add(new WebSegment(step.From, step.To, step.IsAnchor));
+            }
+            IsStepInProgress = false;
+        }
+
+        /// <summary>Örme yarıda kesildiğinde çağrılır; adım sırada kalır ve sonra kaldığı yerden devam edilir.</summary>
+        public void InterruptCurrentStep() => IsStepInProgress = false;
+
+        // ---------- Tamir ----------
+
+        /// <summary>Tamir edilmeyi bekleyen sıradaki kopuk teli alır. Kopuk tel yoksa false döner.</summary>
+        public bool TryTakeDamagedSegment(out WebSegment segment) => _damagedSegments.TryDequeue(out segment);
+
+        /// <summary>Tamir edilen teli ağa geri takar.</summary>
+        public void RestoreSegment(WebSegment segment) => _completedSegments.Add(segment);
+
+        /// <summary>Tamir yarıda kaldığında alınan teli, sonra tamir edilmek üzere kuyruğa geri koyar.</summary>
+        public void ReturnDamagedSegment(WebSegment segment) => _damagedSegments.Enqueue(segment);
 
         public void TriggerVibration(Point origin, double strength = 6.0)
         {
@@ -121,7 +164,7 @@ namespace SpiderDesk.Domain.Web
                 }
             }
 
-            Droplets.Update(dt, IsCompleted, CompletedSegments, rng);
+            Droplets.Update(dt, IsCompleted, _completedSegments, rng);
 
             if (IsVibrating)
             {
@@ -141,18 +184,18 @@ namespace SpiderDesk.Domain.Web
             double radiusSq = damageRadius * damageRadius;
             int brokenCount = 0;
 
-            for (int i = CompletedSegments.Count - 1; i >= 0 && brokenCount < maxBrokenSegments; i--)
+            for (int i = _completedSegments.Count - 1; i >= 0 && brokenCount < maxBrokenSegments; i--)
             {
-                var seg = CompletedSegments[i];
+                var seg = _completedSegments[i];
                 if (seg.IsAnchor) continue;
 
                 if (DistanceToSegmentSquared(impactPoint, seg.Start, seg.End) <= radiusSq)
                 {
                     // Tel kopmadan önce üzerindeki çiy damlası varsa onu serbest bırakıp düşür!
-                    Droplets.OnSegmentBroken(i, CompletedSegments, Center, rng);
+                    Droplets.OnSegmentBroken(i, _completedSegments, Center, rng);
 
-                    CompletedSegments.RemoveAt(i);
-                    DamagedSegments.Enqueue(seg);
+                    _completedSegments.RemoveAt(i);
+                    _damagedSegments.Enqueue(seg);
                     brokenCount++;
                 }
             }
@@ -170,7 +213,7 @@ namespace SpiderDesk.Domain.Web
             Vector toCenter = cursorPos - Center;
             if (toCenter.LengthSquared > Radius * Radius * 1.35) return;
 
-            foreach (var segment in CompletedSegments)
+            foreach (var segment in _completedSegments)
             {
                 if (DistanceToSegmentSquared(cursorPos, segment.Start, segment.End) < SpiderTuning.WebCursorHitDistanceSquared)
                 {
@@ -198,8 +241,8 @@ namespace SpiderDesk.Domain.Web
         public int ComputeVisualStateHash()
         {
             var hash = new HashCode();
-            hash.Add(CompletedSegments.Count);
-            hash.Add(DamagedSegments.Count);
+            hash.Add(_completedSegments.Count);
+            hash.Add(_damagedSegments.Count);
             hash.Add(Droplets.Revision);
 
             var cocoons = Pantry.StoredCocoons;
@@ -219,7 +262,7 @@ namespace SpiderDesk.Domain.Web
             Vector toCenter = point - Center;
             if (toCenter.LengthSquared > Radius * Radius * 1.35) return false;
 
-            foreach (var segment in CompletedSegments)
+            foreach (var segment in _completedSegments)
             {
                 if (DistanceToSegmentSquared(point, segment.Start, segment.End) < SpiderTuning.WebCatchDistanceSquared)
                 {

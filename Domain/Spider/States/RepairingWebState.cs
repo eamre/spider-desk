@@ -31,9 +31,8 @@ namespace SpiderDesk.Domain.Spider.States
         {
             if (!_hasSegment)
             {
-                if (_web.DamagedSegments.Count > 0)
+                if (_web.TryTakeDamagedSegment(out _targetSegment))
                 {
-                    _targetSegment = _web.DamagedSegments.Dequeue();
                     _hasSegment = true;
                     _atSegmentStart = false;
                 }
@@ -61,7 +60,7 @@ namespace SpiderDesk.Domain.Spider.States
 
             if (spider.MoveTowards(_targetSegment.End, SpiderTuning.RepairSpinSpeed, dt))
             {
-                _web.CompletedSegments.Add(_targetSegment);
+                _web.RestoreSegment(_targetSegment);
                 spider.ActiveSilkLine = null;
                 _hasSegment = false;
             }
@@ -72,7 +71,7 @@ namespace SpiderDesk.Domain.Spider.States
             // Eğer avlanma vb. sebeple tamir yarıda kesildiyse elindeki teli tekrar tamir kuyruğuna koy
             if (_hasSegment)
             {
-                _web.DamagedSegments.Enqueue(_targetSegment);
+                _web.ReturnDamagedSegment(_targetSegment);
                 _hasSegment = false;
             }
             spider.ActiveSilkLine = null;

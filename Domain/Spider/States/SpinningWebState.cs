@@ -54,15 +54,12 @@ namespace SpiderDesk.Domain.Spider.States
 
             if (!_hasCurrentStep)
             {
-                if (_web.BuildQueue.Count > 0)
+                if (_web.TryBeginNextStep(out _currentStep))
                 {
-                    _currentStep = _web.BuildQueue.Peek();
                     _hasCurrentStep = true;
-                    _web.IsStepInProgress = true;
                 }
                 else
                 {
-                    _web.IsStepInProgress = false;
                     spider.ActiveSilkLine = null;
 
                     ISpiderBehaviorState nextState = spider.TryConsumePendingWebRequest()
@@ -94,24 +91,15 @@ namespace SpiderDesk.Domain.Spider.States
 
             if (spider.MoveTowards(_currentStep.To, buildSpeed, dt))
             {
-                if (_web.BuildQueue.Count > 0)
-                {
-                    _web.BuildQueue.Dequeue();
-                }
-
-                if (_currentStep.DrawSilk)
-                {
-                    _web.CompletedSegments.Add(new WebSegment(_currentStep.From, _currentStep.To, _currentStep.IsAnchor));
-                }
+                _web.CompleteCurrentStep();
                 _hasCurrentStep = false;
-                _web.IsStepInProgress = false;
                 spider.ActiveSilkLine = null;
             }
         }
 
         public void Exit(SpiderEntity spider, WorldContext world)
         {
-            _web.IsStepInProgress = false;
+            _web.InterruptCurrentStep();
             spider.ActiveSilkLine = null;
             spider.DraglineAnchor = null;
         }
