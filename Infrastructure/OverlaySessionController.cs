@@ -28,6 +28,7 @@ namespace SpiderDesk.Infrastructure
         private readonly IStartupRegistrationService _startupService;
         private readonly TrayMenuService _trayMenuService;
         private readonly PomodoroSessionController _pomodoro;
+        private readonly ReminderSessionController _reminders;
         private readonly DispatcherTimer _timer;
 
         private bool _isPaused;
@@ -46,7 +47,8 @@ namespace SpiderDesk.Infrastructure
             ICursorTrackingService cursorService,
             IStartupRegistrationService startupService,
             TrayMenuService trayMenuService,
-            PomodoroSessionController pomodoro)
+            PomodoroSessionController pomodoro,
+            ReminderSessionController reminders)
         {
             _hostWindow = hostWindow;
             _engine = engine;
@@ -58,6 +60,7 @@ namespace SpiderDesk.Infrastructure
             _startupService = startupService;
             _trayMenuService = trayMenuService;
             _pomodoro = pomodoro;
+            _reminders = reminders;
 
             BindTrayEvents();
             _engine.Spider.PreyCaught += totalCaught => _settings.Update(s => s.TotalBugsCaught = totalCaught);
@@ -76,7 +79,6 @@ namespace SpiderDesk.Infrastructure
         {
             _trayMenuService.NewWebRequested += () => _engine.CommandNewWeb();
             _trayMenuService.RappelRequested += () => _engine.CommandRappel();
-            _trayMenuService.NoteTestRequested += () => _engine.CommandDeliverNote("Annemi ara");
             _trayMenuService.RainOnWebsRequested += () => _engine.CommandRainOnWebs();
             _trayMenuService.SpawnBugsRequested += count => _engine.SpawnExtraBugs(count);
             _trayMenuService.ClearWebsRequested += () => _engine.ClearWebs();
@@ -140,10 +142,11 @@ namespace SpiderDesk.Infrastructure
             double dt = Math.Min(0.15, (now - _lastTick).TotalSeconds);
             _lastTick = now;
 
-            // Pomodoro gerçek saate bakar; simülasyon duraklatılmış ya da ekran kapalı olsa bile süre işlemeye devam eder
+            // Pomodoro ve hatırlatıcı gerçek saate bakar; simülasyon duraklatılmış ya da ekran kapalı olsa bile süre işlemeye devam eder
             _pomodoro.Tick(now);
+            _reminders.Tick(now);
 
-            // Örümcek bir duyuru (FOCUS/BREAK) yazarken katman tam ekran uygulamaların bile üstüne çıkar.
+            // Örümcek bir duyuru (FOCUS/BREAK) yazarken ya da bir not gösterirken katman tam ekran uygulamaların bile üstüne çıkar.
             // Duraklatılmışsa çıkmaz; yoksa yarım kalan yazı uygulamaların üstünde asılı kalırdı.
             bool isAnnouncing = !_isPaused && _engine.IsShowingAnnouncement;
 

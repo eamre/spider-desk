@@ -16,6 +16,20 @@ namespace SpiderDesk.Domain.Reminders
             TimeSpan.FromHours(1)
         };
 
+        /// <summary>
+        /// Pencerede seçilenlerden hatırlatma zamanını bulur. Kullanıcı bir saat yazdıysa o geçerlidir;
+        /// yazmadıysa seçili hızlı süre kullanılır. Yazılan saat geçersizse ya da hiçbir şey seçilmemişse null döner.
+        /// </summary>
+        public static DateTime? Resolve(DateTime now, TimeSpan? quickDelay, string? clockText)
+        {
+            if (!string.IsNullOrWhiteSpace(clockText))
+            {
+                return TryParseClock(clockText, out TimeOnly clock) ? At(now, clock) : null;
+            }
+
+            return quickDelay is { } delay ? After(now, delay) : null;
+        }
+
         /// <summary>Şu andan belli bir süre sonrası (örneğin "15 dk sonra").</summary>
         public static DateTime After(DateTime now, TimeSpan delay) => now + delay;
 

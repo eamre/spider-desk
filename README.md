@@ -2,7 +2,7 @@
 
 A small, friendly desktop spider that hangs out on your Windows desktop.
 
-It wanders around your screen, weaves webs in the corners, catches passing bugs, shakes off raindrops, and takes naps when there's nothing to do. It can even keep your focus sessions with a built-in Pomodoro timer.
+It wanders around your screen, weaves webs in the corners, catches passing bugs, shakes off raindrops, and takes naps when there's nothing to do. It can even keep your focus sessions with a built-in Pomodoro timer and remind you of things by rappelling down with a note.
 
 It runs quietly in the background without getting in your way or eating up your battery.
 
@@ -30,6 +30,7 @@ It runs quietly in the background without getting in your way or eating up your 
 - **🍃 Light breeze:** An occasional room breeze gently sways the webs.
 - **👋 Silk greeting:** On startup the spider writes a greeting for the time of day (*GOOD MORNING, HELLO, GOOD EVENING, GOOD NIGHT*) in silk, then spins its first web.
 - **🍅 Pomodoro timer:** Start 25/5 or 50/10 minute focus sessions from the tray. When a session ends you get a notification and the spider writes **FOCUS** or **BREAK** in silk, even on top of a fullscreen app, with only the spider and its text visible. The countdown starts once the spider has finished writing.
+- **⏰ Reminders:** Add a reminder from the tray (*in 5/15/30 minutes, an hour, or at 14:30*). When it is time, you get a notification and the spider rappels down from the top of the screen holding a paper note with your text, even on top of a fullscreen app. Reminders are saved, so ones you missed while the computer was off are shown the next time it starts.
 - **🖱️ Click-through:** Lives behind your work and games. You can click right through the webs without anything getting blocked.
 
 ---
@@ -58,13 +59,14 @@ dotnet publish -c Release -r win-x64 --self-contained false -p:PublishSingleFile
 
 The compiled executable will be located in `./publish/SpiderDesk.exe`.
 
-> **Note:** SpiderDesk stores your chosen preferences (selected theme, spawn rates, Pomodoro length) in `%LocalAppData%\SpiderDesk\settings.json`. If enabled from the tray menu, it can also create an optional Windows startup shortcut.
+> **Note:** SpiderDesk stores your chosen preferences (selected theme, spawn rates, Pomodoro length) in `%LocalAppData%\SpiderDesk\settings.json`, and your reminders in `reminders.json` next to it. If enabled from the tray menu, it can also create an optional Windows startup shortcut.
 
 ---
 
 ## 🎮 Controls
 
 Right-click the **Spider icon in the System Tray** (by the clock) to:
+- ⏰ Add a reminder, or click one in the list to delete it
 - 🍅 Start or stop a Pomodoro and choose 25/5 or 50/10 minutes (the countdown is shown right in the menu)
 - 🎨 Change themes (*Black Widow, Frost Crystal, Forest Tarantula, Cyber Neon*)
 - 🕸️ Tell it to weave a new web or rappel down on a thread
@@ -87,7 +89,7 @@ SpiderDesk/
 │   └── Services/          Contracts for the cursor, clock, startup and window layer
 ├── Domain/                The simulation itself: never draws, never calls Windows APIs
 │   ├── Spider/            SpiderEntity, IK legs, gait, metabolism, tuning constants
-│   │   ├── States/        13 behaviours: WritingSilkMessage, Wandering, SpinningWeb, Hunting...
+│   │   ├── States/        14 behaviours: WritingSilkMessage, DeliveringNote, Wandering, SpinningWeb, Hunting...
 │   │   └── Themes/        Black Widow, Frost Crystal, Forest Tarantula, Cyber Neon
 │   ├── Insects/           BugEntity, BugSpawner
 │   │   ├── States/        Flying, Perching, Trapped, BeingWrapped
@@ -99,9 +101,10 @@ SpiderDesk/
 │   ├── Performance/       Pure rules: 60 FPS when moving, 20 Hz when still, pause when covered
 │   ├── SimulationEngine   Runs one simulation step per frame
 │   └── WorldContext       Everything the spider can see: webs, bugs, cursor, screen size
-├── Rendering/             Turns the world into WPF drawings: spider, bugs, silk text
+├── Rendering/             Turns the world into WPF drawings: spider, bugs, silk text, the paper note
 │   └── Web/               Web drawing (each web in its own visual)
-├── Infrastructure/        Windows side: run at startup, frame loop, Pomodoro wiring
+├── Infrastructure/        Windows side: run at startup, frame loop, Pomodoro and reminder wiring
+│   ├── Dialogs/           The small window for adding a reminder
 │   ├── Storage/           Saves settings.json and reminders.json
 │   ├── Tray/              Tray menu and the spider tray icon
 │   └── Windowing/         Click-through window, cursor, fullscreen detection

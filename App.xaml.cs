@@ -86,6 +86,7 @@ namespace SpiderDesk
             );
 
             var pomodoro = new PomodoroSessionController(engine, settings, trayMenuService);
+            var reminders = new ReminderSessionController(engine, new JsonReminderRepository(), trayMenuService);
 
             var mainWindow = new MainWindow(canvas, windowLayerService);
             _sessionController = new OverlaySessionController(
@@ -98,7 +99,8 @@ namespace SpiderDesk
                 cursorService,
                 startupService,
                 trayMenuService,
-                pomodoro
+                pomodoro,
+                reminders
             );
 
             mainWindow.Closed += (_, _) => _sessionController.Dispose();

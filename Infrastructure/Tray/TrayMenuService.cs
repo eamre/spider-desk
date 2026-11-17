@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Threading;
 using System.Windows.Forms;
 using SpiderDesk.Core.Services;
 using SpiderDesk.Core.Settings;
@@ -9,7 +10,7 @@ using SpiderDesk.Domain.Spider.Themes;
 namespace SpiderDesk.Infrastructure.Tray
 {
     /// <summary>
-    /// Sistem tepsisi (System Tray) ikonunu, menülerini (eylemler, Pomodoro, tema ve ayarlar) ve Windows bildirimlerini yönetir.
+    /// Sistem tepsisi (System Tray) ikonunu, menülerini (eylemler, Pomodoro, hatırlatıcılar, tema ve ayarlar) ve Windows bildirimlerini yönetir.
     /// </summary>
     public sealed class TrayMenuService : IDisposable
     {
@@ -23,12 +24,12 @@ namespace SpiderDesk.Infrastructure.Tray
         private readonly ToolStripMenuItem _statusMenuItem;
         private readonly ToolStripMenuItem _pomodoroMenu;
         private readonly ToolStripMenuItem _pomodoroToggleItem;
+        private readonly ToolStripMenuItem _remindersMenu;
         private string _lastStatusText = string.Empty;
         private bool _lastClickKeepsMenuOpen;
 
         public event Action? NewWebRequested;
         public event Action? RappelRequested;
-        public event Action? NoteTestRequested;
         public event Action? RainOnWebsRequested;
         public event Action<int>? SpawnBugsRequested;
         public event Action? ClearWebsRequested;
@@ -43,6 +44,8 @@ namespace SpiderDesk.Infrastructure.Tray
         public event Action? ExitRequested;
         public event Action? PomodoroToggleRequested;
         public event Action<PomodoroPreset>? PomodoroPresetSelected;
+        public event Action? ReminderAddRequested;
+        public event Action<Guid>? ReminderDeleteRequested;
 
         public TrayMenuService(UserSettings currentSettings, bool initialStartupEnabled)
         {
@@ -57,7 +60,6 @@ namespace SpiderDesk.Infrastructure.Tray
 
             AddActionItem(menu, "🕸️ Hemen Yeni Ağ Ör", () => NewWebRequested?.Invoke());
             AddActionItem(menu, "🧗 Tavandan İple Sark", () => RappelRequested?.Invoke());
-            AddActionItem(menu, "🧪 Not Testi (geçici)", () => NoteTestRequested?.Invoke());
             AddActionItem(menu, "💧 Ağlara Çiy/Su Damlası Bırak", () => RainOnWebsRequested?.Invoke());
             AddActionItem(menu, "🐛 Ekrana Böcek Gönder (3 Adet)", () => SpawnBugsRequested?.Invoke(3));
             AddActionItem(menu, "🧹 Ağları Temizle", () => ClearWebsRequested?.Invoke());
@@ -69,6 +71,10 @@ namespace SpiderDesk.Infrastructure.Tray
             _pomodoroToggleItem.Click += (_, _) => PomodoroToggleRequested?.Invoke();
             _pomodoroMenu = BuildPomodoroSubMenu(_pomodoroToggleItem, currentSettings.PomodoroPreset);
             menu.Items.Add(_pomodoroMenu);
+
+            // Liste, ReminderSessionController hatırlatmaları yükleyince ShowReminders ile doldurulur
+            _remindersMenu = new ToolStripMenuItem("⏰ Hatırlatıcılar");
+            menu.Items.Add(_remindersMenu);
 
             menu.Items.Add(new ToolStripSeparator());
 
@@ -119,6 +125,7 @@ namespace SpiderDesk.Infrastructure.Tray
             KeepOpenOnSettingClicks(timeModeMenu.DropDown);
             KeepOpenOnSettingClicks(simulationMenu.DropDown);
             KeepOpenOnSettingClicks(_pomodoroMenu.DropDown);
+            KeepOpenOnSettingClicks(_remindersMenu.DropDown);
 
             _notifyIcon = new NotifyIcon
             {
@@ -314,6 +321,50 @@ namespace SpiderDesk.Infrastructure.Tray
             if (_notifyIcon.Text != tooltip)
             {
                 _notifyIcon.Text = tooltip;
+            }
+        }
+
+        /// <summary>
+        /// Hatırlatıcılar alt menüsünü yeniden kurar: en üstte "ekle", altında bekleyen hatırlatmalar.
+        /// Bir hatırlatmaya tıklamak onu siler; menü açık kalır ki kullanıcı listenin güncellendiğini görsün.
+        /// </summary>
+        public void ShowReminders(string title, IReadOnlyList<(Guid Id, string Label)> reminders)
+        {
+            SetTextIfChanged(_remindersMenu, title);
+
+            var items = _remindersMenu.DropDownItems;
+            items.Clear();
+
+            var addItem = new ToolStripMenuItem("➕ Hatırlatıcı Ekle…");
+            addItem.Click += (_, _) => ReminderAddRequested?.Invoke();
+            items.Add(addItem);
+            items.Add(new ToolStripSeparator());
+
+            if (reminders.Count == 0)
+            {
+                items.Add(new ToolStripMenuItem("Bekleyen hatırlatma yok") { Enabled = false });
+                return;
+            }
+
+            items.Add(new ToolStripMenuItem("🗑️ Silmek için tıkla") { Enabled = false });
+            foreach (var (id, label) in reminders)
+            {
+                var item = new ToolStripMenuItem(label) { Tag = KeepMenuOpenTag };
+                // Liste, tıklama olayı bitince yeniden kurulur; tıklanan öğe olay sürerken menüden kaldırılmamalı
+                item.Click += (_, _) => RunAfterCurrentClick(() => ReminderDeleteRequested?.Invoke(id));
+                items.Add(item);
+            }
+        }
+
+        private static void RunAfterCurrentClick(Action action)
+        {
+            if (SynchronizationContext.Current is { } context)
+            {
+                context.Post(_ => action(), null);
+            }
+            else
+            {
+                action();
             }
         }
 

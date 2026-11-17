@@ -179,10 +179,10 @@ namespace SpiderDesk.Domain
         public void CommandRappel() => Spider.RequestRappel(World);
 
         /// <summary>
-        /// Örümcek elindeki işi bitirince tavandan sarkıp bu notu ön bacaklarıyla gösterir.
-        /// Şimdilik yalnızca tepsideki deneme maddesi kullanıyor.
+        /// Örümcek elindeki işi bitirince tavandan sarkıp bu notu ön bacaklarıyla gösterir (örneğin bir hatırlatma).
+        /// Birden fazla not gelirse sırayla gösterilir.
         /// </summary>
-        public void CommandDeliverNote(string text) => Spider.RequestNote(text);
+        public void RequestNote(string text) => Spider.RequestNote(text);
 
         public void CommandRainOnWebs()
         {

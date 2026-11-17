@@ -60,6 +60,30 @@ namespace SpiderDesk.Tests.Domain.Reminders
             Assert.Equal(new DateTime(2027, 1, 1, 8, 0, 0), ReminderTime.At(newYearsEve, new TimeOnly(8, 0)));
         }
 
+        [Fact]
+        public void Resolve_WithOnlyAQuickDelay_UsesTheDelay()
+        {
+            Assert.Equal(Now.AddMinutes(15), ReminderTime.Resolve(Now, TimeSpan.FromMinutes(15), clockText: ""));
+        }
+
+        [Fact]
+        public void Resolve_ATypedTime_WinsOverTheQuickDelay()
+        {
+            Assert.Equal(new DateTime(2026, 1, 1, 17, 30, 0), ReminderTime.Resolve(Now, TimeSpan.FromMinutes(15), "17:30"));
+        }
+
+        [Fact]
+        public void Resolve_AnInvalidTypedTime_GivesNothing_EvenIfAQuickDelayIsSelected()
+        {
+            Assert.Null(ReminderTime.Resolve(Now, TimeSpan.FromMinutes(15), "25:00"));
+        }
+
+        [Fact]
+        public void Resolve_WithNothingChosen_GivesNothing()
+        {
+            Assert.Null(ReminderTime.Resolve(Now, quickDelay: null, clockText: "   "));
+        }
+
         [Theory]
         [InlineData("14:30", 14, 30)]
         [InlineData("14.30", 14, 30)]
