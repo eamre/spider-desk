@@ -2,7 +2,7 @@
 
 A small, friendly desktop spider that hangs out on your Windows desktop.
 
-It wanders around your screen, weaves webs in the corners, catches passing bugs, shakes off raindrops, and takes naps when there's nothing to do.
+It wanders around your screen, weaves webs in the corners, catches passing bugs, shakes off raindrops, and takes naps when there's nothing to do. It can even keep your focus sessions with a built-in Pomodoro timer.
 
 It runs quietly in the background without getting in your way or eating up your battery.
 
@@ -28,6 +28,8 @@ It runs quietly in the background without getting in your way or eating up your 
 - **🐛 Bug hunting:** Catches wandering flies, moths, fireflies, and wasps, wraps them in silk, and stores them in its pantry.
 - **💧 Rain & Dew physics:** Water droplets collect on the silk threads (or can be washed via the tray menu). When the web sags under their weight, the spider walks over and shakes them off.
 - **🍃 Light breeze:** An occasional room breeze gently sways the webs.
+- **👋 Silk greeting:** On startup the spider writes a greeting for the time of day (*GOOD MORNING, HELLO, GOOD EVENING, GOOD NIGHT*) in silk, then spins its first web.
+- **🍅 Pomodoro timer:** Start 25/5 or 50/10 minute focus sessions from the tray. When a session ends you get a notification and the spider writes **FOCUS** or **BREAK** in silk, even on top of a fullscreen app, with only the spider and its text visible. The countdown starts once the spider has finished writing.
 - **🖱️ Click-through:** Lives behind your work and games. You can click right through the webs without anything getting blocked.
 
 ---
@@ -56,13 +58,14 @@ dotnet publish -c Release -r win-x64 --self-contained false -p:PublishSingleFile
 
 The compiled executable will be located in `./publish/SpiderDesk.exe`.
 
-> **Note:** SpiderDesk stores your chosen preferences (selected theme, spawn rates) in `%LocalAppData%\SpiderDesk\settings.json`. If enabled from the tray menu, it can also create an optional Windows startup shortcut.
+> **Note:** SpiderDesk stores your chosen preferences (selected theme, spawn rates, Pomodoro length) in `%LocalAppData%\SpiderDesk\settings.json`. If enabled from the tray menu, it can also create an optional Windows startup shortcut.
 
 ---
 
 ## 🎮 Controls
 
 Right-click the **Spider icon in the System Tray** (by the clock) to:
+- 🍅 Start or stop a Pomodoro and choose 25/5 or 50/10 minutes (the countdown is shown right in the menu)
 - 🎨 Change themes (*Black Widow, Frost Crystal, Forest Tarantula, Cyber Neon*)
 - 🕸️ Tell it to weave a new web or rappel down on a thread
 - 🌧️ Trigger rain on webs (spawn water droplets)
@@ -80,23 +83,24 @@ Right-click the **Spider icon in the System Tray** (by the clock) to:
 ```
 SpiderDesk/
 ├── Core/                  Contracts shared by every layer (IRenderer, AppDiagnostics)
-│   ├── Settings/          UserSettings, how they are saved, spawn-rate presets
+│   ├── Settings/          UserSettings, how they are saved, presets
 │   └── Services/          Contracts for the cursor, clock, startup and window layer
 ├── Domain/                The simulation itself: never draws, never calls Windows APIs
 │   ├── Spider/            SpiderEntity, IK legs, gait, metabolism, tuning constants
-│   │   ├── States/        13 behaviours: WritingGreeting, Wandering, SpinningWeb, Hunting...
+│   │   ├── States/        13 behaviours: WritingSilkMessage, Wandering, SpinningWeb, Hunting...
 │   │   └── Themes/        Black Widow, Frost Crystal, Forest Tarantula, Cyber Neon
 │   ├── Insects/           BugEntity, BugSpawner
 │   │   ├── States/        Flying, Perching, Trapped, BeingWrapped
 │   │   └── Species/       Housefly, green fly, golden moth, firefly, wasp
 │   ├── Web/               Web entity, blueprint generator, droplets, pantry, physics constants
-│   ├── Greeting/          The startup greeting written in silk
+│   ├── SilkText/          Silk letters, text layout and the startup greeting
+│   ├── Pomodoro/          Pomodoro timer, session lengths, countdown and notification texts
 │   ├── Performance/       Pure rules: 60 FPS when moving, 20 Hz when still, pause when covered
 │   ├── SimulationEngine   Runs one simulation step per frame
 │   └── WorldContext       Everything the spider can see: webs, bugs, cursor, screen size
-├── Rendering/             Turns the world into WPF drawings: spider, bugs, greeting
+├── Rendering/             Turns the world into WPF drawings: spider, bugs, silk text
 │   └── Web/               Web drawing (each web in its own visual)
-├── Infrastructure/        Windows side: settings file, run at startup, frame loop
+├── Infrastructure/        Windows side: settings file, run at startup, frame loop, Pomodoro wiring
 │   ├── Tray/              Tray menu and the spider tray icon
 │   └── Windowing/         Click-through window, cursor, fullscreen detection
 ├── tests/SpiderDesk.Tests/  xUnit tests, same folder layout as the app (run: dotnet test)
