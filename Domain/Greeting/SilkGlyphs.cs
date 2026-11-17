@@ -11,7 +11,7 @@ namespace SpiderDesk.Domain.Greeting
     public sealed record SilkGlyph(double Width, IReadOnlyList<IReadOnlyList<Point>> Strokes);
 
     /// <summary>
-    /// Selam yazılarında kullanılan büyük harflerin tek çizgili tanımları.
+    /// Örümceğin ipekle yazdığı büyük harflerin (açılış selamı, FOCUS, BREAK) tek çizgili tanımları.
     /// Tanımlı olmayan karakterler boşluk olarak yazılır.
     /// </summary>
     public static class SilkGlyphs
@@ -27,6 +27,25 @@ namespace SpiderDesk.Domain.Greeting
 
         private static Dictionary<char, SilkGlyph> BuildGlyphs() => new()
         {
+            ['A'] = new(0.7, new[]
+            {
+                Stroke(P(0, 1), P(0.35, 0), P(0.7, 1)),
+                Stroke(P(0.14, 0.6), P(0.56, 0.6))
+            }),
+            ['B'] = new(0.6, new[]
+            {
+                // Gövde, üst kavis, ortadan geri dönüş ve alt kavis tek ipte
+                Stroke(Join(
+                    new[] { P(0, 1), P(0, 0), P(0.28, 0) },
+                    Arc(0.28, 0.25, 0.24, 0.25, -90, 90, ArcSegments),
+                    new[] { P(0, 0.5), P(0.32, 0.5) },
+                    Arc(0.32, 0.75, 0.28, 0.25, -90, 90, ArcSegments),
+                    new[] { P(0, 1) }))
+            }),
+            ['C'] = new(0.72, new[]
+            {
+                Stroke(Arc(0.4, 0.5, 0.4, 0.5, -45, -315, 28))
+            }),
             ['D'] = new(0.62, new[]
             {
                 Stroke(P(0, 0), P(0, 1)),
@@ -36,6 +55,11 @@ namespace SpiderDesk.Domain.Greeting
             {
                 Stroke(P(0.62, 0), P(0, 0), P(0, 1), P(0.62, 1)),
                 Stroke(P(0, 0.5), P(0.5, 0.5))
+            }),
+            ['F'] = new(0.55, new[]
+            {
+                Stroke(P(0.55, 0), P(0, 0), P(0, 1)),
+                Stroke(P(0, 0.5), P(0.45, 0.5))
             }),
             ['G'] = new(0.8, new[]
             {
@@ -50,6 +74,12 @@ namespace SpiderDesk.Domain.Greeting
             ['I'] = new(0.04, new[]
             {
                 Stroke(P(0.02, 0), P(0.02, 1))
+            }),
+            ['K'] = new(0.62, new[]
+            {
+                Stroke(P(0, 0), P(0, 1)),
+                Stroke(P(0.62, 0), P(0, 0.6)),
+                Stroke(P(0.21, 0.4), P(0.62, 1))
             }),
             ['L'] = new(0.55, new[]
             {
@@ -72,10 +102,21 @@ namespace SpiderDesk.Domain.Greeting
                 Stroke(Join(new[] { P(0, 1), P(0, 0), P(0.32, 0) }, Arc(0.32, 0.25, 0.26, 0.25, -90, 90, ArcSegments), new[] { P(0, 0.5) })),
                 Stroke(P(0.26, 0.5), P(0.62, 1))
             }),
+            ['S'] = new(0.62, new[]
+            {
+                // Üst kavis sağdan sola, alt kavis soldan sağa döner; ikisi ortada birleşir
+                Stroke(Join(
+                    Arc(0.31, 0.25, 0.29, 0.25, -30, -270, ArcSegments),
+                    Arc(0.31, 0.75, 0.31, 0.25, -90, 150, ArcSegments)))
+            }),
             ['T'] = new(0.7, new[]
             {
                 Stroke(P(0, 0), P(0.7, 0)),
                 Stroke(P(0.35, 0), P(0.35, 1))
+            }),
+            ['U'] = new(0.66, new[]
+            {
+                Stroke(Join(new[] { P(0, 0) }, Arc(0.33, 0.67, 0.33, 0.33, 180, 0, ArcSegments), new[] { P(0.66, 0) }))
             }),
             ['V'] = new(0.7, new[]
             {
