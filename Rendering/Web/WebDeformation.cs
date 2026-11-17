@@ -33,9 +33,9 @@ namespace SpiderDesk.Rendering.Web
         {
             _center = web.Center;
 
-            _isBreezing = includeMotion && web.IsBreezing;
-            _breezeDirection = web.BreezeDirection;
-            _breezeOffset = web.BreezeOffset;
+            _isBreezing = includeMotion && web.Breeze.IsBlowing;
+            _breezeDirection = web.Breeze.Direction;
+            _breezeOffset = web.Breeze.Offset;
             _breezeReach = web.Radius * BreezeReachFactor;
 
             _isVibrating = includeMotion && web.IsVibrating;

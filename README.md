@@ -94,7 +94,7 @@ SpiderDesk/
 │   ├── Insects/           BugEntity, BugSpawner
 │   │   ├── States/        Flying, Perching, Trapped, BeingWrapped
 │   │   └── Species/       Housefly, green fly, golden moth, firefly, wasp
-│   ├── Web/               Web entity, blueprint generator, droplets, pantry, physics constants
+│   ├── Web/               Web entity, blueprint generator, breeze, droplets, pantry, physics constants
 │   ├── SilkText/          Silk letters, text layout and the startup greeting
 │   ├── Pomodoro/          Pomodoro timer, session lengths, countdown and notification texts
 │   ├── Reminders/         Reminders: the list, time parsing ("15 min", "14:30") and text rules

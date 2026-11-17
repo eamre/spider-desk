@@ -5,7 +5,8 @@ using System.Windows;
 namespace SpiderDesk.Domain.Web
 {
     /// <summary>
-    /// Örümcek ağının durumunu, titreşim/rüzgar fiziğini, hasar/onarım kuyruğunu ve etkileşim geometrisini yönetir.
+    /// Örümcek ağının durumunu, titreşimini, hasar/onarım kuyruğunu ve etkileşim geometrisini yönetir.
+    /// Rüzgâr (<see cref="Breeze"/>), çiy damlaları (<see cref="Droplets"/>) ve kiler (<see cref="Pantry"/>) kendi sınıflarındadır.
     /// </summary>
     public class SpiderWebEntity
     {
@@ -28,6 +29,7 @@ namespace SpiderDesk.Domain.Web
 
         public WebDropletController Droplets { get; } = new();
         public WebPantryController Pantry { get; } = new();
+        public WebBreezeController Breeze { get; } = new();
 
         public bool IsStepInProgress { get; private set; }
         public bool IsCompleted => _buildQueue.Count == 0 && !IsStepInProgress;
@@ -37,18 +39,10 @@ namespace SpiderDesk.Domain.Web
         public double VibrationPhase { get; private set; }
         public Point VibrationOrigin { get; private set; }
 
-        public double BreezeOffset { get; private set; }
-        public Vector BreezeDirection { get; private set; }
-        private double _breezeCooldown = WebTuning.BreezeCooldownBase;
-        private double _breezeDuration = WebTuning.BreezeDurationBase;
-        private double _breezeElapsedTime = 999.0;
-        private double _breezeMaxStrength = WebTuning.BreezeStrengthBase;
-
         public bool IsVibrating => VibrationAmplitude > WebTuning.MotionThreshold;
-        public bool IsBreezing => Math.Abs(BreezeOffset) > WebTuning.MotionThreshold;
 
         /// <summary>Ağın telleri (ve üzerindeki varlıklar) şu an rüzgar veya titreşimle kayıyorsa true döner.</summary>
-        public bool IsDeforming => IsVibrating || IsBreezing;
+        public bool IsDeforming => IsVibrating || Breeze.IsBlowing;
 
         /// <summary>
         /// Ağ her karede yeniden çizilmeyi gerektiren bir hareket içindeyse (titreşim, rüzgar veya düşen damla) true döner.
@@ -124,45 +118,7 @@ namespace SpiderDesk.Domain.Web
                 _pluckCooldown -= dt;
             }
 
-            // Periyodik doğal rüzgar esintisi (Breeze):
-            if (!IsCompleted)
-            {
-                BreezeOffset = 0;
-            }
-            else if (_breezeElapsedTime < _breezeDuration)
-            {
-                _breezeElapsedTime += dt;
-                double progress = _breezeElapsedTime / _breezeDuration;
-                if (progress >= 1.0)
-                {
-                    BreezeOffset = 0;
-                    _breezeCooldown = WebTuning.BreezeCooldownBase + rng.NextDouble() * WebTuning.BreezeCooldownVariance;
-                }
-                else
-                {
-                    // Yumuşak zarf eğrisi (Envelope): 0 -> 1 -> 0
-                    double envelope = Math.Sin(progress * Math.PI);
-                    // 1.5 salınım döngüsü (sağa tatlıca esner, yay gibi hafifçe geri gelir ve durulur)
-                    double wave = Math.Sin(progress * Math.PI * 3.0);
-                    BreezeOffset = envelope * wave * _breezeMaxStrength;
-                }
-            }
-            else
-            {
-                _breezeCooldown -= dt;
-                if (_breezeCooldown <= 0)
-                {
-                    _breezeElapsedTime = 0;
-                    _breezeDuration = WebTuning.BreezeDurationBase + rng.NextDouble() * WebTuning.BreezeDurationVariance;
-                    _breezeMaxStrength = WebTuning.BreezeStrengthBase + rng.NextDouble() * WebTuning.BreezeStrengthVariance;
-                    double dirX = rng.NextDouble() > 0.5 ? 1.0 : -1.0;
-                    double dirY = (rng.NextDouble() - 0.4) * 0.5;
-                    Vector dir = new Vector(dirX, dirY);
-                    if (dir.Length > 0.001) dir.Normalize();
-                    BreezeDirection = dir;
-                }
-            }
-
+            Breeze.Update(dt, IsCompleted, rng);
             Droplets.Update(dt, IsCompleted, _completedSegments, rng);
 
             if (IsVibrating)
