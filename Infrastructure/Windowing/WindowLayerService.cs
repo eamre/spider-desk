@@ -3,21 +3,25 @@ using System.Windows;
 using System.Windows.Interop;
 using SpiderDesk.Core.Services;
 using SpiderDesk.Domain.Performance;
-using static SpiderDesk.Infrastructure.Windowing.NativeMethods;
 
 namespace SpiderDesk.Infrastructure.Windowing
 {
     /// <summary>
     /// Pencerenin tıklama geçirgenliğini (Click-Through) ve Masaüstü Z-Sırasını (Z-Order) yönetir.
-    /// HWND_TOPMOST yalnızca "Pencerelerin Üstünde Göster" açıkken ya da bir duyuru yazılırken (IsPresentingOnTop)
+    /// "Her zaman üstte" yalnızca "Pencerelerin Üstünde Göster" açıkken ya da bir duyuru yazılırken (IsPresentingOnTop)
     /// kullanılır; normal modda pencere doğrudan
     /// masaüstü duvar kağıdı/ikon katmanının (Progman/WorkerW) hemen üstünde tutulur. Böylece masaüstüne
     /// tıklandığında ekran yenilenmesi/titremesi olmaz ve pencereler alta alındığında masaüstüne tıklamaya gerek kalmaz.
-    /// Pencere durumlarını <see cref="IWindowInspector"/> ile okur, örtülme kararını <see cref="DesktopOcclusionPolicy"/>'ye bırakır.
-    /// Kullandığı Windows fonksiyonları ve sabitleri <see cref="NativeMethods"/>'tadır.
+    /// Pencereleri <see cref="IDesktopWindows"/> ile yerleştirir, pencere durumlarını <see cref="IWindowInspector"/> ile okur,
+    /// örtülme kararını <see cref="DesktopOcclusionPolicy"/>'ye bırakır. Windows'u doğrudan çağırmadığı için testlerde
+    /// sahte bir masaüstüyle çalıştırılabilir.
     /// </summary>
     public class WindowLayerService : IWindowLayerService
     {
+        // Masaüstünün arkasına düşüp düşmediğimizi ararken en fazla bu kadar pencereye bakılır
+        private const int MaxWindowsToSearchBelowDesktop = 32;
+
+        private readonly IDesktopWindows _desktop;
         private readonly IWindowInspector _windowInspector;
         private IntPtr _hwnd;
         private IntPtr _desktopHwnd;
@@ -28,8 +32,9 @@ namespace SpiderDesk.Infrastructure.Windowing
         private bool _isDesktopCovered;
         private int _tickCounter;
 
-        public WindowLayerService(IWindowInspector windowInspector)
+        public WindowLayerService(IDesktopWindows desktop, IWindowInspector windowInspector)
         {
+            _desktop = desktop;
             _windowInspector = windowInspector;
         }
 
@@ -78,13 +83,15 @@ namespace SpiderDesk.Infrastructure.Windowing
 
         private bool IsTopmost => _alwaysOnTop || _isPresentingOnTop;
 
-        public void Attach(Window window)
-        {
-            _hwnd = new WindowInteropHelper(window).Handle;
-            int extendedStyle = GetWindowLong(_hwnd, GWL_EXSTYLE);
-            SetWindowLong(_hwnd, GWL_EXSTYLE, extendedStyle | WS_EX_TRANSPARENT | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE);
+        public void Attach(Window window) => Attach(new WindowInteropHelper(window).Handle);
 
-            _desktopHwnd = FindDesktopHostWindow();
+        /// <summary>Pencere tanıtıcısıyla bağlanır; testler sahte masaüstündeki bir pencereyi bu yolla verir.</summary>
+        public void Attach(IntPtr hwnd)
+        {
+            _hwnd = hwnd;
+            _desktop.MakeClickThrough(_hwnd);
+
+            _desktopHwnd = _desktop.FindDesktopHost();
             _lastAppliedTopmostState = null;
             EnforceZOrder();
         }
@@ -93,15 +100,11 @@ namespace SpiderDesk.Infrastructure.Windowing
         {
             if (_hwnd == IntPtr.Zero) return;
 
-            // SWP_NOREDRAW ve SWP_DEFERERASE: Z-sırası değişirken Windows'un alttaki masaüstü ikon listesini
-            // (SysListView32) silip baştan boyamasını (F5 yenilenme hissini) tamamen engeller.
-            const uint flags = SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOSENDCHANGING | SWP_NOREDRAW | SWP_DEFERERASE;
-
             if (IsTopmost)
             {
                 if (_lastAppliedTopmostState != true)
                 {
-                    SetWindowPos(_hwnd, HWND_TOPMOST, 0, 0, 0, 0, flags);
+                    _desktop.SetTopmost(_hwnd, true);
                     _lastAppliedTopmostState = true;
                 }
 
@@ -120,62 +123,67 @@ namespace SpiderDesk.Infrastructure.Windowing
 
             if (_lastAppliedTopmostState != false)
             {
-                SetWindowPos(_hwnd, HWND_NOTOPMOST, 0, 0, 0, 0, flags);
-                PlaceDirectlyAboveDesktop(flags);
+                _desktop.SetTopmost(_hwnd, false);
+                PlaceDirectlyAboveDesktop();
                 _lastAppliedTopmostState = false;
             }
             else
             {
-                // Win32 pencere sorgularını her kare yerine 3 karede bir (~50 ms) çalıştırarak P/Invoke yükünü azalt
+                // Pencere sorgularını her karede değil 4 karede bir yaparak Windows'a yapılan çağrıları azalt
                 _tickCounter++;
                 if ((_tickCounter & 3) != 0)
                 {
                     return;
                 }
 
-                if (_desktopHwnd != IntPtr.Zero && IsBehindDesktop(_hwnd, _desktopHwnd))
+                if (_desktopHwnd != IntPtr.Zero && IsBehindDesktop())
                 {
-                    PlaceDirectlyAboveDesktop(flags);
+                    PlaceDirectlyAboveDesktop();
                 }
             }
 
             UpdateVisibilityAndInteractionState();
         }
 
-        private void PlaceDirectlyAboveDesktop(uint flags)
+        private void PlaceDirectlyAboveDesktop()
         {
+            // Explorer yeniden başlamışsa masaüstü penceresi değişmiştir; yenisini bul
             if (_desktopHwnd == IntPtr.Zero || !_windowInspector.IsDesktopWindow(_desktopHwnd))
             {
-                _desktopHwnd = FindDesktopHostWindow();
+                _desktopHwnd = _desktop.FindDesktopHost();
             }
 
             if (_desktopHwnd == IntPtr.Zero) return;
 
-            IntPtr windowAboveDesktop = GetWindow(_desktopHwnd, GW_HWNDPREV);
+            IntPtr windowAboveDesktop = _desktop.WindowAbove(_desktopHwnd);
             if (windowAboveDesktop != _hwnd)
             {
-                bool aboveIsTopmost = windowAboveDesktop != IntPtr.Zero &&
-                                      (GetWindowLong(windowAboveDesktop, GWL_EXSTYLE) & WS_EX_TOPMOST) != 0;
+                bool aboveIsTopmost = windowAboveDesktop != IntPtr.Zero && _desktop.IsTopmost(windowAboveDesktop);
 
-                IntPtr insertAfter = (windowAboveDesktop == IntPtr.Zero || aboveIsTopmost)
-                    ? HWND_TOP
-                    : windowAboveDesktop;
-
-                SetWindowPos(_hwnd, insertAfter, 0, 0, 0, 0, flags);
+                // Masaüstünün hemen üstünde "her zaman üstte" bir pencere varsa ya da hiç pencere yoksa,
+                // normal pencerelerin en üstüne çık; yoksa masaüstünün üstündeki pencerenin hemen altına gir
+                if (windowAboveDesktop == IntPtr.Zero || aboveIsTopmost)
+                {
+                    _desktop.BringToTop(_hwnd);
+                }
+                else
+                {
+                    _desktop.PlaceBehind(_hwnd, windowAboveDesktop);
+                }
             }
         }
 
-        private static bool IsBehindDesktop(IntPtr targetHwnd, IntPtr desktopHwnd)
+        private bool IsBehindDesktop()
         {
-            IntPtr current = GetWindow(desktopHwnd, GW_HWNDNEXT);
+            IntPtr current = _desktop.WindowBelow(_desktopHwnd);
             int guard = 0;
-            while (current != IntPtr.Zero && guard++ < 32)
+            while (current != IntPtr.Zero && guard++ < MaxWindowsToSearchBelowDesktop)
             {
-                if (current == targetHwnd)
+                if (current == _hwnd)
                 {
                     return true;
                 }
-                current = GetWindow(current, GW_HWNDNEXT);
+                current = _desktop.WindowBelow(current);
             }
             return false;
         }
@@ -183,17 +191,12 @@ namespace SpiderDesk.Infrastructure.Windowing
         private void UpdateVisibilityAndInteractionState()
         {
             bool cursorOverDesktop = false;
-            IntPtr rootHwnd = IntPtr.Zero;
-            if (GetCursorPos(out POINT pt))
+            IntPtr hitHwnd = _desktop.WindowUnderCursor(out IntPtr rootHwnd);
+            if (hitHwnd != IntPtr.Zero)
             {
-                IntPtr hitHwnd = WindowFromPoint(pt);
-                if (hitHwnd != IntPtr.Zero)
-                {
-                    rootHwnd = GetAncestor(hitHwnd, GA_ROOT);
-                    cursorOverDesktop = (rootHwnd != IntPtr.Zero && rootHwnd == _desktopHwnd) ||
-                                        _windowInspector.IsDesktopWindow(rootHwnd) ||
-                                        _windowInspector.IsDesktopWindow(hitHwnd);
-                }
+                cursorOverDesktop = (rootHwnd != IntPtr.Zero && rootHwnd == _desktopHwnd) ||
+                                    _windowInspector.IsDesktopWindow(rootHwnd) ||
+                                    _windowInspector.IsDesktopWindow(hitHwnd);
             }
 
             _isOverlayInteractive = cursorOverDesktop;
@@ -204,30 +207,10 @@ namespace SpiderDesk.Infrastructure.Windowing
                 return;
             }
 
-            _isDesktopCovered = OccludesOverlay(GetForegroundWindow()) || OccludesOverlay(rootHwnd);
+            _isDesktopCovered = OccludesOverlay(_desktop.ForegroundWindow()) || OccludesOverlay(rootHwnd);
         }
 
         private bool OccludesOverlay(IntPtr hwnd) =>
             hwnd != _hwnd && DesktopOcclusionPolicy.Occludes(_windowInspector.Capture(hwnd, _hwnd));
-
-        private static IntPtr FindDesktopHostWindow()
-        {
-            IntPtr progman = FindWindow("Progman", null);
-            if (progman != IntPtr.Zero && FindWindowEx(progman, IntPtr.Zero, "SHELLDLL_DefView", null) != IntPtr.Zero)
-            {
-                return progman;
-            }
-
-            IntPtr workerW = IntPtr.Zero;
-            while ((workerW = FindWindowEx(IntPtr.Zero, workerW, "WorkerW", null)) != IntPtr.Zero)
-            {
-                if (FindWindowEx(workerW, IntPtr.Zero, "SHELLDLL_DefView", null) != IntPtr.Zero)
-                {
-                    return workerW;
-                }
-            }
-
-            return progman;
-        }
     }
 }

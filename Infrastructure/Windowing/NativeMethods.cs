@@ -5,7 +5,8 @@ using System.Text;
 namespace SpiderDesk.Infrastructure.Windowing
 {
     /// <summary>
-    /// Pencere katmanı, pencere denetçisi ve fare takibinin kullandığı Windows (user32.dll) fonksiyonları, sabitleri ve yapıları.
+    /// Win32DesktopWindows, Win32WindowInspector ve CursorTrackingService'in kullandığı Windows (user32.dll) fonksiyonları,
+    /// sabitleri ve yapıları.
     /// Burada hiçbir karar verilmez; yalnızca Windows'a açılan kapı tanımlanır. Kullanan sınıflar bunları
     /// <c>using static</c> ile doğrudan adlarıyla çağırır. Adlar Windows belgelerindekiyle aynı bırakılmıştır
     /// (örneğin <c>SWP_NOMOVE</c>), böylece belgelerde kolayca aranabilir.

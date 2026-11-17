@@ -107,7 +107,7 @@ SpiderDesk/
 │   ├── Dialogs/           The small window for adding a reminder
 │   ├── Storage/           Saves settings.json and reminders.json
 │   ├── Tray/              Tray icon, notifications, and one class per menu (Pomodoro, reminders, settings)
-│   └── Windowing/         Click-through window, cursor, fullscreen detection
+│   └── Windowing/         Click-through window, cursor, fullscreen detection (Win32 behind interfaces, tested with a fake desktop)
 ├── tests/SpiderDesk.Tests/  xUnit tests, same folder layout as the app (run: dotnet test)
 ├── App.xaml.cs            Composition root: creates and wires everything together
 └── MainWindow.xaml.cs     The transparent overlay window
