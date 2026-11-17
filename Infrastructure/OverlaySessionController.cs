@@ -27,6 +27,7 @@ namespace SpiderDesk.Infrastructure
         private readonly ICursorTrackingService _cursorService;
         private readonly IStartupRegistrationService _startupService;
         private readonly TrayMenuService _trayMenuService;
+        private readonly PomodoroSessionController _pomodoro;
         private readonly DispatcherTimer _timer;
 
         private bool _isPaused;
@@ -43,7 +44,8 @@ namespace SpiderDesk.Infrastructure
             IWindowLayerService windowLayerService,
             ICursorTrackingService cursorService,
             IStartupRegistrationService startupService,
-            TrayMenuService trayMenuService)
+            TrayMenuService trayMenuService,
+            PomodoroSessionController pomodoro)
         {
             _hostWindow = hostWindow;
             _engine = engine;
@@ -54,6 +56,7 @@ namespace SpiderDesk.Infrastructure
             _cursorService = cursorService;
             _startupService = startupService;
             _trayMenuService = trayMenuService;
+            _pomodoro = pomodoro;
 
             BindTrayEvents();
             _engine.Spider.PreyCaught += totalCaught => _settings.Update(s => s.TotalBugsCaught = totalCaught);
@@ -134,6 +137,9 @@ namespace SpiderDesk.Infrastructure
             DateTime now = DateTime.Now;
             double dt = Math.Min(0.15, (now - _lastTick).TotalSeconds);
             _lastTick = now;
+
+            // Pomodoro gerçek saate bakar; simülasyon duraklatılmış ya da ekran kapalı olsa bile süre işlemeye devam eder
+            _pomodoro.Tick(now);
 
             _windowLayerService.EnforceZOrder();
 

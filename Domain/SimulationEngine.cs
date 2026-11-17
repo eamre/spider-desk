@@ -156,6 +156,9 @@ namespace SpiderDesk.Domain
 
         public void CommandNewWeb() => Spider.RequestNewWeb(World);
 
+        /// <summary>Örümcek boşalır boşalmaz bu mesajı ipekle yazar (örneğin Pomodoro'nun FOCUS / BREAK duyuruları).</summary>
+        public void RequestSilkMessage(string text) => Spider.RequestSilkMessage(text);
+
         public void CommandRappel() => Spider.RequestRappel(World);
 
         public void CommandRainOnWebs()

@@ -9,15 +9,20 @@ using SpiderDesk.Domain.Spider.Themes;
 namespace SpiderDesk.Infrastructure.Tray
 {
     /// <summary>
-    /// Sistem tepsisi (System Tray) ikonunu, tema seçicisini ve ayar menülerini yönetir.
+    /// Sistem tepsisi (System Tray) ikonunu, menülerini (eylemler, Pomodoro, tema ve ayarlar) ve Windows bildirimlerini yönetir.
     /// </summary>
     public sealed class TrayMenuService : IDisposable
     {
         // Bu etiketi taşıyan öğelere (ayar seçimleri) tıklanınca menü açık kalır; eylemler menüyü kapatır
         private static readonly object KeepMenuOpenTag = new();
 
+        private const string DefaultTooltip = "SpiderDesk - Masaüstü Örümceği";
+        private const string PomodoroMenuTitle = "🍅 Pomodoro";
+
         private readonly NotifyIcon _notifyIcon;
         private readonly ToolStripMenuItem _statusMenuItem;
+        private readonly ToolStripMenuItem _pomodoroMenu;
+        private readonly ToolStripMenuItem _pomodoroToggleItem;
         private string _lastStatusText = string.Empty;
         private bool _lastClickKeepsMenuOpen;
 
@@ -35,6 +40,8 @@ namespace SpiderDesk.Infrastructure.Tray
         public event Action<bool>? StartupChanged;
         public event Action<bool>? PauseChanged;
         public event Action? ExitRequested;
+        public event Action? PomodoroToggleRequested;
+        public event Action<PomodoroPreset>? PomodoroPresetSelected;
 
         public TrayMenuService(UserSettings currentSettings, bool initialStartupEnabled)
         {
@@ -52,6 +59,13 @@ namespace SpiderDesk.Infrastructure.Tray
             AddActionItem(menu, "💧 Ağlara Çiy/Su Damlası Bırak", () => RainOnWebsRequested?.Invoke());
             AddActionItem(menu, "🐛 Ekrana Böcek Gönder (3 Adet)", () => SpawnBugsRequested?.Invoke(3));
             AddActionItem(menu, "🧹 Ağları Temizle", () => ClearWebsRequested?.Invoke());
+
+            menu.Items.Add(new ToolStripSeparator());
+
+            _pomodoroToggleItem = new ToolStripMenuItem("▶️ Başlat");
+            _pomodoroToggleItem.Click += (_, _) => PomodoroToggleRequested?.Invoke();
+            _pomodoroMenu = BuildPomodoroSubMenu(_pomodoroToggleItem, currentSettings.PomodoroPreset);
+            menu.Items.Add(_pomodoroMenu);
 
             menu.Items.Add(new ToolStripSeparator());
 
@@ -101,16 +115,37 @@ namespace SpiderDesk.Infrastructure.Tray
             KeepOpenOnSettingClicks(themeMenu.DropDown);
             KeepOpenOnSettingClicks(timeModeMenu.DropDown);
             KeepOpenOnSettingClicks(simulationMenu.DropDown);
+            KeepOpenOnSettingClicks(_pomodoroMenu.DropDown);
 
             _notifyIcon = new NotifyIcon
             {
                 Icon = TrayIconFactory.CreateSpiderIcon(),
-                Text = "SpiderDesk - Masaüstü Örümceği",
+                Text = DefaultTooltip,
                 ContextMenuStrip = menu,
                 Visible = true
             };
 
             _notifyIcon.DoubleClick += (_, _) => SpawnBugsRequested?.Invoke(2);
+        }
+
+        private ToolStripMenuItem BuildPomodoroSubMenu(ToolStripMenuItem toggleItem, PomodoroPreset currentPreset)
+        {
+            var pomodoroRoot = new ToolStripMenuItem(PomodoroMenuTitle);
+            pomodoroRoot.DropDownItems.Add(toggleItem);
+            pomodoroRoot.DropDownItems.Add(new ToolStripSeparator());
+
+            pomodoroRoot.DropDownItems.Add(new ToolStripMenuItem("⏱️ Süre") { Enabled = false });
+            AddRadioOptions(
+                pomodoroRoot,
+                new (string, PomodoroPreset)[]
+                {
+                    ("Klasik (25 dk odak / 5 dk mola)", PomodoroPreset.Classic),
+                    ("Uzun (50 dk odak / 10 dk mola)", PomodoroPreset.Extended)
+                },
+                preset => preset == currentPreset,
+                preset => PomodoroPresetSelected?.Invoke(preset)
+            );
+            return pomodoroRoot;
         }
 
         private ToolStripMenuItem BuildThemeSubMenu(string currentThemeId)
@@ -259,6 +294,35 @@ namespace SpiderDesk.Infrastructure.Tray
             {
                 _lastStatusText = nextText;
                 _statusMenuItem.Text = nextText;
+            }
+        }
+
+        /// <summary>
+        /// Pomodoro'nun durumunu menüye ve tepsi ikonunun ipucuna yansıtır.
+        /// <paramref name="countdown"/> null ise Pomodoro çalışmıyordur.
+        /// </summary>
+        public void ShowPomodoroState(string? countdown)
+        {
+            bool isRunning = countdown != null;
+            SetTextIfChanged(_pomodoroToggleItem, isRunning ? "⏹️ Durdur" : "▶️ Başlat");
+            SetTextIfChanged(_pomodoroMenu, isRunning ? $"{PomodoroMenuTitle} · {countdown}" : PomodoroMenuTitle);
+
+            string tooltip = isRunning ? $"SpiderDesk · 🍅 {countdown}" : DefaultTooltip;
+            if (_notifyIcon.Text != tooltip)
+            {
+                _notifyIcon.Text = tooltip;
+            }
+        }
+
+        /// <summary>Ekranın sağ altında Windows bildirimi gösterir; tam ekran bir uygulama açıkken de görünür.</summary>
+        public void ShowNotification(string title, string message) =>
+            _notifyIcon.ShowBalloonTip(6000, title, message, ToolTipIcon.Info);
+
+        private static void SetTextIfChanged(ToolStripItem item, string text)
+        {
+            if (item.Text != text)
+            {
+                item.Text = text;
             }
         }
 

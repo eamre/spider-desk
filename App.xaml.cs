@@ -84,6 +84,8 @@ namespace SpiderDesk
                 initialStartupEnabled: startupService.IsEnabled()
             );
 
+            var pomodoro = new PomodoroSessionController(engine, settings, trayMenuService);
+
             var mainWindow = new MainWindow(canvas, windowLayerService);
             _sessionController = new OverlaySessionController(
                 mainWindow,
@@ -94,7 +96,8 @@ namespace SpiderDesk
                 windowLayerService,
                 cursorService,
                 startupService,
-                trayMenuService
+                trayMenuService,
+                pomodoro
             );
 
             mainWindow.Closed += (_, _) => _sessionController.Dispose();

@@ -10,6 +10,7 @@ namespace SpiderDesk.Core.Settings
         public DewSpawnRatePreset DewSpawnRate { get; set; } = DewSpawnRatePreset.Normal;
         public SpiderSpeedPreset SpeedPreset { get; set; } = SpiderSpeedPreset.Normal;
         public EnvironmentTimeMode TimeMode { get; set; } = EnvironmentTimeMode.AutoBySystemClock;
+        public PomodoroPreset PomodoroPreset { get; set; } = PomodoroPreset.Classic;
         public bool AlwaysOnTop { get; set; }
         public bool RunOnStartup { get; set; } = true;
     }
