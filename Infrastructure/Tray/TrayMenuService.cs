@@ -12,7 +12,7 @@ namespace SpiderDesk.Infrastructure.Tray
     /// <list type="bullet">
     /// <item><see cref="PomodoroMenu"/>: Pomodoro (PomodoroSessionController kullanır)</item>
     /// <item><see cref="ReminderMenu"/>: hatırlatıcılar (ReminderSessionController kullanır)</item>
-    /// <item><see cref="SettingsMenu"/>: kayıtlı ayarlar (OverlaySessionController kullanır)</item>
+    /// <item><see cref="SettingsMenu"/>: kayıtlı ayarlar (SettingsSessionController kullanır)</item>
     /// </list>
     /// Bu sınıfta kalanlar: örümceğin durum satırı, anlık eylemler (yeni ağ, yağmur, böcek...), Duraklat ve Çıkış.
     /// </summary>

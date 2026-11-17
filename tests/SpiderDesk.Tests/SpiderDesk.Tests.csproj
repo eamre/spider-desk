@@ -3,6 +3,8 @@
   <PropertyGroup>
     <TargetFramework>net9.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
+    <!-- Tepsi menüsü testleri WinForms menü maddelerine tıklar -->
+    <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
@@ -21,6 +23,9 @@
 
   <ItemGroup>
     <Using Include="Xunit" />
+    <!-- WPF'in Point/Size tipleriyle karışmasın; WinForms tipleri gereken dosyada açıkça using edilir -->
+    <Using Remove="System.Drawing" />
+    <Using Remove="System.Windows.Forms" />
   </ItemGroup>
 
 </Project>

@@ -2,30 +2,25 @@ using System;
 using System.Windows;
 using System.Windows.Threading;
 using SpiderDesk.Core.Services;
-using SpiderDesk.Core.Settings;
 using SpiderDesk.Domain;
 using SpiderDesk.Domain.Performance;
 using SpiderDesk.Infrastructure.Tray;
 using SpiderDesk.Rendering;
-using SpiderDesk.Rendering.Web;
 
 namespace SpiderDesk.Infrastructure
 {
     /// <summary>
     /// Simülasyon döngüsü zamanlayıcısını (DispatcherTimer), adaptif kare hızı (FPS) yönetimini
-    /// ve sistem tepsisi (Tray) menü komutlarının simülasyona bağlanmasını koordine eder.
-    /// Menüden değişen her ayarı önce uygular, sonra SettingsStore ile kaydeder.
+    /// ve tepsideki anlık komutların (yeni ağ, yağmur, böcek, Duraklat, Çıkış) simülasyona bağlanmasını koordine eder.
+    /// Kayıtlı ayarlar <see cref="SettingsSessionController"/>'da, Pomodoro ve hatırlatıcılar kendi denetleyicilerindedir.
     /// </summary>
     public sealed class OverlaySessionController : IDisposable
     {
         private readonly Window _hostWindow;
         private readonly SimulationEngine _engine;
-        private readonly SettingsStore _settings;
         private readonly SimulationCanvas _canvas;
-        private readonly WebRenderer _webRenderer;
         private readonly IWindowLayerService _windowLayerService;
         private readonly ICursorTrackingService _cursorService;
-        private readonly IStartupRegistrationService _startupService;
         private readonly TrayMenuService _trayMenuService;
         private readonly PomodoroSessionController _pomodoro;
         private readonly ReminderSessionController _reminders;
@@ -40,30 +35,23 @@ namespace SpiderDesk.Infrastructure
         public OverlaySessionController(
             Window hostWindow,
             SimulationEngine engine,
-            SettingsStore settings,
             SimulationCanvas canvas,
-            WebRenderer webRenderer,
             IWindowLayerService windowLayerService,
             ICursorTrackingService cursorService,
-            IStartupRegistrationService startupService,
             TrayMenuService trayMenuService,
             PomodoroSessionController pomodoro,
             ReminderSessionController reminders)
         {
             _hostWindow = hostWindow;
             _engine = engine;
-            _settings = settings;
             _canvas = canvas;
-            _webRenderer = webRenderer;
             _windowLayerService = windowLayerService;
             _cursorService = cursorService;
-            _startupService = startupService;
             _trayMenuService = trayMenuService;
             _pomodoro = pomodoro;
             _reminders = reminders;
 
             BindTrayEvents();
-            _engine.Spider.PreyCaught += totalCaught => _settings.Update(s => s.TotalBugsCaught = totalCaught);
 
             _lastTick = DateTime.Now;
             _timer = new DispatcherTimer(DispatcherPriority.Render)
@@ -82,51 +70,6 @@ namespace SpiderDesk.Infrastructure
             _trayMenuService.RainOnWebsRequested += () => _engine.CommandRainOnWebs();
             _trayMenuService.SpawnBugsRequested += count => _engine.SpawnExtraBugs(count);
             _trayMenuService.ClearWebsRequested += () => _engine.ClearWebs();
-
-            _trayMenuService.Settings.ThemeSelected += theme =>
-            {
-                _engine.SetTheme(theme);
-                _webRenderer.ApplyTheme(theme);
-                _canvas.RefreshLayers(forceAll: true);
-                _settings.Update(s => s.ThemeId = theme.Id);
-            };
-
-            _trayMenuService.Settings.SpawnRateSelected += rate =>
-            {
-                _engine.SetSpawnRate(rate);
-                _settings.Update(s => s.SpawnRate = rate);
-            };
-
-            _trayMenuService.Settings.DewSpawnRateSelected += rate =>
-            {
-                _engine.SetDewSpawnRate(rate);
-                _settings.Update(s => s.DewSpawnRate = rate);
-            };
-
-            _trayMenuService.Settings.SpeedPresetSelected += preset =>
-            {
-                _engine.SetSpeedPreset(preset);
-                _settings.Update(s => s.SpeedPreset = preset);
-            };
-
-            _trayMenuService.Settings.TimeModeSelected += mode =>
-            {
-                _engine.SetTimeMode(mode);
-                _settings.Update(s => s.TimeMode = mode);
-            };
-
-            _trayMenuService.Settings.AlwaysOnTopChanged += alwaysOnTop =>
-            {
-                _windowLayerService.AlwaysOnTop = alwaysOnTop;
-                _windowLayerService.EnforceZOrder();
-                _settings.Update(s => s.AlwaysOnTop = alwaysOnTop);
-            };
-
-            _trayMenuService.Settings.StartupChanged += enabled =>
-            {
-                _startupService.SetEnabled(enabled);
-                _settings.Update(s => s.RunOnStartup = enabled);
-            };
 
             _trayMenuService.PauseChanged += paused => _isPaused = paused;
             _trayMenuService.ExitRequested += () =>

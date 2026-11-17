@@ -103,7 +103,7 @@ SpiderDesk/
 │   └── WorldContext       Everything the spider can see: webs, bugs, cursor, screen size
 ├── Rendering/             Turns the world into WPF drawings: spider, bugs, silk text, the paper note
 │   └── Web/               Web drawing (each web in its own visual)
-├── Infrastructure/        Windows side: run at startup, frame loop, Pomodoro and reminder wiring
+├── Infrastructure/        Windows side: run at startup, frame loop, wiring for settings, Pomodoro and reminders
 │   ├── Dialogs/           The small window for adding a reminder
 │   ├── Storage/           Saves settings.json and reminders.json
 │   ├── Tray/              Tray icon, notifications, and one class per menu (Pomodoro, reminders, settings)

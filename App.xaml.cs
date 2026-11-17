@@ -89,16 +89,16 @@ namespace SpiderDesk
             var pomodoro = new PomodoroSessionController(engine, settings, trayMenuService.Pomodoro, trayMenuService);
             var reminders = new ReminderSessionController(engine, new JsonReminderRepository(), trayMenuService.Reminders, trayMenuService);
 
+            // Yalnızca menünün olaylarına abone olur; menü yaşadıkça o da yaşar, bu yüzden bir değişkende tutulmaz
+            _ = new SettingsSessionController(trayMenuService.Settings, engine, settings, canvas, webRenderer, windowLayerService, startupService);
+
             var mainWindow = new MainWindow(canvas, windowLayerService);
             _sessionController = new OverlaySessionController(
                 mainWindow,
                 engine,
-                settings,
                 canvas,
-                webRenderer,
                 windowLayerService,
                 cursorService,
-                startupService,
                 trayMenuService,
                 pomodoro,
                 reminders
