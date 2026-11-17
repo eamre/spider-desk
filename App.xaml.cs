@@ -62,10 +62,9 @@ namespace SpiderDesk
                 SystemParameters.PrimaryScreenWidth,
                 SystemParameters.PrimaryScreenHeight);
 
-            if (startupService.IsEnabled() != settings.Current.RunOnStartup)
-            {
-                startupService.SetEnabled(settings.Current.RunOnStartup);
-            }
+            // Başlangıç kaydını ayara uydur: açıksa bu exe'yi göstersin (exe taşınmış olabilir), kapalıysa silinsin.
+            // Kayıt zaten doğruysa hiçbir şey yazılmaz.
+            startupService.SetEnabled(settings.Current.RunOnStartup);
 
             windowLayerService.AlwaysOnTop = settings.Current.AlwaysOnTop;
 
