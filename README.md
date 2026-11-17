@@ -95,12 +95,14 @@ SpiderDesk/
 │   ├── Web/               Web entity, blueprint generator, droplets, pantry, physics constants
 │   ├── SilkText/          Silk letters, text layout and the startup greeting
 │   ├── Pomodoro/          Pomodoro timer, session lengths, countdown and notification texts
+│   ├── Reminders/         Reminders: the list, time parsing ("15 min", "14:30") and text rules
 │   ├── Performance/       Pure rules: 60 FPS when moving, 20 Hz when still, pause when covered
 │   ├── SimulationEngine   Runs one simulation step per frame
 │   └── WorldContext       Everything the spider can see: webs, bugs, cursor, screen size
 ├── Rendering/             Turns the world into WPF drawings: spider, bugs, silk text
 │   └── Web/               Web drawing (each web in its own visual)
-├── Infrastructure/        Windows side: settings file, run at startup, frame loop, Pomodoro wiring
+├── Infrastructure/        Windows side: run at startup, frame loop, Pomodoro wiring
+│   ├── Storage/           Saves settings.json and reminders.json
 │   ├── Tray/              Tray menu and the spider tray icon
 │   └── Windowing/         Click-through window, cursor, fullscreen detection
 ├── tests/SpiderDesk.Tests/  xUnit tests, same folder layout as the app (run: dotnet test)
