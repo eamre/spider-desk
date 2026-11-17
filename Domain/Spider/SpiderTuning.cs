@@ -65,13 +65,6 @@ namespace SpiderDesk.Domain.Spider
         public const double RappelCursorPushDistance = 72.0;
         public const double RappelCursorPushSpeed = 80.0;
 
-        // Ağ Yakalama ve Hasar Etkileşimi
-        public const double WebCatchDistanceSquared = 196.0;
-        public const double WebCursorHitDistanceSquared = 100.0;
-        public const double WebCursorTearSpeed = 1350.0;
-        public const double WebCursorDamageRadius = 28.0;
-        public const double WebPluckCooldownSeconds = 0.25;
-
         // Ağ Nöbeti ve Devriye (WaitingOnWebState)
         public const double WebPatrolInitialDurationBase = 10.0;
         public const double WebPatrolInitialDurationVariance = 8.0;
@@ -88,24 +81,6 @@ namespace SpiderDesk.Domain.Spider
         public const double PantryInnerRadiusRatio = 0.36;
         public const double PantryOuterRadiusSpan = 0.46;
         public const double CocoonConsumedScaleReduction = 0.85;
-
-        // Çiy Damlası Fiziği (WebDropletController)
-        public const int MaxAttachedDropletsPerWeb = 12;
-        public const double MaxDropletSag = 14.0;
-        public const double DropletSagMultiplier = 2.4;
-        public const double InitialDropletRadiusBase = 2.8;
-        public const double InitialDropletRadiusVariance = 0.9;
-
-        // Rüzgar Esintisi Fiziği (SpiderWebEntity)
-        public const double BreezeCooldownBase = 22.0;
-        public const double BreezeCooldownVariance = 28.0;
-        public const double BreezeDurationBase = 2.2;
-        public const double BreezeDurationVariance = 0.8;
-        public const double BreezeStrengthBase = 3.5;
-        public const double BreezeStrengthVariance = 2.0;
-
-        // Ağ Hareket Algılama (titreşim/rüzgar bu eşiğin altındaysa ağ durgun sayılır ve önbellekten çizilir)
-        public const double WebMotionThreshold = 0.05;
 
         // Açılış Selamı (WritingGreetingState & SilkWriting)
         public const double GreetingTextCenterYRatio = 0.3;

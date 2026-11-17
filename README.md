@@ -89,7 +89,7 @@ SpiderDesk/
 │   ├── Insects/           BugEntity, BugSpawner
 │   │   ├── States/        Flying, Perching, Trapped, BeingWrapped
 │   │   └── Species/       Housefly, green fly, golden moth, firefly, wasp
-│   ├── Web/               Web entity, blueprint generator, droplets, pantry
+│   ├── Web/               Web entity, blueprint generator, droplets, pantry, physics constants
 │   ├── Greeting/          The startup greeting written in silk
 │   ├── Performance/       Pure rules: 60 FPS when moving, 20 Hz when still, pause when covered
 │   ├── SimulationEngine   Runs one simulation step per frame

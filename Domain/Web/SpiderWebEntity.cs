@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Windows;
-using SpiderDesk.Domain.Spider;
 
 namespace SpiderDesk.Domain.Web
 {
@@ -40,13 +39,13 @@ namespace SpiderDesk.Domain.Web
 
         public double BreezeOffset { get; private set; }
         public Vector BreezeDirection { get; private set; }
-        private double _breezeCooldown = SpiderTuning.BreezeCooldownBase;
-        private double _breezeDuration = SpiderTuning.BreezeDurationBase;
+        private double _breezeCooldown = WebTuning.BreezeCooldownBase;
+        private double _breezeDuration = WebTuning.BreezeDurationBase;
         private double _breezeElapsedTime = 999.0;
-        private double _breezeMaxStrength = SpiderTuning.BreezeStrengthBase;
+        private double _breezeMaxStrength = WebTuning.BreezeStrengthBase;
 
-        public bool IsVibrating => VibrationAmplitude > SpiderTuning.WebMotionThreshold;
-        public bool IsBreezing => Math.Abs(BreezeOffset) > SpiderTuning.WebMotionThreshold;
+        public bool IsVibrating => VibrationAmplitude > WebTuning.MotionThreshold;
+        public bool IsBreezing => Math.Abs(BreezeOffset) > WebTuning.MotionThreshold;
 
         /// <summary>Ağın telleri (ve üzerindeki varlıklar) şu an rüzgar veya titreşimle kayıyorsa true döner.</summary>
         public bool IsDeforming => IsVibrating || IsBreezing;
@@ -112,10 +111,10 @@ namespace SpiderDesk.Domain.Web
         /// <summary>Tamir yarıda kaldığında alınan teli, sonra tamir edilmek üzere kuyruğa geri koyar.</summary>
         public void ReturnDamagedSegment(WebSegment segment) => _damagedSegments.Enqueue(segment);
 
-        public void TriggerVibration(Point origin, double strength = 6.0)
+        public void TriggerVibration(Point origin, double strength = WebTuning.DefaultVibrationStrength)
         {
             VibrationOrigin = origin;
-            VibrationAmplitude = Math.Min(10.0, Math.Max(VibrationAmplitude, strength));
+            VibrationAmplitude = Math.Min(WebTuning.MaxVibrationAmplitude, Math.Max(VibrationAmplitude, strength));
         }
 
         public void Update(double dt, Random rng)
@@ -137,7 +136,7 @@ namespace SpiderDesk.Domain.Web
                 if (progress >= 1.0)
                 {
                     BreezeOffset = 0;
-                    _breezeCooldown = SpiderTuning.BreezeCooldownBase + rng.NextDouble() * SpiderTuning.BreezeCooldownVariance;
+                    _breezeCooldown = WebTuning.BreezeCooldownBase + rng.NextDouble() * WebTuning.BreezeCooldownVariance;
                 }
                 else
                 {
@@ -154,8 +153,8 @@ namespace SpiderDesk.Domain.Web
                 if (_breezeCooldown <= 0)
                 {
                     _breezeElapsedTime = 0;
-                    _breezeDuration = SpiderTuning.BreezeDurationBase + rng.NextDouble() * SpiderTuning.BreezeDurationVariance;
-                    _breezeMaxStrength = SpiderTuning.BreezeStrengthBase + rng.NextDouble() * SpiderTuning.BreezeStrengthVariance;
+                    _breezeDuration = WebTuning.BreezeDurationBase + rng.NextDouble() * WebTuning.BreezeDurationVariance;
+                    _breezeMaxStrength = WebTuning.BreezeStrengthBase + rng.NextDouble() * WebTuning.BreezeStrengthVariance;
                     double dirX = rng.NextDouble() > 0.5 ? 1.0 : -1.0;
                     double dirY = (rng.NextDouble() - 0.4) * 0.5;
                     Vector dir = new Vector(dirX, dirY);
@@ -168,8 +167,8 @@ namespace SpiderDesk.Domain.Web
 
             if (IsVibrating)
             {
-                VibrationPhase += dt * 38.0;
-                VibrationAmplitude *= Math.Pow(0.18, dt);
+                VibrationPhase += dt * WebTuning.VibrationFrequency;
+                VibrationAmplitude *= Math.Pow(WebTuning.VibrationDecayPerSecond, dt);
             }
             else
             {
@@ -202,33 +201,33 @@ namespace SpiderDesk.Domain.Web
 
             if (brokenCount > 0)
             {
-                TriggerVibration(impactPoint, 9.0);
+                TriggerVibration(impactPoint, WebTuning.TearVibrationStrength);
             }
         }
 
         public void CheckCursorPluck(Point cursorPos, double cursorSpeed, Random rng)
         {
-            if (!IsCompleted || cursorSpeed < 25.0 || _pluckCooldown > 0) return;
+            if (!IsCompleted || cursorSpeed < WebTuning.PluckMinCursorSpeed || _pluckCooldown > 0) return;
 
             Vector toCenter = cursorPos - Center;
-            if (toCenter.LengthSquared > Radius * Radius * 1.35) return;
+            if (toCenter.LengthSquared > Radius * Radius * WebTuning.InteractionRadiusSquaredFactor) return;
 
             foreach (var segment in _completedSegments)
             {
-                if (DistanceToSegmentSquared(cursorPos, segment.Start, segment.End) < SpiderTuning.WebCursorHitDistanceSquared)
+                if (DistanceToSegmentSquared(cursorPos, segment.Start, segment.End) < WebTuning.CursorHitDistanceSquared)
                 {
-                    if (cursorSpeed > SpiderTuning.WebCursorTearSpeed)
+                    if (cursorSpeed > WebTuning.CursorTearSpeed)
                     {
-                        DamageNear(cursorPos, SpiderTuning.WebCursorDamageRadius, maxBrokenSegments: 2, rng);
+                        DamageNear(cursorPos, WebTuning.CursorDamageRadius, maxBrokenSegments: 2, rng);
                     }
                     else
                     {
-                        double strength = Math.Clamp(cursorSpeed * 0.012, 2.5, 7.5);
+                        double strength = Math.Clamp(cursorSpeed * WebTuning.PluckStrengthPerCursorSpeed, WebTuning.MinPluckStrength, WebTuning.MaxPluckStrength);
                         TriggerVibration(cursorPos, strength);
                         RecentCursorPluckPoint = cursorPos;
                     }
 
-                    _pluckCooldown = SpiderTuning.WebPluckCooldownSeconds;
+                    _pluckCooldown = WebTuning.PluckCooldownSeconds;
                     break;
                 }
             }
@@ -260,11 +259,11 @@ namespace SpiderDesk.Domain.Web
             if (!IsCompleted) return false;
 
             Vector toCenter = point - Center;
-            if (toCenter.LengthSquared > Radius * Radius * 1.35) return false;
+            if (toCenter.LengthSquared > Radius * Radius * WebTuning.InteractionRadiusSquaredFactor) return false;
 
             foreach (var segment in _completedSegments)
             {
-                if (DistanceToSegmentSquared(point, segment.Start, segment.End) < SpiderTuning.WebCatchDistanceSquared)
+                if (DistanceToSegmentSquared(point, segment.Start, segment.End) < WebTuning.CatchDistanceSquared)
                 {
                     return true;
                 }

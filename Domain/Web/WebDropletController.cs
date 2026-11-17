@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Windows;
 using SpiderDesk.Core.Settings;
-using SpiderDesk.Domain.Spider;
 
 namespace SpiderDesk.Domain.Web
 {
@@ -14,7 +13,7 @@ namespace SpiderDesk.Domain.Web
     {
         private readonly List<WaterDroplet> _attachedDroplets = new();
         private readonly List<WaterDroplet> _fallingDroplets = new();
-        private double _condensationTimer = 14.0;
+        private double _condensationTimer = WebTuning.InitialCondensationDelay;
         private DewSpawnRatePreset _spawnRate = DewSpawnRatePreset.Normal;
 
         public IReadOnlyList<WaterDroplet> AttachedDroplets => _attachedDroplets;
@@ -35,7 +34,7 @@ namespace SpiderDesk.Domain.Web
         /// <summary>
         /// Ağda yeterince ağır su damlası biriktiğinde örümceğin ağı silkelemesi gerektiğini bildirir.
         /// </summary>
-        public bool IsHeavyWithWater => _attachedDroplets.Count >= 6;
+        public bool IsHeavyWithWater => _attachedDroplets.Count >= WebTuning.HeavyWithWaterDropletCount;
 
         public void Update(double dt, bool isWebCompleted, IReadOnlyList<WebSegment> segments, Random rng)
         {
@@ -57,7 +56,7 @@ namespace SpiderDesk.Domain.Web
             // 2. Mevcut damlalar zamanla çiy biriktirerek biraz büyür
             foreach (var drop in _attachedDroplets)
             {
-                drop.Grow(dt * 0.08);
+                drop.Grow(dt * WebTuning.DewGrowthPerSecond);
             }
 
             // 3. Seçili çiy sıklığına göre yeni çiy damlaları oluşur
@@ -65,7 +64,7 @@ namespace SpiderDesk.Domain.Web
             if (_condensationTimer <= 0)
             {
                 _condensationTimer = GetNextInterval(rng);
-                if (_attachedDroplets.Count < 9)
+                if (_attachedDroplets.Count < WebTuning.MaxDewDropletsPerWeb)
                 {
                     SpawnDropletOnRandomSegment(segments, rng);
                 }
@@ -76,9 +75,9 @@ namespace SpiderDesk.Domain.Web
         {
             if (segments.Count == 0) return;
 
-            for (int i = 0; i < count && _attachedDroplets.Count < SpiderTuning.MaxAttachedDropletsPerWeb; i++)
+            for (int i = 0; i < count && _attachedDroplets.Count < WebTuning.MaxAttachedDropletsPerWeb; i++)
             {
-                SpawnDropletOnRandomSegment(segments, rng, initialRadius: SpiderTuning.InitialDropletRadiusBase + rng.NextDouble() * SpiderTuning.InitialDropletRadiusVariance);
+                SpawnDropletOnRandomSegment(segments, rng, initialRadius: WebTuning.InitialDropletRadiusBase + rng.NextDouble() * WebTuning.InitialDropletRadiusVariance);
             }
         }
 
@@ -89,10 +88,10 @@ namespace SpiderDesk.Domain.Web
             {
                 if (_attachedDroplets[i].SegmentIndex == segmentIndex)
                 {
-                    totalSag += _attachedDroplets[i].Radius * SpiderTuning.DropletSagMultiplier;
+                    totalSag += _attachedDroplets[i].Radius * WebTuning.DropletSagMultiplier;
                 }
             }
-            return Math.Min(SpiderTuning.MaxDropletSag, totalSag);
+            return Math.Min(WebTuning.MaxDropletSag, totalSag);
         }
 
         public Point CalculateDropletWorldPosition(WaterDroplet droplet, IReadOnlyList<WebSegment> segments, Point webCenter)
@@ -115,7 +114,7 @@ namespace SpiderDesk.Domain.Web
                 if (drop.SegmentIndex >= 0 && drop.SegmentIndex < segments.Count)
                 {
                     Point worldPos = CalculateDropletWorldPosition(drop, segments, webCenter);
-                    double initialVy = 45.0 + rng.NextDouble() * 65.0;
+                    double initialVy = WebTuning.ShakenDropletFallSpeedBase + rng.NextDouble() * WebTuning.ShakenDropletFallSpeedVariance;
                     drop.Detach(worldPos, initialVy);
                     _fallingDroplets.Add(drop);
                 }
@@ -137,7 +136,7 @@ namespace SpiderDesk.Domain.Web
                 if (drop.SegmentIndex == brokenSegmentIndex)
                 {
                     Point worldPos = CalculateDropletWorldPosition(drop, segments, webCenter);
-                    double initialVy = 35.0 + rng.NextDouble() * 55.0;
+                    double initialVy = WebTuning.BrokenThreadDropletFallSpeedBase + rng.NextDouble() * WebTuning.BrokenThreadDropletFallSpeedVariance;
                     drop.Detach(worldPos, initialVy);
                     _fallingDroplets.Add(drop);
                     _attachedDroplets.RemoveAt(i);
