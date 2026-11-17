@@ -1,7 +1,7 @@
-using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Media;
 using SpiderDesk.Core.Services;
+using static SpiderDesk.Infrastructure.Windowing.NativeMethods;
 
 namespace SpiderDesk.Infrastructure.Windowing
 {
@@ -10,16 +10,6 @@ namespace SpiderDesk.Infrastructure.Windowing
     /// </summary>
     public class CursorTrackingService : ICursorTrackingService
     {
-        [StructLayout(LayoutKind.Sequential)]
-        private struct Win32Point
-        {
-            public int X;
-            public int Y;
-        }
-
-        [DllImport("user32.dll")]
-        private static extern bool GetCursorPos(out Win32Point pt);
-
         public Point CurrentPosition { get; private set; }
         public Point PreviousPosition { get; private set; }
         public double Speed { get; private set; }
@@ -27,7 +17,7 @@ namespace SpiderDesk.Infrastructure.Windowing
 
         public void Update(Visual referenceVisual, double dt)
         {
-            if (!GetCursorPos(out Win32Point rawPt)) return;
+            if (!GetCursorPos(out POINT rawPt)) return;
 
             Point screenPt = new Point(rawPt.X, rawPt.Y);
 
