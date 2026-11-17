@@ -91,10 +91,11 @@ namespace SpiderDesk.Infrastructure.Windowing
         }
 
         /// <summary>
-        /// Fare doğrudan görünür masaüstünün üzerindeyse veya "Pencerelerin Üstünde Göster" açıksa true döner.
-        /// Pencereler simge durumuna küçültüldüğünde masaüstüne tekrar tıklamaya gerek kalmadan true olur.
+        /// Fare doğrudan görünür masaüstünün üzerindeyse ya da katman en öndeyse ("Pencerelerin Üstünde Göster" açıkken
+        /// veya bir duyuru/not gösterilirken) true döner. Böylece tam ekran bir uygulamanın üstünde not gösteren örümcek
+        /// de fareyle uzaklaştırılabilir. Pencereler simge durumuna küçültüldüğünde masaüstüne tekrar tıklamaya gerek kalmadan true olur.
         /// </summary>
-        public bool IsOverlayInteractive => _alwaysOnTop || _isOverlayInteractive;
+        public bool IsOverlayInteractive => IsTopmost || _isOverlayInteractive;
 
         /// <summary>
         /// Öndeki ya da imlecin altındaki pencere, katmanın bulunduğu monitörde büyütülmüş veya

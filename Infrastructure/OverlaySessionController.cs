@@ -76,6 +76,7 @@ namespace SpiderDesk.Infrastructure
         {
             _trayMenuService.NewWebRequested += () => _engine.CommandNewWeb();
             _trayMenuService.RappelRequested += () => _engine.CommandRappel();
+            _trayMenuService.NoteTestRequested += () => _engine.CommandDeliverNote("Annemi ara");
             _trayMenuService.RainOnWebsRequested += () => _engine.CommandRainOnWebs();
             _trayMenuService.SpawnBugsRequested += count => _engine.SpawnExtraBugs(count);
             _trayMenuService.ClearWebsRequested += () => _engine.ClearWebs();

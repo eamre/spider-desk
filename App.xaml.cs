@@ -75,7 +75,7 @@ namespace SpiderDesk
                 engine.Spider,
                 webRenderer,
                 new BugRenderer(),
-                new SpiderRenderer(),
+                new SpiderRenderer(new NoteRenderer()),
                 new SilkWritingRenderer(() => engine.Spider.Theme)
             );
 

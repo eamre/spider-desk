@@ -17,6 +17,7 @@ namespace SpiderDesk.Rendering
         private readonly Pen _activeSilkPen = DrawingResources.CreateFrozenPen(Color.FromArgb(220, 255, 255, 255), 1.25);
         private readonly Pen _draglinePen = DrawingResources.CreateFrozenPen(Color.FromArgb(75, 240, 248, 255), 0.8);
         private readonly SolidColorBrush _carriedCocoonBrush = DrawingResources.CreateFrozenBrush(Color.FromArgb(235, 245, 250, 255));
+        private readonly IRenderer<CarriedNote> _noteRenderer;
 
         private string _cachedThemeId = string.Empty;
         private Pen _legUpperPen = null!;
@@ -27,8 +28,9 @@ namespace SpiderDesk.Rendering
         private SolidColorBrush _markingBrush = null!;
         private SolidColorBrush _eyeBrush = null!;
 
-        public SpiderRenderer()
+        public SpiderRenderer(IRenderer<CarriedNote> noteRenderer)
         {
+            _noteRenderer = noteRenderer;
             UpdateThemeBrushes(SpiderThemeCatalog.All[0]);
         }
 
@@ -50,6 +52,12 @@ namespace SpiderDesk.Rendering
             else if (spider.DraglineAnchor is { } anchor)
             {
                 dc.DrawLine(_draglinePen, sway.Displace(anchor), sway.Displace(spider.GetSpinneretPosition()));
+            }
+
+            // Örümcek bir not taşıyorsa kart bacakların altında kalır; böylece ön bacaklar kartı tutuyormuş gibi görünür
+            if (spider.CarriedNote is { } note)
+            {
+                _noteRenderer.Render(dc, note);
             }
 
             // 2. Sabit uzunluklu 2-Kemikli Ters Kinematik (IK) Bacaklar

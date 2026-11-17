@@ -28,6 +28,7 @@ namespace SpiderDesk.Infrastructure.Tray
 
         public event Action? NewWebRequested;
         public event Action? RappelRequested;
+        public event Action? NoteTestRequested;
         public event Action? RainOnWebsRequested;
         public event Action<int>? SpawnBugsRequested;
         public event Action? ClearWebsRequested;
@@ -56,6 +57,7 @@ namespace SpiderDesk.Infrastructure.Tray
 
             AddActionItem(menu, "🕸️ Hemen Yeni Ağ Ör", () => NewWebRequested?.Invoke());
             AddActionItem(menu, "🧗 Tavandan İple Sark", () => RappelRequested?.Invoke());
+            AddActionItem(menu, "🧪 Not Testi (geçici)", () => NoteTestRequested?.Invoke());
             AddActionItem(menu, "💧 Ağlara Çiy/Su Damlası Bırak", () => RainOnWebsRequested?.Invoke());
             AddActionItem(menu, "🐛 Ekrana Böcek Gönder (3 Adet)", () => SpawnBugsRequested?.Invoke(3));
             AddActionItem(menu, "🧹 Ağları Temizle", () => ClearWebsRequested?.Invoke());

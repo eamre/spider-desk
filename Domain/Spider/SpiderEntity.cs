@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Windows;
 using SpiderDesk.Domain.Insects;
 using SpiderDesk.Domain.Spider.States;
@@ -16,6 +17,7 @@ namespace SpiderDesk.Domain.Spider
         private readonly SpiderGaitController _gaitController;
         private readonly AutoWebScheduler _autoWebScheduler = new();
         private string? _pendingSilkMessage;
+        private readonly Queue<string> _pendingNotes = new();
 
         public Point Position { get; private set; }
         public double Angle { get; private set; }
@@ -31,12 +33,14 @@ namespace SpiderDesk.Domain.Spider
         public (Point Start, Point End)? ActiveSilkLine { get; set; }
         public Point? DraglineAnchor { get; set; }
         public double? CarriedCocoonSize { get; set; }
+        public CarriedNote? CarriedNote { get; set; }
 
         public int BugsCaught { get; private set; }
         public int Level => 1 + (BugsCaught / SpiderTuning.BugsPerLevel);
         public double SpeedMultiplier { get; set; } = 1.0;
         public int PendingWebRequests { get; private set; }
         public bool HasPendingSilkMessage => _pendingSilkMessage != null;
+        public int PendingNoteCount => _pendingNotes.Count;
 
         public bool HasVisualMotion
         {
@@ -104,6 +108,12 @@ namespace SpiderDesk.Domain.Spider
         /// <summary>Henüz yazılmaya başlanmamış mesajı iptal eder. Yazılmakta olan mesaj yarıda kesilmez.</summary>
         public void CancelPendingSilkMessage() => _pendingSilkMessage = null;
 
+        /// <summary>
+        /// Örümceğe tavandan sarkıp göstermesi için bir not verir (örneğin bir hatırlatma). Örümcek yarıda bırakamayacağı
+        /// bir işteyse (av taşımak, ağ örmek) önce onu bitirir. Birden fazla not gelirse hiçbiri kaybolmaz, sırayla gösterilir.
+        /// </summary>
+        public void RequestNote(string text) => _pendingNotes.Enqueue(text);
+
         public void ClearPendingWebRequests()
         {
             PendingWebRequests = 0;
@@ -127,10 +137,14 @@ namespace SpiderDesk.Domain.Spider
         {
             VelocityVector = new Vector(0, 0);
 
-            if (_pendingSilkMessage is { } message && CurrentState.CanWriteSilkMessage)
+            if (_pendingSilkMessage is { } message && CurrentState.CanStopForMessage)
             {
                 _pendingSilkMessage = null;
                 TransitionTo(WritingSilkMessageState.Announcement(message), world);
+            }
+            else if (_pendingNotes.Count > 0 && CurrentState.CanStopForMessage)
+            {
+                TransitionTo(new DeliveringNoteState(_pendingNotes.Dequeue()), world);
             }
             else if (ShouldFleeFromCursor(world))
             {

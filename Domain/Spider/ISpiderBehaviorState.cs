@@ -12,8 +12,11 @@ namespace SpiderDesk.Domain.Spider
         bool CanEatFromPantry => true;
         bool CanStartScheduledWeb => false;
 
-        /// <summary>Örümcek bu durumdayken yarıda bırakıp ipekle mesaj yazmaya geçebilir mi? (av taşırken veya ağ örerken hayır)</summary>
-        bool CanWriteSilkMessage => false;
+        /// <summary>
+        /// Örümcek bu durumdayken elindeki işi bırakıp bir mesaj gösterebilir mi (ipekle FOCUS/BREAK yazmak ya da tavandan not göstermek)?
+        /// Av taşırken veya ağ örerken hayır: mesaj, örümcek o işi bitirene kadar sırada bekler.
+        /// </summary>
+        bool CanStopForMessage => false;
         bool IsAlwaysAnimating => true;
 
         void Enter(SpiderEntity spider, WorldContext world);

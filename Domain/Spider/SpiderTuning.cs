@@ -65,6 +65,16 @@ namespace SpiderDesk.Domain.Spider
         public const double RappelCursorPushDistance = 72.0;
         public const double RappelCursorPushSpeed = 80.0;
 
+        // Not Getirme (DeliveringNoteState): örümcek baş aşağı sarkar, notu ön iki bacağıyla tutar
+        public const double NoteHoldDistance = 30.0;      // Gövde merkezinden kartın üst kenarına (başın önünde)
+        public const double NoteGripHalfSpan = 15.0;      // Ön bacakların kartı tuttuğu noktalar, ortadan sağa/sola
+        public const double NoteHangSeconds = 20.0;
+        public const double NoteHangHeightRatio = 0.30;   // Kartın okunacağı yükseklik, ekran yüksekliğine oranla
+        public const double NoteScreenEdgeMargin = 170.0; // Geniş kart ekrandan taşmasın
+        public const double NoteFadeInSeconds = 0.4;
+        public const double NoteUprightTolerance = 0.2;   // Örümcek baş aşağı konuma bu kadar (radyan) yaklaşınca not belirir
+        public const double NoteFadeOutDistance = 90.0;   // Tavana bu kadar kala kart tamamen solar
+
         // Ağ Nöbeti ve Devriye (WaitingOnWebState)
         public const double WebPatrolInitialDurationBase = 10.0;
         public const double WebPatrolInitialDurationVariance = 8.0;

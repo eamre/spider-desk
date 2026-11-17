@@ -170,12 +170,19 @@ namespace SpiderDesk.Domain
             Spider.HasPendingSilkMessage || Spider.CurrentState is WritingSilkMessageState { IsAnnouncement: true };
 
         /// <summary>
-        /// Örümcek şu an bir duyuru yazıyorsa ya da yazdığı duyuru hâlâ soluyorsa true döner.
-        /// Bu sürede örümcek ve yazısı, kullanıcı tam ekran bir uygulamadayken bile görünmelidir.
+        /// Örümcek şu an bir duyuru yazıyorsa, yazdığı duyuru hâlâ soluyorsa ya da tavandan bir not gösteriyorsa true döner.
+        /// Bu sürede örümcek ve yazısı/notu, kullanıcı tam ekran bir uygulamadayken bile görünmelidir.
         /// </summary>
-        public bool IsShowingAnnouncement => World.SilkMessage is { IsAnnouncement: true };
+        public bool IsShowingAnnouncement =>
+            World.SilkMessage is { IsAnnouncement: true } || Spider.CarriedNote != null;
 
         public void CommandRappel() => Spider.RequestRappel(World);
+
+        /// <summary>
+        /// Örümcek elindeki işi bitirince tavandan sarkıp bu notu ön bacaklarıyla gösterir.
+        /// Şimdilik yalnızca tepsideki deneme maddesi kullanıyor.
+        /// </summary>
+        public void CommandDeliverNote(string text) => Spider.RequestNote(text);
 
         public void CommandRainOnWebs()
         {
