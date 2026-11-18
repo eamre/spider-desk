@@ -1,0 +1,140 @@
+<Window x:Class="SpiderDesk.Infrastructure.Dialogs.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="SpiderDesk"
+        Icon="pack://application:,,,/SpiderDesk;component/spider.ico"
+        Width="552"
+        Height="672"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        Topmost="True"
+        WindowStartupLocation="Manual"
+        FontSize="13"
+        KeyDown="OnKeyDown">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/SpiderDesk;component/Infrastructure/Dialogs/DarkStyles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <Style x:Key="ComingSoon" TargetType="TextBlock" BasedOn="{StaticResource CardDescription}">
+                <Setter Property="FontSize" Value="13" />
+            </Style>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <!-- Pencerenin çevresinde gölgeye yer kalsın diye 16 piksel boşluk var; pencerenin kendisi Shell'dir -->
+    <Grid x:Name="Root" Margin="16">
+        <!-- Açılırken pencere bu kadar aşağıdan yukarı kayarak gelir -->
+        <Grid.RenderTransform>
+            <TranslateTransform x:Name="RootOffset" />
+        </Grid.RenderTransform>
+
+        <!-- Gölge ayrı bir katmanda: içerikteki yazılar gölge efektinden etkilenip bulanıklaşmasın -->
+        <Border CornerRadius="10" Background="{StaticResource WindowBrush}">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="28" ShadowDepth="8" Direction="270" Opacity="0.5" Color="Black" />
+            </Border.Effect>
+        </Border>
+
+        <Border x:Name="Shell" CornerRadius="10" Background="{StaticResource WindowBrush}"
+                BorderBrush="{StaticResource ShellEdgeBrush}" BorderThickness="1"
+                TextElement.FontFamily="{StaticResource UiFont}" TextElement.Foreground="{StaticResource TextBrush}">
+            <Grid>
+                <!-- Üst köşedeki soluk ışıltı -->
+                <Border CornerRadius="10" Background="{StaticResource AuroraBrush}" IsHitTestVisible="False" />
+
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="52" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <!-- Başlık: simge, ad ve kapatma düğmesi -->
+                    <Grid Grid.Row="0" Margin="18,0,10,0">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <!-- Siyah örümcek simgesi koyu zeminde kaybolmasın diye renkli bir rozetin içinde durur -->
+                            <Border Width="28" Height="28" CornerRadius="8" Background="{StaticResource BadgeBrush}">
+                                <Image Source="pack://application:,,,/SpiderDesk;component/spider.ico" Width="18" Height="18" />
+                            </Border>
+                            <TextBlock Text="SpiderDesk" FontSize="14" FontWeight="SemiBold" Margin="10,0,0,0" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <Button x:Name="CloseButton" Style="{StaticResource CaptionCloseButton}" HorizontalAlignment="Right"
+                                VerticalAlignment="Center" ToolTip="Kapat" Click="OnCloseClicked" />
+                    </Grid>
+
+                    <Grid Grid.Row="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="88" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Sekme şeridi: üstte örümcekle ilgili sekmeler, en altta Ayarlar -->
+                        <DockPanel Grid.Column="0" Margin="8,4,8,12" LastChildFill="False">
+                            <RadioButton x:Name="SettingsNav" DockPanel.Dock="Bottom" Style="{StaticResource RailButton}" Tag="Settings" Checked="OnNavChecked">
+                                <StackPanel>
+                                    <TextBlock Style="{StaticResource RailIcon}" Text="&#xE713;" />
+                                    <TextBlock Text="Ayarlar" HorizontalAlignment="Center" />
+                                </StackPanel>
+                            </RadioButton>
+                            <RadioButton x:Name="SpiderNav" DockPanel.Dock="Top" Style="{StaticResource RailButton}" Tag="Spider" Checked="OnNavChecked">
+                                <StackPanel>
+                                    <TextBlock Style="{StaticResource RailIcon}" Text="&#xEBE8;" />
+                                    <TextBlock Text="Örümcek" HorizontalAlignment="Center" />
+                                </StackPanel>
+                            </RadioButton>
+                            <RadioButton x:Name="PomodoroNav" DockPanel.Dock="Top" Style="{StaticResource RailButton}" Tag="Pomodoro" Checked="OnNavChecked">
+                                <StackPanel>
+                                    <TextBlock Style="{StaticResource RailIcon}" Text="&#xE916;" />
+                                    <TextBlock Text="Pomodoro" HorizontalAlignment="Center" />
+                                </StackPanel>
+                            </RadioButton>
+                            <RadioButton x:Name="RemindersNav" DockPanel.Dock="Top" Style="{StaticResource RailButton}" Tag="Reminders" Checked="OnNavChecked">
+                                <StackPanel>
+                                    <TextBlock Style="{StaticResource RailIcon}" Text="&#xEA8F;" />
+                                    <TextBlock Text="Hatırlatıcılar" HorizontalAlignment="Center" />
+                                </StackPanel>
+                            </RadioButton>
+                        </DockPanel>
+
+                        <!-- İçerik paneli: sol üst köşesi yuvarlak, şeritten biraz daha açık renk -->
+                        <Border Grid.Column="1" Background="{StaticResource PanelBrush}" CornerRadius="10,0,10,0"
+                                BorderBrush="{StaticResource BorderBrush}" BorderThickness="1,1,0,0">
+                            <!-- Her sekmenin içeriği; aynı anda yalnızca biri görünür. Sonraki adımlarda her biri kendi kontrolüne taşınacak. -->
+                            <Grid Margin="22,20,20,20">
+                                <StackPanel x:Name="SpiderPane">
+                                    <TextBlock Style="{StaticResource PaneTitle}" Text="Örümcek" />
+                                    <Border Style="{StaticResource Card}">
+                                        <TextBlock Style="{StaticResource ComingSoon}" Text="Örümceğin durumu ve komutları burada olacak." />
+                                    </Border>
+                                </StackPanel>
+                                <StackPanel x:Name="PomodoroPane">
+                                    <TextBlock Style="{StaticResource PaneTitle}" Text="Pomodoro" />
+                                    <Border Style="{StaticResource Card}">
+                                        <TextBlock Style="{StaticResource ComingSoon}" Text="Geri sayım ve Pomodoro düğmeleri burada olacak." />
+                                    </Border>
+                                </StackPanel>
+                                <StackPanel x:Name="RemindersPane">
+                                    <TextBlock Style="{StaticResource PaneTitle}" Text="Hatırlatıcılar" />
+                                    <Border Style="{StaticResource Card}">
+                                        <TextBlock Style="{StaticResource ComingSoon}" Text="Bekleyen hatırlatmalar burada listelenecek." />
+                                    </Border>
+                                </StackPanel>
+                                <StackPanel x:Name="SettingsPane">
+                                    <TextBlock Style="{StaticResource PaneTitle}" Text="Ayarlar" />
+                                    <Border Style="{StaticResource Card}">
+                                        <TextBlock Style="{StaticResource ComingSoon}" Text="Tema, hız ve diğer ayarlar burada olacak." />
+                                    </Border>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </Grid>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

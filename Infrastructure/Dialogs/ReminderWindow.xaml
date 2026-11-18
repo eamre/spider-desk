@@ -14,18 +14,10 @@
         Foreground="#2F2A24">
 
     <Window.Resources>
-        <SolidColorBrush x:Key="AccentBrush" Color="#6B5B3E" />
-        <SolidColorBrush x:Key="SoftBorderBrush" Color="#D9CFBC" />
-
-        <Style x:Key="SectionTitle" TargetType="TextBlock">
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Margin" Value="0,0,0,6" />
-        </Style>
-
-        <Style TargetType="TextBox">
-            <Setter Property="Padding" Value="6,5" />
-            <Setter Property="BorderBrush" Value="{StaticResource SoftBorderBrush}" />
-        </Style>
+        <ResourceDictionary>
+        <ResourceDictionary.MergedDictionaries>
+            <ResourceDictionary Source="pack://application:,,,/SpiderDesk;component/Infrastructure/Dialogs/DialogStyles.xaml" />
+        </ResourceDictionary.MergedDictionaries>
 
         <!-- Hızlı süre seçenekleri: aynı gruptaki radyo düğmeleri, hap şeklinde düğmeler olarak görünür -->
         <Style x:Key="QuickDelayButton" TargetType="RadioButton">
@@ -52,11 +44,7 @@
                 </Setter.Value>
             </Setter>
         </Style>
-
-        <Style TargetType="Button">
-            <Setter Property="MinWidth" Value="84" />
-            <Setter Property="Padding" Value="10,5" />
-        </Style>
+        </ResourceDictionary>
     </Window.Resources>
 
     <StackPanel Margin="18,16,18,16">

@@ -13,7 +13,7 @@ namespace SpiderDesk.Infrastructure.Tray
     /// <item><see cref="ReminderMenu"/>: hatırlatıcılar (ReminderSessionController kullanır)</item>
     /// <item><see cref="SettingsMenu"/>: kayıtlı ayarlar (SettingsSessionController kullanır)</item>
     /// </list>
-    /// Bu sınıfta kalanlar: örümceğin durum satırı, anlık eylemler (yeni ağ, yağmur, böcek...), Duraklat ve Çıkış.
+    /// Bu sınıfta kalanlar: örümceğin durum satırı, ayarlar penceresini açma (sol tık ya da "Ayarlar"), anlık eylemler (yeni ağ, yağmur, böcek...), Duraklat ve Çıkış.
     /// </summary>
     public sealed class TrayMenuService : INotificationService, IDisposable
     {
@@ -25,6 +25,12 @@ namespace SpiderDesk.Infrastructure.Tray
         public PomodoroMenu Pomodoro { get; }
         public ReminderMenu Reminders { get; }
         public SettingsMenu Settings { get; }
+
+        /// <summary>Menüden "Ayarlar" seçildi: pencere açılmalı.</summary>
+        public event Action? SettingsWindowRequested;
+
+        /// <summary>İkona sol tıklandı: pencere kapalıysa açılmalı, açıksa kapanmalı.</summary>
+        public event Action? IconClicked;
 
         public event Action? NewWebRequested;
         public event Action? RappelRequested;
@@ -45,6 +51,9 @@ namespace SpiderDesk.Infrastructure.Tray
 
             _statusMenuItem = TrayMenuItems.Header("🕷️ Seviye 1 | Başlatılıyor...");
             menu.Items.Add(_statusMenuItem);
+            menu.Items.Add(new ToolStripSeparator());
+
+            menu.Items.Add(TrayMenuItems.Action("⚙️ Ayarlar", () => SettingsWindowRequested?.Invoke()));
             menu.Items.Add(new ToolStripSeparator());
 
             menu.Items.Add(TrayMenuItems.Action("🕸️ Hemen Yeni Ağ Ör", () => NewWebRequested?.Invoke()));
@@ -77,7 +86,11 @@ namespace SpiderDesk.Infrastructure.Tray
                 Visible = true
             };
 
-            _notifyIcon.DoubleClick += (_, _) => SpawnBugsRequested?.Invoke(2);
+            // Sol tık ayarlar penceresini açıp kapatır; sağ tık menüyü açar (bunu NotifyIcon kendisi yapar)
+            _notifyIcon.MouseClick += (_, e) =>
+            {
+                if (e.Button == MouseButtons.Left) IconClicked?.Invoke();
+            };
 
             // Pomodoro çalışırken geri sayım, menüyü açmadan da görülsün diye ikonun ipucunda da yazar
             Pomodoro.CountdownChanged += countdown => SetTooltip(countdown != null ? $"SpiderDesk · 🍅 {countdown}" : DefaultTooltip);

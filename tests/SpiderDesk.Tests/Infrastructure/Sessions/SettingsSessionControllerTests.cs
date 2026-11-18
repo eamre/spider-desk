@@ -1,4 +1,3 @@
-using System.Runtime.ExceptionServices;
 using System.Windows;
 using System.Windows.Forms;
 using SpiderDesk.Core.Services;
@@ -106,25 +105,7 @@ namespace SpiderDesk.Tests.Infrastructure.Sessions
             }
         }
 
-        private static void RunOnSta(Action<Rig> test)
-        {
-            ExceptionDispatchInfo? failure = null;
-            var thread = new Thread(() =>
-            {
-                try
-                {
-                    test(new Rig());
-                }
-                catch (Exception ex)
-                {
-                    failure = ExceptionDispatchInfo.Capture(ex);
-                }
-            });
-            thread.SetApartmentState(ApartmentState.STA);
-            thread.Start();
-            thread.Join();
-            failure?.Throw();
-        }
+        private static void RunOnSta(Action<Rig> test) => StaThread.Run(() => test(new Rig()));
 
         [Fact]
         public void ChoosingATheme_DressesTheSpider_AndSavesIt()

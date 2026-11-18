@@ -8,7 +8,7 @@ using SpiderDesk.Domain.Web;
 namespace SpiderDesk.Rendering
 {
     /// <summary>
-    /// Örümceğin ipekle yazdığı selamı aktif temanın ağ rengiyle çizer.
+    /// Örümceğin ipekle yazdığı yazıyı (açılış selamı, Pomodoro'nun FOCUS / BREAK duyuruları) aktif temanın ağ rengiyle çizer.
     /// Teller çift iplik olarak çizilir; yeni gerilen tel bir an titrer, sonra yatay teller hafifçe sarkar.
     /// Titreme ve sarkma yalnızca görseldir, yazının konumlarını değiştirmez.
     /// </summary>

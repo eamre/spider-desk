@@ -11,6 +11,7 @@ using SpiderDesk.Core.Services;
 using SpiderDesk.Core.Settings;
 using SpiderDesk.Domain;
 using SpiderDesk.Domain.Insects.Species;
+using SpiderDesk.Infrastructure.Dialogs;
 using SpiderDesk.Infrastructure.Platform;
 using SpiderDesk.Infrastructure.Sessions;
 using SpiderDesk.Infrastructure.Storage;
@@ -91,6 +92,11 @@ namespace SpiderDesk
 
             // Yalnızca menünün olaylarına abone olur; menü yaşadıkça o da yaşar, bu yüzden bir değişkende tutulmaz
             _ = new SettingsSessionController(trayMenuService.Settings, engine, settings, canvas, webRenderer, windowLayerService, startupService);
+
+            // Uygulama boyunca tek bir ayarlar penceresi var; tepsinin yanında açılır, kapatılınca gizlenir
+            var settingsWindow = new SettingsWindow();
+            trayMenuService.SettingsWindowRequested += settingsWindow.ShowOrActivate;
+            trayMenuService.IconClicked += settingsWindow.ToggleFromTray;
 
             var mainWindow = new MainWindow(canvas, windowLayerService);
             _sessionController = new OverlaySessionController(
