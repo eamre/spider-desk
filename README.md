@@ -27,7 +27,7 @@ It runs quietly in the background without getting in your way or eating up your 
   </tr>
 </table>
 
-### 🪟 The settings window
+### ⚙️ The settings window
 
 Click the spider icon in the System Tray and this window opens right above it.
 
