@@ -3,13 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using SpiderDesk.Domain;
 using SpiderDesk.Domain.Reminders;
-using SpiderDesk.Infrastructure.Dialogs;
 using SpiderDesk.Infrastructure.Tray;
 
 namespace SpiderDesk.Infrastructure.Sessions
 {
     /// <summary>
-    /// Hatırlatıcıyı tepsi menüsüne, ekleme penceresine, örümceğe ve Windows bildirimlerine bağlar.
+    /// Hatırlatıcıyı "Hatırlatıcılar" sekmesine (<see cref="IReminderView"/>), örümceğe ve Windows bildirimlerine bağlar.
     /// Her karede <see cref="Tick"/> ile o anki saat verilir; zamanı gelen hatırlatma için bildirim gelir
     /// ve örümcek notu tavandan sarkarak gösterir. Her değişiklik reminders.json dosyasına hemen kaydedilir.
     /// </summary>
@@ -18,9 +17,8 @@ namespace SpiderDesk.Infrastructure.Sessions
         private readonly ReminderSchedule _schedule;
         private readonly IReminderRepository _repository;
         private readonly SimulationEngine _engine;
-        private readonly ReminderMenu _menu;
+        private readonly IReminderView _view;
         private readonly INotificationService _notifications;
-        private ReminderWindow? _openWindow;
 
         // Listedeki "Bugün" / "Yarın" yazıları gün değişince eskir; o zaman liste yeniden kurulur
         private DateTime _listShownForDate;
@@ -28,17 +26,17 @@ namespace SpiderDesk.Infrastructure.Sessions
         public ReminderSessionController(
             SimulationEngine engine,
             IReminderRepository repository,
-            ReminderMenu menu,
+            IReminderView view,
             INotificationService notifications)
         {
             _engine = engine;
             _repository = repository;
-            _menu = menu;
+            _view = view;
             _notifications = notifications;
             _schedule = new ReminderSchedule(repository.Load());
 
-            _menu.AddRequested += OpenAddWindow;
-            _menu.DeleteRequested += Delete;
+            _view.ReminderCreated += Add;
+            _view.DeleteRequested += Delete;
 
             ShowList(DateTime.Now);
         }
@@ -73,22 +71,6 @@ namespace SpiderDesk.Infrastructure.Sessions
             }
         }
 
-        private void OpenAddWindow()
-        {
-            // Pencere zaten açıksa ikincisini açmak yerine onu öne getir
-            if (_openWindow != null)
-            {
-                _openWindow.Activate();
-                return;
-            }
-
-            _openWindow = new ReminderWindow();
-            _openWindow.ReminderCreated += Add;
-            _openWindow.Closed += (_, _) => _openWindow = null;
-            _openWindow.Show();
-            _openWindow.Activate();
-        }
-
         private void Add(Reminder reminder)
         {
             _schedule.Add(reminder);
@@ -110,9 +92,9 @@ namespace SpiderDesk.Infrastructure.Sessions
         private void ShowList(DateTime now)
         {
             _listShownForDate = now.Date;
-            _menu.ShowReminders(
-                ReminderText.MenuTitleFor(_schedule.Upcoming.Count),
-                _schedule.Upcoming.Select(reminder => (reminder.Id, ReminderText.ListLabel(reminder, now))).ToList());
+            _view.ShowReminders(_schedule.Upcoming
+                .Select(reminder => new ReminderListItem(reminder.Id, ReminderText.When(reminder.DueAt, now), reminder.Text))
+                .ToList());
         }
     }
 }

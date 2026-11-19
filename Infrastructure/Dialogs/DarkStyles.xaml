@@ -359,6 +359,10 @@
                             <Setter TargetName="Shine" Property="Opacity" Value="0" />
                             <Setter Property="Opacity" Value="0.85" />
                         </Trigger>
+                        <!-- Basılamazken soluk görünür (örneğin metni yazılmamış bir hatırlatmanın "Kaydet"i) -->
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.35" />
+                        </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
@@ -391,6 +395,65 @@
             </Setter.Value>
         </Setter>
     </Style>
+
+    <!-- Koyu metin kutusu: içine tıklayınca alt çizgisi mavi olur (Windows 11'deki gibi) -->
+    <Style x:Key="DarkTextBox" TargetType="TextBox">
+        <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+        <Setter Property="CaretBrush" Value="{StaticResource TextBrush}" />
+        <Setter Property="SelectionBrush" Value="{StaticResource AccentBrush}" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Padding" Value="10,7" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TextBox">
+                    <Grid>
+                        <Border x:Name="Frame" CornerRadius="6" Background="#1F1F1F"
+                                BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" />
+                        <Border x:Name="Underline" Height="2" VerticalAlignment="Bottom" CornerRadius="0,0,6,6"
+                                Background="{StaticResource AccentBrush}" Opacity="0" />
+                        <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}" VerticalAlignment="Center" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Frame" Property="BorderBrush" Value="{StaticResource MutedTextBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Underline" Property="Opacity" Value="1" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Yalnızca simgesi olan yuvarlak düğme (örneğin hatırlatmayı silmek); üstüne gelince kırmızılaşır -->
+    <Style x:Key="DeleteIconButton" TargetType="Button">
+        <Setter Property="Foreground" Value="{StaticResource MutedTextBrush}" />
+        <Setter Property="Width" Value="30" />
+        <Setter Property="Height" Value="30" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="ToolTip" Value="Sil" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid>
+                        <Border x:Name="Back" CornerRadius="15" Background="#33C42B1C" Opacity="0" />
+                        <TextBlock Text="&#xE74D;" FontFamily="{StaticResource IconFont}" FontSize="13"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Back" Property="Opacity" Value="1" />
+                            <Setter Property="Foreground" Value="#FF99A4" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Hatırlatmanın zamanının durduğu mavi hap ("Bugün 14:30") -->
+    <SolidColorBrush x:Key="AccentTintBrush" Color="#1F60CDFF" />
 
     <!-- "Ayarlar kaydedilemedi" gibi uyarıların şeridi -->
     <SolidColorBrush x:Key="WarningBackBrush" Color="#433519" />

@@ -8,19 +8,14 @@ namespace SpiderDesk.Domain.Reminders
     public readonly record struct ReminderNotification(string Title, string Message);
 
     /// <summary>
-    /// Hatırlatmalarla ilgili kullanıcıya gösterilen bütün yazılar: tepsi listesi, bildirim ve örümceğin notu.
+    /// Hatırlatmalarla ilgili kullanıcıya gösterilen bütün yazılar: listedeki zaman, bildirim ve örümceğin notu.
     /// Saat dışarıdan verilir (now); böylece "Bugün" / "Yarın" gibi ifadeler testlerde denenebilir.
     /// </summary>
     public static class ReminderText
     {
-        public const string MenuTitle = "⏰ Hatırlatıcılar";
         public const string MissedNotePrefix = "Kaçırdın: ";
 
         private static readonly CultureInfo Turkish = CultureInfo.GetCultureInfo("tr-TR");
-
-        /// <summary>Tepsi menüsündeki başlık; bekleyen hatırlatma varsa sayısını da gösterir.</summary>
-        public static string MenuTitleFor(int pendingCount) =>
-            pendingCount > 0 ? $"{MenuTitle} ({pendingCount})" : MenuTitle;
 
         /// <summary>Hızlı süre düğmesinin yazısı: "5 dk", "15 dk", "1 saat", "1,5 saat".</summary>
         public static string DelayLabel(TimeSpan delay) =>
@@ -42,9 +37,6 @@ namespace SpiderDesk.Domain.Reminders
                 _ => $"{dueAt.ToString("d MMMM", Turkish)} {clock}"
             };
         }
-
-        /// <summary>Tepsi listesindeki satır, örneğin "Bugün 14:30 · Annemi ara".</summary>
-        public static string ListLabel(Reminder reminder, DateTime now) => $"{When(reminder.DueAt, now)} · {reminder.Text}";
 
         /// <summary>
         /// Zamanı gelen hatırlatmalar için tek bir Windows bildirimi. Bildirimler birbirinin üstüne yazıldığı için

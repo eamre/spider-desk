@@ -6,12 +6,9 @@ namespace SpiderDesk.Infrastructure.Tray
 {
     /// <summary>
     /// Sistem tepsisindeki örümcek ikonu: ipucu yazısı, Windows bildirimleri ve sağ tık menüsü.
-    /// Menünün kendisi parçalardan kurulur; her parça kendi sınıfındadır ve ilgili denetleyici yalnızca kendi parçasını tanır:
-    /// <list type="bullet">
-    /// <item><see cref="ReminderMenu"/>: hatırlatıcılar (ReminderSessionController kullanır)</item>
-    /// </list>
-    /// Bu sınıfta kalanlar: örümceğin durum satırı, ayarlar penceresini açma (sol tık ya da "Ayarlar"), anlık eylemler (yeni ağ, yağmur, böcek...), Duraklat ve Çıkış.
-    /// Kayıtlı ayarlar ve Pomodoro artık ayarlar penceresinin sekmelerindedir; Pomodoro'nun geri sayımı yine de ikonun ipucunda görünür.
+    /// Menüde örümceğin durum satırı, ayarlar penceresini açma (sol tık ya da "Ayarlar"), anlık eylemler (yeni ağ, yağmur, böcek...),
+    /// Duraklat ve Çıkış vardır. Ayarlar, Pomodoro ve hatırlatıcılar ayarlar penceresinin sekmelerindedir;
+    /// Pomodoro'nun geri sayımı yine de ikonun ipucunda görünür.
     /// </summary>
     public sealed class TrayMenuService : INotificationService, ITrayTooltip, IDisposable
     {
@@ -19,8 +16,6 @@ namespace SpiderDesk.Infrastructure.Tray
 
         private readonly NotifyIcon _notifyIcon;
         private readonly ToolStripMenuItem _statusMenuItem;
-
-        public ReminderMenu Reminders { get; }
 
         /// <summary>Menüden "Ayarlar" seçildi: pencere açılmalı.</summary>
         public event Action? SettingsWindowRequested;
@@ -38,9 +33,6 @@ namespace SpiderDesk.Infrastructure.Tray
 
         public TrayMenuService()
         {
-            var keepOpen = new KeepMenuOpen();
-            Reminders = new ReminderMenu(keepOpen);
-
             var menu = new ContextMenuStrip();
 
             _statusMenuItem = TrayMenuItems.Header("🕷️ Seviye 1 | Başlatılıyor...");
@@ -57,15 +49,10 @@ namespace SpiderDesk.Infrastructure.Tray
             menu.Items.Add(TrayMenuItems.Action("🧹 Ağları Temizle", () => ClearWebsRequested?.Invoke()));
 
             menu.Items.Add(new ToolStripSeparator());
-            menu.Items.Add(Reminders.Root);
-
-            menu.Items.Add(new ToolStripSeparator());
             menu.Items.Add(BuildPauseItem());
 
             menu.Items.Add(new ToolStripSeparator());
             menu.Items.Add(TrayMenuItems.Action("❌ Çıkış", () => ExitRequested?.Invoke()));
-
-            keepOpen.AttachTo(menu);
 
             _notifyIcon = new NotifyIcon
             {

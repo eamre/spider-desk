@@ -1,0 +1,79 @@
+<UserControl x:Class="SpiderDesk.Infrastructure.Dialogs.Pages.RemindersPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Sekme pencereye eklenmeden önce kurulduğu için stilleri kendisi yükler -->
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/SpiderDesk;component/Infrastructure/Dialogs/DarkStyles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <DockPanel>
+        <Button x:Name="AddButton" DockPanel.Dock="Top" Style="{StaticResource PillPrimaryButton}" HorizontalAlignment="Left"
+                Margin="0,0,0,12" Click="OnAddClicked">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="&#xE710;" FontFamily="{StaticResource IconFont}" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0" />
+                <TextBlock Text="Hatırlatıcı ekle" />
+            </StackPanel>
+        </Button>
+
+        <!-- Yeni hatırlatma kartı: "Hatırlatıcı ekle"ye basınca listenin üstünde açılır -->
+        <Border x:Name="AddCard" DockPanel.Dock="Top" Style="{StaticResource Card}" Visibility="Collapsed" Margin="0,0,0,12"
+                BorderBrush="{StaticResource AccentBrush}" BorderThickness="1">
+            <StackPanel>
+                <TextBlock Style="{StaticResource CardTitle}" Text="Ne hatırlatayım?" Margin="0,0,0,8" />
+                <TextBox x:Name="NoteInput" Style="{StaticResource DarkTextBox}" TextChanged="OnInputChanged" />
+                <TextBlock x:Name="CharacterCount" HorizontalAlignment="Right" Margin="0,4,0,0" FontSize="11"
+                           Foreground="{StaticResource MutedTextBrush}" />
+
+                <TextBlock Style="{StaticResource CardTitle}" Text="Ne zaman?" Margin="0,4,0,8" />
+                <!-- Düğmeler ReminderTime.QuickDelays listesinden kodda oluşturulur -->
+                <Border Style="{StaticResource SegmentGroup}" HorizontalAlignment="Left">
+                    <StackPanel x:Name="QuickDelayChoices" Orientation="Horizontal" />
+                </Border>
+                <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                    <TextBlock Text="ya da saat:" VerticalAlignment="Center" Margin="0,0,10,0" Foreground="{StaticResource SubTextBrush}" />
+                    <Grid Width="84">
+                        <TextBox x:Name="ClockInput" Style="{StaticResource DarkTextBox}" MaxLength="5" ToolTip="Örneğin 14:30"
+                                 TextChanged="OnClockChanged" />
+                        <!-- Kutu boşken nasıl doldurulacağını gösteren soluk örnek -->
+                        <TextBlock x:Name="ClockPlaceholder" Text="00:00" Margin="11,0,0,0" VerticalAlignment="Center"
+                                   Foreground="{StaticResource MutedTextBrush}" Opacity="0.6" IsHitTestVisible="False" />
+                    </Grid>
+                </StackPanel>
+
+                <Grid Margin="0,16,0,0">
+                    <TextBlock x:Name="DuePreview" VerticalAlignment="Center" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,0,12,0" />
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button x:Name="CancelButton" Style="{StaticResource PillSecondaryButton}" Content="İptal" MinWidth="80"
+                                Margin="0,0,8,0" Click="OnCancelClicked" />
+                        <Button x:Name="SaveButton" Style="{StaticResource PillPrimaryButton}" Content="Kaydet" MinWidth="90"
+                                Click="OnSaveClicked" />
+                    </StackPanel>
+                </Grid>
+            </StackPanel>
+        </Border>
+
+        <Grid>
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,0,10,0" Margin="0,0,-10,0">
+                <!-- Satırlar kodda oluşturulur -->
+                <StackPanel x:Name="ReminderList" />
+            </ScrollViewer>
+
+            <!-- Liste boşken: zil, kısa açıklama -->
+            <StackPanel x:Name="EmptyState" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,0,0,40">
+                <Border Width="56" Height="56" CornerRadius="28" Background="{StaticResource AccentTintBrush}" HorizontalAlignment="Center">
+                    <TextBlock Text="&#xEA8F;" FontFamily="{StaticResource IconFont}" FontSize="22" Foreground="{StaticResource AccentBrush}"
+                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+                <TextBlock Text="Bekleyen hatırlatma yok" FontSize="15" HorizontalAlignment="Center" Margin="0,14,0,4"
+                           Foreground="{StaticResource TextBrush}" />
+                <TextBlock Style="{StaticResource CardDescription}" HorizontalAlignment="Center" TextAlignment="Center" MaxWidth="260"
+                           Text="Zamanı gelince örümcek notu tavandan sarkarak getirir." />
+            </StackPanel>
+        </Grid>
+    </DockPanel>
+</UserControl>

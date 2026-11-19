@@ -117,12 +117,10 @@
                                     <TextBlock DockPanel.Dock="Top" Style="{StaticResource PaneTitle}" Text="Pomodoro" />
                                     <pages:PomodoroPage x:Name="PomodoroPageView" />
                                 </DockPanel>
-                                <StackPanel x:Name="RemindersPane">
-                                    <TextBlock Style="{StaticResource PaneTitle}" Text="Hatırlatıcılar" />
-                                    <Border Style="{StaticResource Card}">
-                                        <TextBlock Style="{StaticResource ComingSoon}" Text="Bekleyen hatırlatmalar burada listelenecek." />
-                                    </Border>
-                                </StackPanel>
+                                <DockPanel x:Name="RemindersPane">
+                                    <TextBlock DockPanel.Dock="Top" Style="{StaticResource PaneTitle}" Text="Hatırlatıcılar" />
+                                    <pages:RemindersPage x:Name="RemindersPageView" />
+                                </DockPanel>
                                 <DockPanel x:Name="SettingsPane">
                                     <TextBlock DockPanel.Dock="Top" Style="{StaticResource PaneTitle}" Text="Ayarlar" />
                                     <pages:SettingsPage x:Name="SettingsPageView" Margin="0,0,-10,0" />

@@ -104,11 +104,11 @@ SpiderDesk/
 ├── Rendering/             Turns the world into WPF drawings: spider, bugs, silk text, the paper note
 │   └── Web/               Web drawing (each web in its own visual)
 ├── Infrastructure/        The Windows side
-│   ├── Dialogs/           The settings flyout next to the tray (one page per tab) and the reminder window
+│   ├── Dialogs/           The settings flyout next to the tray: one page per tab (spider, Pomodoro, reminders, settings)
 │   ├── Platform/          Run at Windows startup (registry) and the system clock
 │   ├── Sessions/          The frame loop, and wiring the tray menus to the spider: settings, Pomodoro, reminders
 │   ├── Storage/           Saves settings.json and reminders.json
-│   ├── Tray/              Tray icon, its Pomodoro tooltip, notifications and the reminder menu
+│   ├── Tray/              Tray icon, its small menu, the Pomodoro tooltip and notifications
 │   └── Windowing/         Click-through window, cursor, fullscreen detection (Win32 behind interfaces, tested with a fake desktop)
 ├── tests/SpiderDesk.Tests/  xUnit tests, same folder layout as the app (run: dotnet test)
 ├── App.xaml.cs            Composition root: creates and wires everything together

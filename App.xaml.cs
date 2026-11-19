@@ -88,9 +88,9 @@ namespace SpiderDesk
             trayMenuService.SettingsWindowRequested += settingsWindow.ShowOrActivate;
             trayMenuService.IconClicked += settingsWindow.ToggleFromTray;
 
-            // Her denetleyici yalnızca kendi sekmesini (ya da menü parçasını) ve bildirim arayüzünü tanır
+            // Her denetleyici yalnızca kendi sekmesini ve bildirim arayüzünü tanır
             var pomodoro = new PomodoroSessionController(engine, settings, settingsWindow.PomodoroPage, trayMenuService, trayMenuService);
-            var reminders = new ReminderSessionController(engine, new JsonReminderRepository(), trayMenuService.Reminders, trayMenuService);
+            var reminders = new ReminderSessionController(engine, new JsonReminderRepository(), settingsWindow.RemindersPage, trayMenuService);
 
             // Yalnızca "Ayarlar" sekmesinin olaylarına abone olur; sekme yaşadıkça o da yaşar, bu yüzden bir değişkende tutulmaz
             _ = new SettingsSessionController(settingsWindow.SettingsPage, engine, settings, canvas, webRenderer, windowLayerService, startupService);

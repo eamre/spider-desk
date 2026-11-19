@@ -1,5 +1,4 @@
 using System;
-using System.Globalization;
 using System.Windows;
 using System.Windows.Media;
 using SpiderDesk.Domain.Spider;
@@ -8,20 +7,15 @@ namespace SpiderDesk.Rendering
 {
     /// <summary>
     /// Örümceğin ön bacaklarıyla tuttuğu kâğıt notu çizer: el yazısı gibi bir yazı tipiyle, hafif gölgeli krem bir kart.
-    /// Kartın genişliği metne göre ayarlanır, uzun metin alt satıra geçer.
+    /// Kartın genişliği metne göre ayarlanır; yazıyı satırlara <see cref="NoteTextLayout"/> dizer.
     /// </summary>
     public sealed class NoteRenderer : IRenderer<CarriedNote>
     {
-        private const double FontSize = 15.0;
-        private const double MaxTextWidth = 190.0;
         private const double MinCardWidth = 96.0;
         private const double PaddingX = 14.0;
         private const double PaddingY = 10.0;
         private const double CornerRadius = 3.0;
         private static readonly Vector ShadowOffset = new(2.0, 3.0);
-
-        private static readonly Typeface HandwritingTypeface = new(
-            new FontFamily("Segoe Print, Segoe UI"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
 
         private readonly SolidColorBrush _paperBrush = DrawingResources.CreateFrozenBrush(Color.FromRgb(255, 251, 236));
         private readonly SolidColorBrush _shadowBrush = DrawingResources.CreateFrozenBrush(Color.FromArgb(55, 0, 0, 0));
@@ -46,7 +40,7 @@ namespace SpiderDesk.Rendering
             dc.DrawRoundedRectangle(_shadowBrush, null, Rect.Offset(card, ShadowOffset), CornerRadius, CornerRadius);
             dc.DrawRoundedRectangle(_paperBrush, _edgePen, card, CornerRadius, CornerRadius);
             // Ortalı hizalamada FormattedText satırları MaxTextWidth genişliğindeki kutunun içinde kendisi ortalar
-            dc.DrawText(text, new Point(note.TopCenter.X - MaxTextWidth / 2, card.Y + PaddingY));
+            dc.DrawText(text, new Point(note.TopCenter.X - NoteTextLayout.MaxTextWidth / 2, card.Y + PaddingY));
             dc.Pop();
             dc.Pop();
         }
@@ -58,18 +52,7 @@ namespace SpiderDesk.Rendering
                 return _cachedFormattedText;
             }
 
-            var formatted = new FormattedText(
-                text,
-                CultureInfo.CurrentUICulture,
-                FlowDirection.LeftToRight,
-                HandwritingTypeface,
-                FontSize,
-                _inkBrush,
-                PixelsPerDip())
-            {
-                MaxTextWidth = MaxTextWidth,
-                TextAlignment = TextAlignment.Center
-            };
+            FormattedText formatted = NoteTextLayout.Create(text, _inkBrush, PixelsPerDip());
 
             _cachedText = text;
             _cachedFormattedText = formatted;

@@ -10,15 +10,6 @@ namespace SpiderDesk.Tests.Domain.Reminders
         private static Reminder Due(DateTime dueAt, string text = "Annemi ara") => Reminder.Create(text, dueAt);
 
         [Theory]
-        [InlineData(0, "⏰ Hatırlatıcılar")]
-        [InlineData(1, "⏰ Hatırlatıcılar (1)")]
-        [InlineData(3, "⏰ Hatırlatıcılar (3)")]
-        public void MenuTitle_ShowsHowManyAreWaiting(int count, string expected)
-        {
-            Assert.Equal(expected, ReminderText.MenuTitleFor(count));
-        }
-
-        [Theory]
         [InlineData(5, "5 dk")]
         [InlineData(15, "15 dk")]
         [InlineData(30, "30 dk")]
@@ -74,14 +65,6 @@ namespace SpiderDesk.Tests.Domain.Reminders
             var lateEvening = new DateTime(2026, 11, 17, 23, 50, 0);
 
             Assert.Equal("Yarın 00:10", ReminderText.When(new DateTime(2026, 11, 18, 0, 10, 0), lateEvening));
-        }
-
-        [Fact]
-        public void ListLabel_ShowsTheTimeAndTheText()
-        {
-            var reminder = Due(new DateTime(2026, 11, 17, 14, 30, 0));
-
-            Assert.Equal("Bugün 14:30 · Annemi ara", ReminderText.ListLabel(reminder, Now));
         }
 
         [Fact]

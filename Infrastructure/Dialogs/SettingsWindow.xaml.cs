@@ -1,6 +1,5 @@
 using System;
 using System.ComponentModel;
-using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -37,6 +36,9 @@ namespace SpiderDesk.Infrastructure.Dialogs
 
         /// <summary>"Pomodoro" sekmesi; <see cref="Sessions.PomodoroSessionController"/> buna bağlanır.</summary>
         public Pages.PomodoroPage PomodoroPage => PomodoroPageView;
+
+        /// <summary>"Hatırlatıcılar" sekmesi; <see cref="Sessions.ReminderSessionController"/> buna bağlanır.</summary>
+        public Pages.RemindersPage RemindersPage => RemindersPageView;
 
         /// <summary>
         /// True ise pencere her açılışta tepsinin yanına yerleşir. Testler pencereyi ekranın dışında tutmak için kapatır.
@@ -98,11 +100,11 @@ namespace SpiderDesk.Infrastructure.Dialogs
             Hide();
         }
 
-        // Pencerenin dışına tıklanınca gizlen. Bu pencereden açılan bir pencere (örneğin "Hatırlatıcı ekle") öne geldiyse gizlenme.
+        // Pencerenin dışına tıklanınca gizlen
         protected override void OnDeactivated(EventArgs e)
         {
             base.OnDeactivated(e);
-            if (!IsVisible || OwnedWindows.Cast<Window>().Any(owned => owned.IsVisible)) return;
+            if (!IsVisible) return;
 
             _lastAutoHiddenAt = DateTime.UtcNow;
             Hide();
