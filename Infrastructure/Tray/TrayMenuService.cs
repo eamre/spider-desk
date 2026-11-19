@@ -5,17 +5,15 @@ using System.Windows.Forms;
 namespace SpiderDesk.Infrastructure.Tray
 {
     /// <summary>
-    /// Sistem tepsisindeki örümcek ikonu: ipucu yazısı, Windows bildirimleri ve sağ tık menüsü.
-    /// Menüde örümceğin durum satırı, ayarlar penceresini açma (sol tık ya da "Ayarlar"), anlık eylemler (yeni ağ, yağmur, böcek...),
-    /// Duraklat ve Çıkış vardır. Ayarlar, Pomodoro ve hatırlatıcılar ayarlar penceresinin sekmelerindedir;
-    /// Pomodoro'nun geri sayımı yine de ikonun ipucunda görünür.
+    /// Sistem tepsisindeki örümcek ikonu: ipucu yazısı, Windows bildirimleri ve küçük bir sağ tık menüsü
+    /// (Ayarlar, Duraklat, Çıkış). İkona sol tıklamak ayarlar penceresini açıp kapatır; örümceğin durumu, komutları,
+    /// Pomodoro, hatırlatıcılar ve ayarlar oradaki sekmelerdedir. Pomodoro'nun geri sayımı yine de ikonun ipucunda görünür.
     /// </summary>
     public sealed class TrayMenuService : INotificationService, ITrayTooltip, IDisposable
     {
         private const string DefaultTooltip = "SpiderDesk - Masaüstü Örümceği";
 
         private readonly NotifyIcon _notifyIcon;
-        private readonly ToolStripMenuItem _statusMenuItem;
 
         /// <summary>Menüden "Ayarlar" seçildi: pencere açılmalı.</summary>
         public event Action? SettingsWindowRequested;
@@ -23,11 +21,6 @@ namespace SpiderDesk.Infrastructure.Tray
         /// <summary>İkona sol tıklandı: pencere kapalıysa açılmalı, açıksa kapanmalı.</summary>
         public event Action? IconClicked;
 
-        public event Action? NewWebRequested;
-        public event Action? RappelRequested;
-        public event Action? RainOnWebsRequested;
-        public event Action<int>? SpawnBugsRequested;
-        public event Action? ClearWebsRequested;
         public event Action<bool>? PauseChanged;
         public event Action? ExitRequested;
 
@@ -35,24 +28,11 @@ namespace SpiderDesk.Infrastructure.Tray
         {
             var menu = new ContextMenuStrip();
 
-            _statusMenuItem = TrayMenuItems.Header("🕷️ Seviye 1 | Başlatılıyor...");
-            menu.Items.Add(_statusMenuItem);
-            menu.Items.Add(new ToolStripSeparator());
-
-            menu.Items.Add(TrayMenuItems.Action("⚙️ Ayarlar", () => SettingsWindowRequested?.Invoke()));
-            menu.Items.Add(new ToolStripSeparator());
-
-            menu.Items.Add(TrayMenuItems.Action("🕸️ Hemen Yeni Ağ Ör", () => NewWebRequested?.Invoke()));
-            menu.Items.Add(TrayMenuItems.Action("🧗 Tavandan İple Sark", () => RappelRequested?.Invoke()));
-            menu.Items.Add(TrayMenuItems.Action("💧 Ağlara Çiy/Su Damlası Bırak", () => RainOnWebsRequested?.Invoke()));
-            menu.Items.Add(TrayMenuItems.Action("🐛 Ekrana Böcek Gönder (3 Adet)", () => SpawnBugsRequested?.Invoke(3)));
-            menu.Items.Add(TrayMenuItems.Action("🧹 Ağları Temizle", () => ClearWebsRequested?.Invoke()));
-
-            menu.Items.Add(new ToolStripSeparator());
+            menu.Items.Add(MenuAction("⚙️ Ayarlar", () => SettingsWindowRequested?.Invoke()));
             menu.Items.Add(BuildPauseItem());
 
             menu.Items.Add(new ToolStripSeparator());
-            menu.Items.Add(TrayMenuItems.Action("❌ Çıkış", () => ExitRequested?.Invoke()));
+            menu.Items.Add(MenuAction("❌ Çıkış", () => ExitRequested?.Invoke()));
 
             _notifyIcon = new NotifyIcon
             {
@@ -69,6 +49,14 @@ namespace SpiderDesk.Infrastructure.Tray
             };
         }
 
+        /// <summary>Tıklanınca bir iş yapan ve menüyü kapatan madde.</summary>
+        private static ToolStripMenuItem MenuAction(string text, Action onClick)
+        {
+            var item = new ToolStripMenuItem(text);
+            item.Click += (_, _) => onClick();
+            return item;
+        }
+
         private ToolStripMenuItem BuildPauseItem()
         {
             var pauseItem = new ToolStripMenuItem("⏸️ Duraklat") { CheckOnClick = true };
@@ -80,9 +68,6 @@ namespace SpiderDesk.Infrastructure.Tray
             };
             return pauseItem;
         }
-
-        public void UpdateStatus(int level, int satietyPercent, string stateDisplayName, int bugsCaught) =>
-            TrayMenuItems.SetTextIfChanged(_statusMenuItem, $"🕷️ Sv.{level} | Tokluk: %{satietyPercent} | {stateDisplayName} | Av: {bugsCaught}");
 
         /// <summary>Ekranın sağ altında Windows bildirimi gösterir; tam ekran bir uygulama açıkken de görünür.</summary>
         public void ShowNotification(string title, string message) =>

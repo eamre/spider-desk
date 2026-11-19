@@ -21,10 +21,6 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="pack://application:,,,/SpiderDesk;component/Infrastructure/Dialogs/DarkStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
-
-            <Style x:Key="ComingSoon" TargetType="TextBlock" BasedOn="{StaticResource CardDescription}">
-                <Setter Property="FontSize" Value="13" />
-            </Style>
         </ResourceDictionary>
     </Window.Resources>
 
@@ -105,14 +101,13 @@
                         <!-- İçerik paneli: sol üst köşesi yuvarlak, şeritten biraz daha açık renk -->
                         <Border Grid.Column="1" Background="{StaticResource PanelBrush}" CornerRadius="10,0,10,0"
                                 BorderBrush="{StaticResource BorderBrush}" BorderThickness="1,1,0,0">
-                            <!-- Her sekmenin içeriği; aynı anda yalnızca biri görünür. Sonraki adımlarda her biri kendi kontrolüne taşınacak. -->
+                            <!-- Her sekmenin içeriği kendi kontrolündedir (Dialogs/Pages); aynı anda yalnızca biri görünür -->
+
                             <Grid Margin="22,20,20,20">
-                                <StackPanel x:Name="SpiderPane">
-                                    <TextBlock Style="{StaticResource PaneTitle}" Text="Örümcek" />
-                                    <Border Style="{StaticResource Card}">
-                                        <TextBlock Style="{StaticResource ComingSoon}" Text="Örümceğin durumu ve komutları burada olacak." />
-                                    </Border>
-                                </StackPanel>
+                                <DockPanel x:Name="SpiderPane">
+                                    <TextBlock DockPanel.Dock="Top" Style="{StaticResource PaneTitle}" Text="Örümcek" />
+                                    <pages:SpiderPage x:Name="SpiderPageView" />
+                                </DockPanel>
                                 <DockPanel x:Name="PomodoroPane">
                                     <TextBlock DockPanel.Dock="Top" Style="{StaticResource PaneTitle}" Text="Pomodoro" />
                                     <pages:PomodoroPage x:Name="PomodoroPageView" />

@@ -11,8 +11,8 @@ namespace SpiderDesk.Infrastructure.Sessions
 {
     /// <summary>
     /// Simülasyon döngüsü zamanlayıcısını (DispatcherTimer), adaptif kare hızı (FPS) yönetimini
-    /// ve tepsideki anlık komutların (yeni ağ, yağmur, böcek, Duraklat, Çıkış) simülasyona bağlanmasını koordine eder.
-    /// Kayıtlı ayarlar <see cref="SettingsSessionController"/>'da, Pomodoro ve hatırlatıcılar kendi denetleyicilerindedir.
+    /// ve tepsideki Duraklat ile Çıkış'ı koordine eder. Her karede Pomodoro'ya, hatırlatıcılara ve "Örümcek" sekmesine saati verir.
+    /// Örümceğe verilen komutlar <see cref="SpiderSessionController"/>'da, kayıtlı ayarlar <see cref="SettingsSessionController"/>'dadır.
     /// </summary>
     public sealed class OverlaySessionController : IDisposable
     {
@@ -24,6 +24,7 @@ namespace SpiderDesk.Infrastructure.Sessions
         private readonly TrayMenuService _trayMenuService;
         private readonly PomodoroSessionController _pomodoro;
         private readonly ReminderSessionController _reminders;
+        private readonly SpiderSessionController _spider;
         private readonly DispatcherTimer _timer;
         private readonly AnnouncementCurtain _curtain = new();
 
@@ -40,7 +41,8 @@ namespace SpiderDesk.Infrastructure.Sessions
             ICursorTrackingService cursorService,
             TrayMenuService trayMenuService,
             PomodoroSessionController pomodoro,
-            ReminderSessionController reminders)
+            ReminderSessionController reminders,
+            SpiderSessionController spider)
         {
             _hostWindow = hostWindow;
             _engine = engine;
@@ -50,6 +52,7 @@ namespace SpiderDesk.Infrastructure.Sessions
             _trayMenuService = trayMenuService;
             _pomodoro = pomodoro;
             _reminders = reminders;
+            _spider = spider;
 
             BindTrayEvents();
 
@@ -65,12 +68,6 @@ namespace SpiderDesk.Infrastructure.Sessions
 
         private void BindTrayEvents()
         {
-            _trayMenuService.NewWebRequested += () => _engine.CommandNewWeb();
-            _trayMenuService.RappelRequested += () => _engine.CommandRappel();
-            _trayMenuService.RainOnWebsRequested += () => _engine.CommandRainOnWebs();
-            _trayMenuService.SpawnBugsRequested += count => _engine.SpawnExtraBugs(count);
-            _trayMenuService.ClearWebsRequested += () => _engine.ClearWebs();
-
             _trayMenuService.PauseChanged += paused => _isPaused = paused;
             _trayMenuService.ExitRequested += () =>
             {
@@ -148,12 +145,7 @@ namespace SpiderDesk.Infrastructure.Sessions
 
             _wasOccluded = isOccluded;
 
-            _trayMenuService.UpdateStatus(
-                _engine.Spider.Level,
-                _engine.Spider.Metabolism.SatietyPercent,
-                _engine.Spider.CurrentState.DisplayName,
-                _engine.Spider.BugsCaught
-            );
+            _spider.ShowStatus();
         }
 
         public void Dispose()

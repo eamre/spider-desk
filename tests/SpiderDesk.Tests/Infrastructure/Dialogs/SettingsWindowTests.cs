@@ -1,5 +1,8 @@
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Interop;
+using System.Windows.Threading;
 using SpiderDesk.Infrastructure.Dialogs;
 
 namespace SpiderDesk.Tests.Infrastructure.Dialogs
@@ -31,6 +34,28 @@ namespace SpiderDesk.Tests.Infrastructure.Dialogs
                 window.Dispatcher.InvokeShutdown();
             }
         });
+
+        // Pencerenin çizim ve animasyon işleri yürüsün diye verilen süre boyunca mesajları işler
+        private static void WaitWhileTheWindowRuns(TimeSpan duration)
+        {
+            var frame = new DispatcherFrame();
+            var timer = new DispatcherTimer { Interval = duration };
+            timer.Tick += (_, _) =>
+            {
+                timer.Stop();
+                frame.Continue = false;
+            };
+            timer.Start();
+            Dispatcher.PushFrame(frame);
+        }
+
+        // Kapanış önce içeriği söndürür, sonra pencereyi gizler; pencere gizlenene kadar (en fazla bir saniye) bekler
+        private static void WaitUntilHidden(SettingsWindow window)
+        {
+            for (int i = 0; i < 20 && window.IsVisible; i++) WaitWhileTheWindowRuns(TimeSpan.FromMilliseconds(50));
+        }
+
+        private static UIElement Content(SettingsWindow window) => (UIElement)window.FindName("Root");
 
         private static FrameworkElement Pane(SettingsWindow window, string name) => (FrameworkElement)window.FindName(name);
 
@@ -87,6 +112,7 @@ namespace SpiderDesk.Tests.Infrastructure.Dialogs
                 Assert.True(window.IsVisible);
 
                 window.Close();
+                WaitUntilHidden(window);
                 Assert.False(window.IsVisible);
 
                 // Gerçekten kapansaydı burada "kapanmış pencere yeniden gösterilemez" hatası verirdi
@@ -118,6 +144,7 @@ namespace SpiderDesk.Tests.Infrastructure.Dialogs
                 Assert.True(window.IsVisible);
 
                 window.ToggleFromTray();
+                WaitUntilHidden(window);
                 Assert.False(window.IsVisible);
             });
         }
@@ -142,10 +169,127 @@ namespace SpiderDesk.Tests.Infrastructure.Dialogs
                 window.ShowOrActivate();
                 window.ShowTab(SettingsTab.Pomodoro);
                 window.Close();
+                WaitUntilHidden(window);
 
                 window.ShowOrActivate();
 
                 Assert.Equal(SettingsTab.Pomodoro, window.CurrentTab);
+            });
+        }
+
+        // Windows pencereyi gösterirken hemen çizer. O anda içerik görünür olursa açılış animasyonu onu
+        // görünmez hâle çekip yeniden getirir: pencere açılır, bir an kaybolur, sonra tekrar belirir.
+        [Fact]
+        public void WhenTheWindowAppears_ItsContentIsStillInvisible_SoTheOpeningDoesNotFlicker()
+        {
+            WithWindow(window =>
+            {
+                UIElement root = Content(window);
+                var opacityWhenShown = new List<double>();
+                window.IsVisibleChanged += (_, e) =>
+                {
+                    if ((bool)e.NewValue) opacityWhenShown.Add(root.Opacity);
+                };
+
+                window.ShowOrActivate();
+                // İlk açılışın animasyonu bitsin: içerik tam görünür olur
+                WaitWhileTheWindowRuns(TimeSpan.FromMilliseconds(500));
+                Assert.Equal(1.0, root.Opacity);
+
+                window.Close();
+                WaitUntilHidden(window);
+                window.ShowOrActivate();
+
+                Assert.Equal(new[] { 0.0, 0.0 }, opacityWhenShown);
+            });
+        }
+
+        // Gizlenen pencere son çizilen karesini saklar ve yeniden gösterilince bir an onu gösterir.
+        // Bu son kare görünmez olsun diye pencere kapanırken önce içeriği söndürür, sonra gizlenir.
+        [Fact]
+        public void Closing_FadesTheContentOutBeforeHiding_SoTheNextOpeningDoesNotFlashTheOldImage()
+        {
+            WithWindow(window =>
+            {
+                UIElement root = Content(window);
+                window.ShowOrActivate();
+                WaitWhileTheWindowRuns(TimeSpan.FromMilliseconds(500));
+
+                double? opacityWhenHidden = null;
+                window.IsVisibleChanged += (_, e) =>
+                {
+                    if (!(bool)e.NewValue) opacityWhenHidden = root.Opacity;
+                };
+
+                window.Close();
+                Assert.True(window.IsVisible); // önce söner, hemen gizlenmez
+                WaitUntilHidden(window);
+
+                Assert.False(window.IsVisible);
+                Assert.Equal(0.0, opacityWhenHidden);
+            });
+        }
+
+        [Fact]
+        public void OpeningAgainWhileFadingOut_KeepsTheWindowOpen()
+        {
+            WithWindow(window =>
+            {
+                window.ShowOrActivate();
+                WaitWhileTheWindowRuns(TimeSpan.FromMilliseconds(500));
+
+                window.Close();
+                window.ShowOrActivate();
+                WaitWhileTheWindowRuns(TimeSpan.FromMilliseconds(500));
+
+                Assert.True(window.IsVisible);
+                Assert.Equal(1.0, Content(window).Opacity);
+            });
+        }
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr SendMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
+
+        // Testteki pencere odak almaz, bu yüzden "dışına tıklandı" bilgisi kendiliğinden gelmez.
+        // Windows'un gönderdiği mesajların aynısını gönderir: önce "odak sende", sonra "odağı kaybettin".
+        private static void ClickOutside(SettingsWindow window)
+        {
+            const uint WM_ACTIVATE = 0x0006;
+            IntPtr hwnd = new WindowInteropHelper(window).Handle;
+            SendMessage(hwnd, WM_ACTIVATE, new IntPtr(1), IntPtr.Zero);
+            SendMessage(hwnd, WM_ACTIVATE, IntPtr.Zero, IntPtr.Zero);
+        }
+
+        [Fact]
+        public void ClickingOutside_ClosesTheWindow()
+        {
+            WithWindow(window =>
+            {
+                window.ShowOrActivate();
+                WaitWhileTheWindowRuns(TimeSpan.FromMilliseconds(500));
+
+                ClickOutside(window);
+                WaitUntilHidden(window);
+
+                Assert.False(window.IsVisible);
+            });
+        }
+
+        [Fact]
+        public void ClickingTheTrayIconToCloseTheWindow_DoesNotReopenItWhileItFades()
+        {
+            WithWindow(window =>
+            {
+                window.ShowOrActivate();
+                WaitWhileTheWindowRuns(TimeSpan.FromMilliseconds(500));
+
+                // Tepsi ikonuna tıklamak önce pencerenin dışına tıklamaktır: pencere sönmeye başlar,
+                // hemen ardından ikonun tıklaması gelir. Bu tıklama pencereyi kapatmalı, yeniden açmamalı.
+                ClickOutside(window);
+                window.ToggleFromTray();
+                WaitUntilHidden(window);
+
+                Assert.False(window.IsVisible);
             });
         }
     }

@@ -26,11 +26,11 @@ It runs quietly in the background without getting in your way or eating up your 
 - **🕷️ Procedural walking:** Crawls around naturally with 8-legged Inverse Kinematics (IK) physics.
 - **🕸️ Web weaving:** Spins both round orb webs and cozy corner webs.
 - **🐛 Bug hunting:** Catches wandering flies, moths, fireflies, and wasps, wraps them in silk, and stores them in its pantry.
-- **💧 Rain & Dew physics:** Water droplets collect on the silk threads (or can be washed via the tray menu). When the web sags under their weight, the spider walks over and shakes them off.
+- **💧 Rain & Dew physics:** Water droplets collect on the silk threads (or you can rain on them from the settings window). When the web sags under their weight, the spider walks over and shakes them off.
 - **🍃 Light breeze:** An occasional room breeze gently sways the webs.
 - **👋 Silk greeting:** On startup the spider writes a greeting for the time of day (*GOOD MORNING, HELLO, GOOD EVENING, GOOD NIGHT*) in silk, then spins its first web.
-- **🍅 Pomodoro timer:** Start 25/5 or 50/10 minute focus sessions from the tray. When a session ends you get a notification and the spider writes **FOCUS** or **BREAK** in silk, even on top of a fullscreen app, with only the spider and its text visible. The countdown starts once the spider has finished writing.
-- **⏰ Reminders:** Add a reminder from the tray (*in 5/15/30 minutes, an hour, or at 14:30*). When it is time, you get a notification and the spider rappels down from the top of the screen holding a paper note with your text, even on top of a fullscreen app. Reminders are saved, so ones you missed while the computer was off are shown the next time it starts.
+- **🍅 Pomodoro timer:** Start 25/5 or 50/10 minute focus sessions from the settings window, with a countdown ring you can pause and resume. When a session ends you get a notification and the spider writes **FOCUS** or **BREAK** in silk, even on top of a fullscreen app, with only the spider and its text visible. The countdown starts once the spider has finished writing.
+- **⏰ Reminders:** Add a reminder from the settings window (*in 5/15/30 minutes, an hour, or at 14:30*). When it is time, you get a notification and the spider rappels down from the top of the screen holding a paper note with your text, even on top of a fullscreen app. Reminders are saved, so ones you missed while the computer was off are shown the next time it starts.
 - **🖱️ Click-through:** Lives behind your work and games. You can click right through the webs without anything getting blocked.
 
 ---
@@ -59,20 +59,19 @@ dotnet publish -c Release -r win-x64 --self-contained false -p:PublishSingleFile
 
 The compiled executable will be located in `./publish/SpiderDesk.exe`.
 
-> **Note:** SpiderDesk stores your chosen preferences (selected theme, spawn rates, Pomodoro length) in `%LocalAppData%\SpiderDesk\settings.json`, and your reminders in `reminders.json` next to it. If enabled from the tray menu, it can also create an optional Windows startup shortcut.
+> **Note:** SpiderDesk stores your chosen preferences (selected theme, spawn rates, Pomodoro length) in `%LocalAppData%\SpiderDesk\settings.json`, and your reminders in `reminders.json` next to it. If enabled in the settings window, it can also add itself to the programs Windows starts at sign-in.
 
 ---
 
 ## 🎮 Controls
 
-Right-click the **Spider icon in the System Tray** (by the clock) to:
-- ⏰ Add a reminder, or click one in the list to delete it
-- 🍅 Start, pause, resume or finish a Pomodoro and choose 25/5 or 50/10 minutes (the countdown is shown right in the menu)
-- 🎨 Change themes (*Black Widow, Frost Crystal, Forest Tarantula, Cyber Neon*)
-- 🕸️ Tell it to weave a new web or rappel down on a thread
-- 🌧️ Trigger rain on webs (spawn water droplets)
-- 🐛 Spawn a few extra bugs
-- ⏸️ Pause the simulation
+**Click the spider icon in the System Tray** (by the clock) to open the settings window right above it. Click outside it, press Esc or click the icon again to close it. It has four tabs:
+- 🕷️ **Spider:** its level and how many bugs until the next one, how full it is, what it is doing now, and commands: weave a new web, rappel down, rain on the webs, send bugs, clear the webs
+- 🍅 **Pomodoro:** a countdown ring with start, pause, resume and finish, and 25/5 or 50/10 minutes (the countdown also shows when you hover over the tray icon)
+- ⏰ **Reminders:** your waiting reminders, and a card to add a new one (type *1959* and it becomes *19:59*)
+- ⚙️ **Settings:** theme (*Black Widow, Frost Crystal, Forest Tarantula, Cyber Neon*), day/night, speeds, always on top, start with Windows
+
+**Right-click** the tray icon for the quick menu: Settings, Pause and Exit.
 
 **Mouse interactions:**
 - Drag your mouse across a web to pluck the silk — the spider will run over to investigate!
@@ -106,7 +105,7 @@ SpiderDesk/
 ├── Infrastructure/        The Windows side
 │   ├── Dialogs/           The settings flyout next to the tray: one page per tab (spider, Pomodoro, reminders, settings)
 │   ├── Platform/          Run at Windows startup (registry) and the system clock
-│   ├── Sessions/          The frame loop, and wiring the tray menus to the spider: settings, Pomodoro, reminders
+│   ├── Sessions/          The frame loop, and wiring each tab to the spider: spider, settings, Pomodoro, reminders
 │   ├── Storage/           Saves settings.json and reminders.json
 │   ├── Tray/              Tray icon, its small menu, the Pomodoro tooltip and notifications
 │   └── Windowing/         Click-through window, cursor, fullscreen detection (Win32 behind interfaces, tested with a fake desktop)

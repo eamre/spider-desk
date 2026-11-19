@@ -91,6 +91,7 @@ namespace SpiderDesk
             // Her denetleyici yalnızca kendi sekmesini ve bildirim arayüzünü tanır
             var pomodoro = new PomodoroSessionController(engine, settings, settingsWindow.PomodoroPage, trayMenuService, trayMenuService);
             var reminders = new ReminderSessionController(engine, new JsonReminderRepository(), settingsWindow.RemindersPage, trayMenuService);
+            var spider = new SpiderSessionController(engine, settingsWindow.SpiderPage);
 
             // Yalnızca "Ayarlar" sekmesinin olaylarına abone olur; sekme yaşadıkça o da yaşar, bu yüzden bir değişkende tutulmaz
             _ = new SettingsSessionController(settingsWindow.SettingsPage, engine, settings, canvas, webRenderer, windowLayerService, startupService);
@@ -104,7 +105,8 @@ namespace SpiderDesk
                 cursorService,
                 trayMenuService,
                 pomodoro,
-                reminders
+                reminders,
+                spider
             );
 
             mainWindow.Closed += (_, _) => _sessionController.Dispose();
