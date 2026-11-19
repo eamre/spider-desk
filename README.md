@@ -17,6 +17,37 @@ It runs quietly in the background without getting in your way or eating up your 
     <td align="center"><em>Catching a bug and storing the cocoon</em></td>
     <td align="center"><em>Shaking rain off a heavy web</em></td>
   </tr>
+  <tr>
+    <td align="center"><img src="docs/pomodoro.gif" alt="When a Pomodoro focus session starts, the spider writes FOCUS in silk" width="370"></td>
+    <td align="center"><img src="docs/reminder.gif" alt="The spider rappels down from the top of the screen holding a paper note with the reminder text" width="370"></td>
+  </tr>
+  <tr>
+    <td align="center"><em>Starting a Pomodoro: the spider writes FOCUS</em></td>
+    <td align="center"><em>A reminder arrives on a paper note</em></td>
+  </tr>
+</table>
+
+### 🪟 The settings window
+
+Click the spider icon in the System Tray and this window opens right above it.
+
+<table>
+  <tr>
+    <td align="center"><img src="docs/tab-spider.png" alt="Spider tab: level, progress to the next level, how full the spider is, bugs caught and commands" width="340"></td>
+    <td align="center"><img src="docs/tab-pomodoro.png" alt="Pomodoro tab: a countdown ring with pause and finish buttons and the session length" width="340"></td>
+  </tr>
+  <tr>
+    <td align="center"><em>Spider: level, stats and commands</em></td>
+    <td align="center"><em>Pomodoro: countdown ring</em></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/tab-reminders.png" alt="Reminders tab: a list of waiting reminders with their times" width="340"></td>
+    <td align="center"><img src="docs/tab-settings.png" alt="Settings tab: theme, day and night, spider speed and more" width="340"></td>
+  </tr>
+  <tr>
+    <td align="center"><em>Reminders: what is coming up</em></td>
+    <td align="center"><em>Settings: themes, speeds and more</em></td>
+  </tr>
 </table>
 
 ---
