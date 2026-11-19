@@ -2,10 +2,10 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using SpiderDesk.Domain.Reminders;
-using SpiderDesk.Infrastructure.Dialogs.Pages;
+using SpiderDesk.Infrastructure.Flyout.Pages;
 using SpiderDesk.Infrastructure.Sessions;
 
-namespace SpiderDesk.Tests.Infrastructure.Dialogs.Pages
+namespace SpiderDesk.Tests.Infrastructure.Flyout.Pages
 {
     /// <summary>
     /// "Hatırlatıcılar" sekmesinin kendisini doğrular: liste ve boş durum, ekleme kartının kuralları

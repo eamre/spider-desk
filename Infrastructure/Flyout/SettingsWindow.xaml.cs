@@ -6,7 +6,7 @@ using System.Windows.Input;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
 
-namespace SpiderDesk.Infrastructure.Dialogs
+namespace SpiderDesk.Infrastructure.Flyout
 {
     /// <summary>Ayarlar penceresinin sekmeleri.</summary>
     public enum SettingsTab

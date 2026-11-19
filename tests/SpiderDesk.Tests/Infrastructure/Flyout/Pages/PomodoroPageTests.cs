@@ -5,9 +5,9 @@ using System.Windows.Media;
 using System.Windows.Shapes;
 using SpiderDesk.Core.Settings;
 using SpiderDesk.Domain.Pomodoro;
-using SpiderDesk.Infrastructure.Dialogs.Pages;
+using SpiderDesk.Infrastructure.Flyout.Pages;
 
-namespace SpiderDesk.Tests.Infrastructure.Dialogs.Pages
+namespace SpiderDesk.Tests.Infrastructure.Flyout.Pages
 {
     /// <summary>
     /// "Pomodoro" sekmesinin kendisini doğrular: verilen durumu doğru çizdiğini ve düğmelerin doğru isteği bildirdiğini.

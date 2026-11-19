@@ -4,7 +4,7 @@ using System.Windows.Controls;
 using SpiderDesk.Domain.Spider;
 using SpiderDesk.Infrastructure.Sessions;
 
-namespace SpiderDesk.Infrastructure.Dialogs.Pages
+namespace SpiderDesk.Infrastructure.Flyout.Pages
 {
     /// <summary>
     /// Ayarlar penceresinin "Örümcek" sekmesi: seviye ve ilerleme, tokluk, toplam av, şu an ne yaptığı ve komutlar.

@@ -2,9 +2,9 @@ using System.Windows.Controls;
 using SpiderDesk.Core.Services;
 using SpiderDesk.Core.Settings;
 using SpiderDesk.Domain.Spider.Themes;
-using SpiderDesk.Infrastructure.Dialogs.Pages;
+using SpiderDesk.Infrastructure.Flyout.Pages;
 
-namespace SpiderDesk.Tests.Infrastructure.Dialogs.Pages
+namespace SpiderDesk.Tests.Infrastructure.Flyout.Pages
 {
     /// <summary>
     /// "Ayarlar" sekmesinin kendisini doğrular: ayarları doğru gösterdiğini, gösterirken olay çıkarmadığını

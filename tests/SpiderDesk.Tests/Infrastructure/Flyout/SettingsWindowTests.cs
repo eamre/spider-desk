@@ -3,9 +3,9 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Interop;
 using System.Windows.Threading;
-using SpiderDesk.Infrastructure.Dialogs;
+using SpiderDesk.Infrastructure.Flyout;
 
-namespace SpiderDesk.Tests.Infrastructure.Dialogs
+namespace SpiderDesk.Tests.Infrastructure.Flyout
 {
     /// <summary>
     /// Ayarlar penceresinin iskeletini doğrular: sekmeler arasında geçiş, kapatınca gizlenmesi ve yeniden açılması.

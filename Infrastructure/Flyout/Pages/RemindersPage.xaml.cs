@@ -7,7 +7,7 @@ using System.Windows.Threading;
 using SpiderDesk.Domain.Reminders;
 using SpiderDesk.Infrastructure.Sessions;
 
-namespace SpiderDesk.Infrastructure.Dialogs.Pages
+namespace SpiderDesk.Infrastructure.Flyout.Pages
 {
     /// <summary>
     /// Ayarlar penceresinin "Hatırlatıcılar" sekmesi: bekleyen hatırlatmaların listesi ve yeni hatırlatma kartı.

@@ -1,7 +1,7 @@
-<Window x:Class="SpiderDesk.Infrastructure.Dialogs.SettingsWindow"
+<Window x:Class="SpiderDesk.Infrastructure.Flyout.SettingsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:pages="clr-namespace:SpiderDesk.Infrastructure.Dialogs.Pages"
+        xmlns:pages="clr-namespace:SpiderDesk.Infrastructure.Flyout.Pages"
         Title="SpiderDesk"
         Icon="pack://application:,,,/SpiderDesk;component/spider.ico"
         Width="552"
@@ -19,7 +19,7 @@
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="pack://application:,,,/SpiderDesk;component/Infrastructure/Dialogs/DarkStyles.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/SpiderDesk;component/Infrastructure/Flyout/Styles/DarkControls.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Window.Resources>
@@ -101,7 +101,7 @@
                         <!-- İçerik paneli: sol üst köşesi yuvarlak, şeritten biraz daha açık renk -->
                         <Border Grid.Column="1" Background="{StaticResource PanelBrush}" CornerRadius="10,0,10,0"
                                 BorderBrush="{StaticResource BorderBrush}" BorderThickness="1,1,0,0">
-                            <!-- Her sekmenin içeriği kendi kontrolündedir (Dialogs/Pages); aynı anda yalnızca biri görünür -->
+                            <!-- Her sekmenin içeriği kendi kontrolündedir (Flyout/Pages); aynı anda yalnızca biri görünür -->
 
                             <Grid Margin="22,20,20,20">
                                 <DockPanel x:Name="SpiderPane">

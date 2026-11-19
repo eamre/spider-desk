@@ -10,7 +10,7 @@ using SpiderDesk.Core.Settings;
 using SpiderDesk.Domain.Spider.Themes;
 using SpiderDesk.Infrastructure.Sessions;
 
-namespace SpiderDesk.Infrastructure.Dialogs.Pages
+namespace SpiderDesk.Infrastructure.Flyout.Pages
 {
     /// <summary>
     /// Ayarlar penceresinin "Ayarlar" sekmesi: tema, gece/gündüz, hız ve sıklıklar, "Üstte göster" ve "Otomatik başlat".

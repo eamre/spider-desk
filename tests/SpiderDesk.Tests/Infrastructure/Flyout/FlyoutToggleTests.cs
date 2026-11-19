@@ -1,6 +1,6 @@
-using SpiderDesk.Infrastructure.Dialogs;
+using SpiderDesk.Infrastructure.Flyout;
 
-namespace SpiderDesk.Tests.Infrastructure.Dialogs
+namespace SpiderDesk.Tests.Infrastructure.Flyout
 {
     /// <summary>
     /// Tepsi ikonuna tıklamanın pencereyi ne zaman açtığını doğrular. Asıl kural: pencere açıkken ikona basmak onu

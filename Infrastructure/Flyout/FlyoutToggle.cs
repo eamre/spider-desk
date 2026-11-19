@@ -1,6 +1,6 @@
 using System;
 
-namespace SpiderDesk.Infrastructure.Dialogs
+namespace SpiderDesk.Infrastructure.Flyout
 {
     /// <summary>
     /// Tepsi ikonuna tıklamanın pencereyi açıp açmayacağına karar veren saf kural.

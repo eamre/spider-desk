@@ -1,7 +1,7 @@
 using System.Windows;
-using SpiderDesk.Infrastructure.Dialogs;
+using SpiderDesk.Infrastructure.Flyout;
 
-namespace SpiderDesk.Tests.Infrastructure.Dialogs
+namespace SpiderDesk.Tests.Infrastructure.Flyout
 {
     /// <summary>
     /// Tepsiden açılan pencerenin, görev çubuğu hangi kenarda olursa olsun tepsinin olduğu köşede açıldığını doğrular.

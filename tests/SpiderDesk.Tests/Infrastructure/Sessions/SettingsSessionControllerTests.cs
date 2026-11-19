@@ -6,7 +6,7 @@ using SpiderDesk.Domain;
 using SpiderDesk.Domain.Insects.Species;
 using SpiderDesk.Domain.Spider;
 using SpiderDesk.Domain.Spider.Themes;
-using SpiderDesk.Infrastructure.Dialogs.Pages;
+using SpiderDesk.Infrastructure.Flyout.Pages;
 using SpiderDesk.Infrastructure.Platform;
 using SpiderDesk.Infrastructure.Sessions;
 using SpiderDesk.Infrastructure.Windowing;

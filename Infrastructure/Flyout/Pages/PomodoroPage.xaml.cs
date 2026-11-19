@@ -7,7 +7,7 @@ using SpiderDesk.Core.Settings;
 using SpiderDesk.Domain.Pomodoro;
 using SpiderDesk.Infrastructure.Sessions;
 
-namespace SpiderDesk.Infrastructure.Dialogs.Pages
+namespace SpiderDesk.Infrastructure.Flyout.Pages
 {
     /// <summary>
     /// Ayarlar penceresinin "Pomodoro" sekmesi: geri sayım halkası, Başlat/Duraklat/Devam et ve Bitir düğmeleri, süre seçimi.

@@ -11,7 +11,7 @@ using SpiderDesk.Core.Services;
 using SpiderDesk.Core.Settings;
 using SpiderDesk.Domain;
 using SpiderDesk.Domain.Insects.Species;
-using SpiderDesk.Infrastructure.Dialogs;
+using SpiderDesk.Infrastructure.Flyout;
 using SpiderDesk.Infrastructure.Platform;
 using SpiderDesk.Infrastructure.Sessions;
 using SpiderDesk.Infrastructure.Storage;

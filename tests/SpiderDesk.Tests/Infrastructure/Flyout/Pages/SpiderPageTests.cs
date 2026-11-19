@@ -3,9 +3,9 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 using SpiderDesk.Domain.Spider;
-using SpiderDesk.Infrastructure.Dialogs.Pages;
+using SpiderDesk.Infrastructure.Flyout.Pages;
 
-namespace SpiderDesk.Tests.Infrastructure.Dialogs.Pages
+namespace SpiderDesk.Tests.Infrastructure.Flyout.Pages
 {
     /// <summary>
     /// "Örümcek" sekmesinin kendisini doğrular: durumu doğru gösterdiğini ve her komut düğmesinin kendi isteğini bildirdiğini.

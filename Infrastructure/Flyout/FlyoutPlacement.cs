@@ -1,7 +1,7 @@
 using System;
 using System.Windows;
 
-namespace SpiderDesk.Infrastructure.Dialogs
+namespace SpiderDesk.Infrastructure.Flyout
 {
     /// <summary>
     /// Tepsiden açılan pencerenin (flyout) ekrandaki yerini hesaplayan saf kural sınıfı.

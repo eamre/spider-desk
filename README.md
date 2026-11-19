@@ -103,7 +103,7 @@ SpiderDesk/
 ├── Rendering/             Turns the world into WPF drawings: spider, bugs, silk text, the paper note
 │   └── Web/               Web drawing (each web in its own visual)
 ├── Infrastructure/        The Windows side
-│   ├── Dialogs/           The settings flyout next to the tray: one page per tab (spider, Pomodoro, reminders, settings)
+│   ├── Flyout/            The settings flyout next to the tray: one page per tab (spider, Pomodoro, reminders, settings)
 │   ├── Platform/          Run at Windows startup (registry) and the system clock
 │   ├── Sessions/          The frame loop, and wiring each tab to the spider: spider, settings, Pomodoro, reminders
 │   ├── Storage/           Saves settings.json and reminders.json
