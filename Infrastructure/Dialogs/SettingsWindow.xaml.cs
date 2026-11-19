@@ -35,6 +35,9 @@ namespace SpiderDesk.Infrastructure.Dialogs
         /// <summary>"Ayarlar" sekmesi; <see cref="Sessions.SettingsSessionController"/> buna bağlanır.</summary>
         public Pages.SettingsPage SettingsPage => SettingsPageView;
 
+        /// <summary>"Pomodoro" sekmesi; <see cref="Sessions.PomodoroSessionController"/> buna bağlanır.</summary>
+        public Pages.PomodoroPage PomodoroPage => PomodoroPageView;
+
         /// <summary>
         /// True ise pencere her açılışta tepsinin yanına yerleşir. Testler pencereyi ekranın dışında tutmak için kapatır.
         /// </summary>

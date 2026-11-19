@@ -1,7 +1,6 @@
 using System;
 using System.Drawing;
 using System.Windows.Forms;
-using SpiderDesk.Core.Settings;
 
 namespace SpiderDesk.Infrastructure.Tray
 {
@@ -9,20 +8,18 @@ namespace SpiderDesk.Infrastructure.Tray
     /// Sistem tepsisindeki örümcek ikonu: ipucu yazısı, Windows bildirimleri ve sağ tık menüsü.
     /// Menünün kendisi parçalardan kurulur; her parça kendi sınıfındadır ve ilgili denetleyici yalnızca kendi parçasını tanır:
     /// <list type="bullet">
-    /// <item><see cref="PomodoroMenu"/>: Pomodoro (PomodoroSessionController kullanır)</item>
     /// <item><see cref="ReminderMenu"/>: hatırlatıcılar (ReminderSessionController kullanır)</item>
     /// </list>
     /// Bu sınıfta kalanlar: örümceğin durum satırı, ayarlar penceresini açma (sol tık ya da "Ayarlar"), anlık eylemler (yeni ağ, yağmur, böcek...), Duraklat ve Çıkış.
-    /// Kayıtlı ayarlar (tema, hız, "Üstte göster"...) artık ayarlar penceresinin "Ayarlar" sekmesindedir.
+    /// Kayıtlı ayarlar ve Pomodoro artık ayarlar penceresinin sekmelerindedir; Pomodoro'nun geri sayımı yine de ikonun ipucunda görünür.
     /// </summary>
-    public sealed class TrayMenuService : INotificationService, IDisposable
+    public sealed class TrayMenuService : INotificationService, ITrayTooltip, IDisposable
     {
         private const string DefaultTooltip = "SpiderDesk - Masaüstü Örümceği";
 
         private readonly NotifyIcon _notifyIcon;
         private readonly ToolStripMenuItem _statusMenuItem;
 
-        public PomodoroMenu Pomodoro { get; }
         public ReminderMenu Reminders { get; }
 
         /// <summary>Menüden "Ayarlar" seçildi: pencere açılmalı.</summary>
@@ -39,10 +36,9 @@ namespace SpiderDesk.Infrastructure.Tray
         public event Action<bool>? PauseChanged;
         public event Action? ExitRequested;
 
-        public TrayMenuService(UserSettings currentSettings)
+        public TrayMenuService()
         {
             var keepOpen = new KeepMenuOpen();
-            Pomodoro = new PomodoroMenu(currentSettings.PomodoroPreset, keepOpen);
             Reminders = new ReminderMenu(keepOpen);
 
             var menu = new ContextMenuStrip();
@@ -61,7 +57,6 @@ namespace SpiderDesk.Infrastructure.Tray
             menu.Items.Add(TrayMenuItems.Action("🧹 Ağları Temizle", () => ClearWebsRequested?.Invoke()));
 
             menu.Items.Add(new ToolStripSeparator());
-            menu.Items.Add(Pomodoro.Root);
             menu.Items.Add(Reminders.Root);
 
             menu.Items.Add(new ToolStripSeparator());
@@ -85,9 +80,6 @@ namespace SpiderDesk.Infrastructure.Tray
             {
                 if (e.Button == MouseButtons.Left) IconClicked?.Invoke();
             };
-
-            // Pomodoro çalışırken geri sayım, menüyü açmadan da görülsün diye ikonun ipucunda da yazar
-            Pomodoro.CountdownChanged += countdown => SetTooltip(countdown != null ? $"SpiderDesk · 🍅 {countdown}" : DefaultTooltip);
         }
 
         private ToolStripMenuItem BuildPauseItem()
@@ -108,6 +100,10 @@ namespace SpiderDesk.Infrastructure.Tray
         /// <summary>Ekranın sağ altında Windows bildirimi gösterir; tam ekran bir uygulama açıkken de görünür.</summary>
         public void ShowNotification(string title, string message) =>
             _notifyIcon.ShowBalloonTip(6000, title, message, ToolTipIcon.Info);
+
+        /// <summary>Pomodoro çalışırken geri sayım, pencereyi açmadan da görülsün diye ikonun ipucunda yazar.</summary>
+        public void ShowPomodoroCountdown(string? countdown) =>
+            SetTooltip(countdown != null ? $"SpiderDesk · 🍅 {countdown}" : DefaultTooltip);
 
         private void SetTooltip(string text)
         {

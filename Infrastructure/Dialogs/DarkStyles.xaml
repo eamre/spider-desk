@@ -335,6 +335,63 @@
         </Setter>
     </Style>
 
+    <!-- Hap biçimli ana düğme: açık mavi dolgulu, üstüne gelince biraz açılır -->
+    <Style x:Key="PillPrimaryButton" TargetType="Button">
+        <Setter Property="Foreground" Value="#0B0B0B" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="MinWidth" Value="112" />
+        <Setter Property="Height" Value="36" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid>
+                        <Border CornerRadius="18" Background="{StaticResource AccentBrush}" />
+                        <Border x:Name="Shine" CornerRadius="18" Background="#33FFFFFF" Opacity="0" />
+                        <ContentPresenter Margin="20,0" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Shine" Property="Opacity" Value="1" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Shine" Property="Opacity" Value="0" />
+                            <Setter Property="Opacity" Value="0.85" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Hap biçimli ikincil düğme: yalnızca ince çerçeveli -->
+    <Style x:Key="PillSecondaryButton" TargetType="Button">
+        <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="MinWidth" Value="96" />
+        <Setter Property="Height" Value="36" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid>
+                        <Border x:Name="Frame" CornerRadius="18" Background="Transparent"
+                                BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" />
+                        <Border x:Name="HoverLayer" CornerRadius="18" Background="{StaticResource HoverBrush}" Opacity="0" />
+                        <ContentPresenter Margin="20,0" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="HoverLayer" Property="Opacity" Value="1" />
+                            <Setter TargetName="Frame" Property="BorderBrush" Value="{StaticResource MutedTextBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- "Ayarlar kaydedilemedi" gibi uyarıların şeridi -->
     <SolidColorBrush x:Key="WarningBackBrush" Color="#433519" />
     <SolidColorBrush x:Key="WarningIconBrush" Color="#FCE100" />

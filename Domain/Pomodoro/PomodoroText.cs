@@ -21,10 +21,16 @@ namespace SpiderDesk.Domain.Pomodoro
         /// </summary>
         public static string Countdown(PomodoroPhase phase, TimeSpan remaining, bool isWaitingToStart = false, bool isPaused = false)
         {
-            int totalSeconds = (int)Math.Ceiling(Math.Max(0, remaining.TotalSeconds));
-            string text = $"{LabelOf(phase)} {totalSeconds / 60:00}:{totalSeconds % 60:00}";
+            string text = $"{LabelOf(phase)} {Clock(remaining)}";
             if (isPaused) return text + " ⏸";
             return isWaitingToStart ? text + " ⏳" : text;
+        }
+
+        /// <summary>Kalan süre "18:32" biçiminde. Saniyeler yukarı yuvarlanır: son saniyede "00:01" görünür.</summary>
+        public static string Clock(TimeSpan remaining)
+        {
+            int totalSeconds = (int)Math.Ceiling(Math.Max(0, remaining.TotalSeconds));
+            return $"{totalSeconds / 60:00}:{totalSeconds % 60:00}";
         }
 
         /// <summary>Yeni başlayan tur için duyuru üretir. <paramref name="length"/> o turun toplam süresidir.</summary>

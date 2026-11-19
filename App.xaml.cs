@@ -81,16 +81,16 @@ namespace SpiderDesk
                 new SilkWritingRenderer(() => engine.Spider.Theme)
             );
 
-            var trayMenuService = new TrayMenuService(currentSettings: settings.Current);
-
-            // Her denetleyici yalnızca kendi menü parçasını ve bildirim arayüzünü tanır
-            var pomodoro = new PomodoroSessionController(engine, settings, trayMenuService.Pomodoro, trayMenuService);
-            var reminders = new ReminderSessionController(engine, new JsonReminderRepository(), trayMenuService.Reminders, trayMenuService);
+            var trayMenuService = new TrayMenuService();
 
             // Uygulama boyunca tek bir ayarlar penceresi var; tepsinin yanında açılır, kapatılınca gizlenir
             var settingsWindow = new SettingsWindow();
             trayMenuService.SettingsWindowRequested += settingsWindow.ShowOrActivate;
             trayMenuService.IconClicked += settingsWindow.ToggleFromTray;
+
+            // Her denetleyici yalnızca kendi sekmesini (ya da menü parçasını) ve bildirim arayüzünü tanır
+            var pomodoro = new PomodoroSessionController(engine, settings, settingsWindow.PomodoroPage, trayMenuService, trayMenuService);
+            var reminders = new ReminderSessionController(engine, new JsonReminderRepository(), trayMenuService.Reminders, trayMenuService);
 
             // Yalnızca "Ayarlar" sekmesinin olaylarına abone olur; sekme yaşadıkça o da yaşar, bu yüzden bir değişkende tutulmaz
             _ = new SettingsSessionController(settingsWindow.SettingsPage, engine, settings, canvas, webRenderer, windowLayerService, startupService);

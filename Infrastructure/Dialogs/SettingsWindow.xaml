@@ -113,12 +113,10 @@
                                         <TextBlock Style="{StaticResource ComingSoon}" Text="Örümceğin durumu ve komutları burada olacak." />
                                     </Border>
                                 </StackPanel>
-                                <StackPanel x:Name="PomodoroPane">
-                                    <TextBlock Style="{StaticResource PaneTitle}" Text="Pomodoro" />
-                                    <Border Style="{StaticResource Card}">
-                                        <TextBlock Style="{StaticResource ComingSoon}" Text="Geri sayım ve Pomodoro düğmeleri burada olacak." />
-                                    </Border>
-                                </StackPanel>
+                                <DockPanel x:Name="PomodoroPane">
+                                    <TextBlock DockPanel.Dock="Top" Style="{StaticResource PaneTitle}" Text="Pomodoro" />
+                                    <pages:PomodoroPage x:Name="PomodoroPageView" />
+                                </DockPanel>
                                 <StackPanel x:Name="RemindersPane">
                                     <TextBlock Style="{StaticResource PaneTitle}" Text="Hatırlatıcılar" />
                                     <Border Style="{StaticResource Card}">

@@ -30,6 +30,14 @@ namespace SpiderDesk.Domain.Pomodoro
         /// <summary>Tur duraklatıldı: kalan süre donmuş durumda, <see cref="Resume"/> bekleniyor.</summary>
         public bool IsPaused { get; private set; }
 
+        /// <summary>Şu anki odak ve mola süreleri (bir sonraki turdan itibaren geçerli olanlar).</summary>
+        public PomodoroDurations Durations => _durations;
+
+        /// <summary>Süren turun toplam uzunluğu; geri sayım halkasının ne kadar dolu olacağı buna göre hesaplanır.</summary>
+        public TimeSpan CurrentPhaseLength => IsRunning ? _currentPhaseLength : TimeSpan.Zero;
+
+        private TimeSpan _currentPhaseLength;
+
         public PomodoroTimer(PomodoroDurations durations)
         {
             _durations = durations;
@@ -95,7 +103,8 @@ namespace SpiderDesk.Domain.Pomodoro
             if (!IsRunning || !IsWaitingToStart) return;
 
             IsWaitingToStart = false;
-            _phaseEndsAt = now + DurationOf(Phase);
+            _currentPhaseLength = DurationOf(Phase);
+            _phaseEndsAt = now + _currentPhaseLength;
         }
 
         /// <summary>
@@ -152,6 +161,7 @@ namespace SpiderDesk.Domain.Pomodoro
             IsPaused = false;
             IsWaitingToStart = true;
             _waitingSince = now;
+            _currentPhaseLength = DurationOf(phase);
         }
 
         private TimeSpan DurationOf(PomodoroPhase phase) => phase switch

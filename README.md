@@ -108,7 +108,7 @@ SpiderDesk/
 │   ├── Platform/          Run at Windows startup (registry) and the system clock
 │   ├── Sessions/          The frame loop, and wiring the tray menus to the spider: settings, Pomodoro, reminders
 │   ├── Storage/           Saves settings.json and reminders.json
-│   ├── Tray/              Tray icon, notifications, and one class per menu (Pomodoro, reminders)
+│   ├── Tray/              Tray icon, its Pomodoro tooltip, notifications and the reminder menu
 │   └── Windowing/         Click-through window, cursor, fullscreen detection (Win32 behind interfaces, tested with a fake desktop)
 ├── tests/SpiderDesk.Tests/  xUnit tests, same folder layout as the app (run: dotnet test)
 ├── App.xaml.cs            Composition root: creates and wires everything together
