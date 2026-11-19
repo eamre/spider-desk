@@ -11,9 +11,9 @@ namespace SpiderDesk.Infrastructure.Tray
     /// <list type="bullet">
     /// <item><see cref="PomodoroMenu"/>: Pomodoro (PomodoroSessionController kullanır)</item>
     /// <item><see cref="ReminderMenu"/>: hatırlatıcılar (ReminderSessionController kullanır)</item>
-    /// <item><see cref="SettingsMenu"/>: kayıtlı ayarlar (SettingsSessionController kullanır)</item>
     /// </list>
     /// Bu sınıfta kalanlar: örümceğin durum satırı, ayarlar penceresini açma (sol tık ya da "Ayarlar"), anlık eylemler (yeni ağ, yağmur, böcek...), Duraklat ve Çıkış.
+    /// Kayıtlı ayarlar (tema, hız, "Üstte göster"...) artık ayarlar penceresinin "Ayarlar" sekmesindedir.
     /// </summary>
     public sealed class TrayMenuService : INotificationService, IDisposable
     {
@@ -24,7 +24,6 @@ namespace SpiderDesk.Infrastructure.Tray
 
         public PomodoroMenu Pomodoro { get; }
         public ReminderMenu Reminders { get; }
-        public SettingsMenu Settings { get; }
 
         /// <summary>Menüden "Ayarlar" seçildi: pencere açılmalı.</summary>
         public event Action? SettingsWindowRequested;
@@ -40,12 +39,11 @@ namespace SpiderDesk.Infrastructure.Tray
         public event Action<bool>? PauseChanged;
         public event Action? ExitRequested;
 
-        public TrayMenuService(UserSettings currentSettings, bool initialStartupEnabled)
+        public TrayMenuService(UserSettings currentSettings)
         {
             var keepOpen = new KeepMenuOpen();
             Pomodoro = new PomodoroMenu(currentSettings.PomodoroPreset, keepOpen);
             Reminders = new ReminderMenu(keepOpen);
-            Settings = new SettingsMenu(currentSettings, initialStartupEnabled, keepOpen);
 
             var menu = new ContextMenuStrip();
 
@@ -67,10 +65,6 @@ namespace SpiderDesk.Infrastructure.Tray
             menu.Items.Add(Reminders.Root);
 
             menu.Items.Add(new ToolStripSeparator());
-            foreach (ToolStripItem item in Settings.Items)
-            {
-                menu.Items.Add(item);
-            }
             menu.Items.Add(BuildPauseItem());
 
             menu.Items.Add(new ToolStripSeparator());

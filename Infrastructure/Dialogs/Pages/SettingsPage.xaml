@@ -1,0 +1,119 @@
+<UserControl x:Class="SpiderDesk.Infrastructure.Dialogs.Pages.SettingsPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Sekme pencereye eklenmeden önce kurulduğu için stilleri kendisi yükler -->
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/SpiderDesk;component/Infrastructure/Dialogs/DarkStyles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <DockPanel>
+        <!-- Kayıt başarısız olunca altta beliren uyarı -->
+        <Border x:Name="SaveWarning" DockPanel.Dock="Bottom" Visibility="Collapsed" Margin="0,10,10,0"
+                Background="{StaticResource WarningBackBrush}" CornerRadius="6" Padding="12,10">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="&#xE7BA;" FontFamily="{StaticResource IconFont}" Foreground="{StaticResource WarningIconBrush}"
+                           VerticalAlignment="Center" Margin="0,0,10,0" />
+                <TextBlock Grid.Column="1" Style="{StaticResource CardDescription}" Margin="0" Foreground="{StaticResource TextBrush}"
+                           Text="Ayarlar kaydedilemedi. Bir sonraki değişiklikte yeniden denenecek." />
+            </Grid>
+        </Border>
+
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,0,10,0">
+            <StackPanel>
+                <TextBlock Style="{StaticResource SectionHeader}" Text="Görünüm" Margin="2,0,0,8" />
+
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource CardTitle}" Text="Tema" />
+                        <TextBlock Style="{StaticResource CardDescription}" Text="Örümceğin ve ağlarının renkleri" />
+                        <!-- Kutucuklar temalar listesinden kodda oluşturulur -->
+                        <UniformGrid x:Name="ThemeChoices" Columns="2" Margin="0,12,-6,-6" />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource CardTitle}" Text="Gece / gündüz" />
+                        <TextBlock Style="{StaticResource CardDescription}" Text="Otomatik seçilirse bilgisayarın saatine göre değişir; gece ateş böcekleri çıkar" />
+                        <Border Style="{StaticResource SegmentGroup}" HorizontalAlignment="Left" Margin="0,10,0,0">
+                            <StackPanel x:Name="TimeModeChoices" Orientation="Horizontal" />
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+                <TextBlock Style="{StaticResource SectionHeader}" Text="Hız ve sıklık" />
+
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource CardTitle}" Text="Örümcek hızı" />
+                        <TextBlock Style="{StaticResource CardDescription}" Text="Örümceğin ne kadar çevik hareket ettiği" />
+                        <Border Style="{StaticResource SegmentGroup}" HorizontalAlignment="Left" Margin="0,10,0,0">
+                            <StackPanel x:Name="SpeedChoices" Orientation="Horizontal" />
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource CardTitle}" Text="Böcek sıklığı" />
+                        <TextBlock Style="{StaticResource CardDescription}" Text="Ekrana ne sıklıkla böcek gelsin" />
+                        <Border Style="{StaticResource SegmentGroup}" HorizontalAlignment="Left" Margin="0,10,0,0">
+                            <StackPanel x:Name="SpawnRateChoices" Orientation="Horizontal" />
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource CardTitle}" Text="Çiy sıklığı" />
+                        <TextBlock Style="{StaticResource CardDescription}" Text="Ağlarda ne sıklıkla çiy damlası oluşsun" />
+                        <Border Style="{StaticResource SegmentGroup}" HorizontalAlignment="Left" Margin="0,10,0,0">
+                            <StackPanel x:Name="DewChoices" Orientation="Horizontal" />
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+                <TextBlock Style="{StaticResource SectionHeader}" Text="Davranış" />
+
+                <Border Style="{StaticResource Card}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Margin="0,0,12,0">
+                            <TextBlock Style="{StaticResource CardTitle}" Text="Pencerelerin üstünde göster" />
+                            <TextBlock Style="{StaticResource CardDescription}" Text="Örümcek bütün pencerelerin önünde dolaşır" />
+                        </StackPanel>
+                        <CheckBox x:Name="AlwaysOnTopSwitch" Grid.Column="1" Style="{StaticResource ToggleSwitch}"
+                                  Checked="OnAlwaysOnTopToggled" Unchecked="OnAlwaysOnTopToggled" />
+                    </Grid>
+                </Border>
+
+                <Border Style="{StaticResource Card}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Margin="0,0,12,0">
+                            <TextBlock Style="{StaticResource CardTitle}" Text="Bilgisayar açılınca başlat" />
+                            <TextBlock Style="{StaticResource CardDescription}" Text="Windows açıldığında örümcek de kendiliğinden gelir" />
+                        </StackPanel>
+                        <CheckBox x:Name="StartupSwitch" Grid.Column="1" Style="{StaticResource ToggleSwitch}"
+                                  Checked="OnStartupToggled" Unchecked="OnStartupToggled" />
+                    </Grid>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
+</UserControl>

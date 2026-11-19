@@ -13,6 +13,7 @@ namespace SpiderDesk.Tests.Core.Settings
             public UserSettings Stored { get; } = new() { ThemeId = "frost_crystal" };
             public int LoadCount { get; private set; }
             public List<UserSettings> Saves { get; } = new();
+            public bool FailSaves { get; set; }
 
             public string? LastError => null;
 
@@ -25,8 +26,35 @@ namespace SpiderDesk.Tests.Core.Settings
             public bool Save(UserSettings settings)
             {
                 Saves.Add(settings);
-                return true;
+                return !FailSaves;
             }
+        }
+
+        [Fact]
+        public void Update_TellsWhetherTheSaveWorked()
+        {
+            var repository = new FakeSettingsRepository();
+            var store = new SettingsStore(repository);
+
+            Assert.True(store.Update(s => s.SpeedPreset = SpiderSpeedPreset.Agile));
+
+            repository.FailSaves = true;
+            Assert.False(store.Update(s => s.SpeedPreset = SpiderSpeedPreset.Calm));
+        }
+
+        [Fact]
+        public void AFailedSave_KeepsTheChange_AndTheNextSaveWritesIt()
+        {
+            var repository = new FakeSettingsRepository { FailSaves = true };
+            var store = new SettingsStore(repository);
+            store.Update(s => s.SpeedPreset = SpiderSpeedPreset.Agile);
+
+            repository.FailSaves = false;
+            store.Update(s => s.ThemeId = "cyber_neon");
+
+            // İkinci kayıt bütün ayarları yazar; birinci kayıtta kaybolan hız da artık diskte
+            Assert.Equal(SpiderSpeedPreset.Agile, repository.Saves[^1].SpeedPreset);
+            Assert.Equal("cyber_neon", repository.Saves[^1].ThemeId);
         }
 
         [Fact]

@@ -18,11 +18,14 @@ namespace SpiderDesk.Core.Settings
             Current = repository.Load();
         }
 
-        /// <summary>Verilen değişikliği ayarlara uygular ve hemen diske kaydeder.</summary>
-        public void Update(Action<UserSettings> change)
+        /// <summary>
+        /// Verilen değişikliği ayarlara uygular ve hemen diske kaydeder. Kayıt başarısız olursa false döner;
+        /// değişiklik bellekte kalır ve bir sonraki başarılı kayıtla (her kayıt bütün ayarları yazar) diske geçer.
+        /// </summary>
+        public bool Update(Action<UserSettings> change)
         {
             change(Current);
-            _repository.Save(Current);
+            return _repository.Save(Current);
         }
     }
 }

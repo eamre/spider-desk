@@ -1,6 +1,7 @@
 <Window x:Class="SpiderDesk.Infrastructure.Dialogs.SettingsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:pages="clr-namespace:SpiderDesk.Infrastructure.Dialogs.Pages"
         Title="SpiderDesk"
         Icon="pack://application:,,,/SpiderDesk;component/spider.ico"
         Width="552"
@@ -124,12 +125,10 @@
                                         <TextBlock Style="{StaticResource ComingSoon}" Text="Bekleyen hatırlatmalar burada listelenecek." />
                                     </Border>
                                 </StackPanel>
-                                <StackPanel x:Name="SettingsPane">
-                                    <TextBlock Style="{StaticResource PaneTitle}" Text="Ayarlar" />
-                                    <Border Style="{StaticResource Card}">
-                                        <TextBlock Style="{StaticResource ComingSoon}" Text="Tema, hız ve diğer ayarlar burada olacak." />
-                                    </Border>
-                                </StackPanel>
+                                <DockPanel x:Name="SettingsPane">
+                                    <TextBlock DockPanel.Dock="Top" Style="{StaticResource PaneTitle}" Text="Ayarlar" />
+                                    <pages:SettingsPage x:Name="SettingsPageView" Margin="0,0,-10,0" />
+                                </DockPanel>
                             </Grid>
                         </Border>
                     </Grid>

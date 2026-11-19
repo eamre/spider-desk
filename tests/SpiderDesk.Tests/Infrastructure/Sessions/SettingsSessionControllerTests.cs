@@ -1,14 +1,14 @@
 using System.Windows;
-using System.Windows.Forms;
+using System.Windows.Controls;
 using SpiderDesk.Core.Services;
 using SpiderDesk.Core.Settings;
 using SpiderDesk.Domain;
 using SpiderDesk.Domain.Insects.Species;
 using SpiderDesk.Domain.Spider;
 using SpiderDesk.Domain.Spider.Themes;
+using SpiderDesk.Infrastructure.Dialogs.Pages;
 using SpiderDesk.Infrastructure.Platform;
 using SpiderDesk.Infrastructure.Sessions;
-using SpiderDesk.Infrastructure.Tray;
 using SpiderDesk.Infrastructure.Windowing;
 using SpiderDesk.Rendering;
 using SpiderDesk.Rendering.Web;
@@ -16,20 +16,22 @@ using SpiderDesk.Rendering.Web;
 namespace SpiderDesk.Tests.Infrastructure.Sessions
 {
     /// <summary>
-    /// Tepsideki ayar menüsünden yapılan her seçimin hem simülasyona uygulandığını hem de diske kaydedildiğini doğrular.
-    /// Menü maddelerine gerçekten tıklanır (PerformClick). WPF çizim nesneleri STA iş parçacığı istediği için testler orada çalışır.
+    /// Ayarlar sekmesinde yapılan her seçimin hem simülasyona uygulandığını hem de diske kaydedildiğini doğrular.
+    /// Gerçek <see cref="SettingsPage"/> kullanılır ve düğmeleri kullanıcı gibi seçilir. WPF nesneleri STA iş parçacığı istediği için
+    /// testler orada çalışır.
     /// </summary>
     public class SettingsSessionControllerTests
     {
         private sealed class FakeSettingsRepository : ISettingsRepository
         {
             public int SaveCount { get; private set; }
+            public bool FailSaves { get; set; }
             public string? LastError => null;
             public UserSettings Load() => new();
             public bool Save(UserSettings settings)
             {
                 SaveCount++;
-                return true;
+                return !FailSaves;
             }
         }
 
@@ -67,7 +69,7 @@ namespace SpiderDesk.Tests.Infrastructure.Sessions
             public FakeEnvironment Environment { get; } = new();
             public SettingsStore Settings { get; }
             public SimulationEngine Engine { get; }
-            public SettingsMenu Menu { get; }
+            public SettingsPage Page { get; } = new();
 
             public Rig()
             {
@@ -81,28 +83,26 @@ namespace SpiderDesk.Tests.Infrastructure.Sessions
                     new BugRenderer(),
                     new SpiderRenderer(new NoteRenderer()),
                     new SilkWritingRenderer(() => Engine.Spider.Theme));
-                Menu = new SettingsMenu(Settings.Current, startupEnabled: false, new KeepMenuOpen());
 
-                _ = new SettingsSessionController(Menu, Engine, Settings, canvas, webRenderer, WindowLayer, Startup);
+                _ = new SettingsSessionController(Page, Engine, Settings, canvas, webRenderer, WindowLayer, Startup);
             }
 
-            /// <summary>Menüde (alt menüler dahil) bu yazıyla başlayan maddeye tıklar.</summary>
-            public void Click(string text)
+            /// <summary>Sekmede bu yazıyı taşıyan düğmeyi seçer (kullanıcı tıklamış gibi).</summary>
+            public void Choose(string panelName, string label)
             {
-                ToolStripMenuItem item = Find(Menu.Items, text) ?? throw new InvalidOperationException($"Menüde '{text}' yok");
-                item.PerformClick();
+                var panel = (Panel)Page.FindName(panelName);
+                RadioButton button = panel.Children.OfType<RadioButton>()
+                    .Single(b => (b.Content as string ?? b.ToolTip as string) == label);
+                button.IsChecked = true;
             }
 
-            private static ToolStripMenuItem? Find(IEnumerable<ToolStripItem> items, string text)
+            public void Toggle(string switchName)
             {
-                foreach (ToolStripItem item in items)
-                {
-                    if (item is not ToolStripMenuItem menuItem) continue;
-                    if (menuItem.Text != null && menuItem.Text.StartsWith(text, StringComparison.Ordinal)) return menuItem;
-                    if (Find(menuItem.DropDownItems.Cast<ToolStripItem>(), text) is { } inner) return inner;
-                }
-                return null;
+                var toggle = (CheckBox)Page.FindName(switchName);
+                toggle.IsChecked = toggle.IsChecked != true;
             }
+
+            public bool IsWarningVisible => ((FrameworkElement)Page.FindName("SaveWarning")).Visibility == Visibility.Visible;
         }
 
         private static void RunOnSta(Action<Rig> test) => StaThread.Run(() => test(new Rig()));
@@ -113,8 +113,9 @@ namespace SpiderDesk.Tests.Infrastructure.Sessions
             RunOnSta(rig =>
             {
                 ISpiderTheme other = SpiderThemeCatalog.All.First(t => t.Id != rig.Settings.Current.ThemeId);
+                string label = new string(other.DisplayName.SkipWhile(c => !char.IsLetter(c)).ToArray());
 
-                rig.Click(other.DisplayName);
+                rig.Choose("ThemeChoices", label);
 
                 Assert.Equal(other.Id, rig.Engine.Spider.Theme.Id);
                 Assert.Equal(other.Id, rig.Settings.Current.ThemeId);
@@ -127,7 +128,7 @@ namespace SpiderDesk.Tests.Infrastructure.Sessions
         {
             RunOnSta(rig =>
             {
-                rig.Click("Yoğun (8-17 sn)");
+                rig.Choose("SpawnRateChoices", "Yoğun");
 
                 Assert.Equal(BugSpawnRatePreset.High, rig.Settings.Current.SpawnRate);
                 Assert.Equal(1, rig.Repository.SaveCount);
@@ -139,7 +140,7 @@ namespace SpiderDesk.Tests.Infrastructure.Sessions
         {
             RunOnSta(rig =>
             {
-                rig.Click("Kapalı");
+                rig.Choose("DewChoices", "Kapalı");
 
                 Assert.Equal(DewSpawnRatePreset.Off, rig.Engine.World.DewSpawnRate);
                 Assert.Equal(DewSpawnRatePreset.Off, rig.Settings.Current.DewSpawnRate);
@@ -152,7 +153,7 @@ namespace SpiderDesk.Tests.Infrastructure.Sessions
         {
             RunOnSta(rig =>
             {
-                rig.Click("Çevik (1.35x)");
+                rig.Choose("SpeedChoices", "Çevik");
 
                 Assert.Equal(SpiderSpeedPolicy.MultiplierFor(SpiderSpeedPreset.Agile), rig.Engine.Spider.SpeedMultiplier);
                 Assert.Equal(SpiderSpeedPreset.Agile, rig.Settings.Current.SpeedPreset);
@@ -165,7 +166,7 @@ namespace SpiderDesk.Tests.Infrastructure.Sessions
         {
             RunOnSta(rig =>
             {
-                rig.Click("Sürekli Gece");
+                rig.Choose("TimeModeChoices", "Gece");
 
                 Assert.Equal(EnvironmentTimeMode.AlwaysNight, rig.Environment.TimeMode);
                 Assert.Equal(EnvironmentTimeMode.AlwaysNight, rig.Settings.Current.TimeMode);
@@ -178,7 +179,7 @@ namespace SpiderDesk.Tests.Infrastructure.Sessions
         {
             RunOnSta(rig =>
             {
-                rig.Click("🖥️ Pencerelerin Üstünde Göster");
+                rig.Toggle("AlwaysOnTopSwitch");
 
                 Assert.True(rig.WindowLayer.AlwaysOnTop);
                 Assert.Equal(1, rig.WindowLayer.EnforceCount);
@@ -194,7 +195,7 @@ namespace SpiderDesk.Tests.Infrastructure.Sessions
             {
                 rig.Settings.Current.RunOnStartup = false;
 
-                rig.Click("🚀 Bilgisayar Açıldığında Otomatik Başlat");
+                rig.Toggle("StartupSwitch");
 
                 Assert.True(rig.Startup.LastSet);
                 Assert.True(rig.Settings.Current.RunOnStartup);
@@ -212,6 +213,36 @@ namespace SpiderDesk.Tests.Infrastructure.Sessions
 
                 Assert.Equal(2, rig.Settings.Current.TotalBugsCaught);
                 Assert.Equal(2, rig.Repository.SaveCount);
+            });
+        }
+
+        [Fact]
+        public void OnOpening_ThePageShowsTheCurrentSettings_WithoutSavingAnything()
+        {
+            RunOnSta(rig =>
+            {
+                var speed = (Panel)rig.Page.FindName("SpeedChoices");
+                RadioButton chosen = speed.Children.OfType<RadioButton>().Single(b => b.IsChecked == true);
+
+                Assert.Equal("Normal", chosen.Content);
+                Assert.Equal(0, rig.Repository.SaveCount);
+            });
+        }
+
+        [Fact]
+        public void WhenSavingFails_AWarningAppears_AndDisappearsAfterTheNextGoodSave()
+        {
+            RunOnSta(rig =>
+            {
+                Assert.False(rig.IsWarningVisible);
+
+                rig.Repository.FailSaves = true;
+                rig.Choose("SpeedChoices", "Çevik");
+                Assert.True(rig.IsWarningVisible);
+
+                rig.Repository.FailSaves = false;
+                rig.Choose("SpeedChoices", "Sakin");
+                Assert.False(rig.IsWarningVisible);
             });
         }
     }

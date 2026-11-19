@@ -32,6 +32,9 @@ namespace SpiderDesk.Infrastructure.Dialogs
 
         public SettingsTab CurrentTab { get; private set; }
 
+        /// <summary>"Ayarlar" sekmesi; <see cref="Sessions.SettingsSessionController"/> buna bağlanır.</summary>
+        public Pages.SettingsPage SettingsPage => SettingsPageView;
+
         /// <summary>
         /// True ise pencere her açılışta tepsinin yanına yerleşir. Testler pencereyi ekranın dışında tutmak için kapatır.
         /// </summary>
