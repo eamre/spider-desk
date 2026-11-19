@@ -111,7 +111,7 @@ SpiderDesk/
 │   └── Windowing/         Click-through window, cursor, fullscreen detection (Win32 behind interfaces, tested with a fake desktop)
 ├── tests/SpiderDesk.Tests/  xUnit tests, same folder layout as the app (run: dotnet test)
 ├── App.xaml.cs            Composition root: creates and wires everything together
-└── MainWindow.xaml.cs     The transparent overlay window
+└── MainWindow.cs          The transparent overlay window
 ```
 
 Dependencies point one way: `Domain` knows nothing about `Rendering` or `Infrastructure`, and `Core` depends on nothing.

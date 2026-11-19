@@ -13,9 +13,12 @@ namespace SpiderDesk.Domain.Spider.Themes
             new CyberNeonTheme()
         ];
 
+        /// <summary>Ayar dosyasında tanınmayan bir tema adı varsa bu tema kullanılır.</summary>
+        public static ISpiderTheme Default { get; } = All.OfType<ForestTarantulaTheme>().Single();
+
         public static ISpiderTheme GetById(string? id)
         {
-            return All.FirstOrDefault(t => t.Id == id) ?? All[0];
+            return All.FirstOrDefault(t => t.Id == id) ?? Default;
         }
     }
 }
